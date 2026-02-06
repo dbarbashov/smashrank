@@ -1,0 +1,14 @@
+{
+  "name": "smashrank",
+  "private": true,
+  "scripts": {
+    "build": "tsc --build && cp packages/core/src/i18n/*.json packages/core/dist/i18n/",
+    "test": "pnpm --filter '@smashrank/*' run test",
+    "dev": "pnpm --filter @smashrank/bot run dev",
+    "migrate": "pnpm --filter @smashrank/db run migrate"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "typescript": "^5.7.0"
+  }
+}

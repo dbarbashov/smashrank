@@ -1,0 +1,20 @@
+{
+  "name": "@smashrank/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc && cp src/i18n/*.json dist/i18n/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "i18next": "^24.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
