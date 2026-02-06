@@ -32,5 +32,9 @@ export function groupQueries(sql: SqlLike) {
         ON CONFLICT (group_id, player_id) DO NOTHING
       `;
     },
+
+    async updateLanguage(groupId: string, language: string): Promise<void> {
+      await sql`UPDATE groups SET language = ${language} WHERE id = ${groupId}`;
+    },
   };
 }

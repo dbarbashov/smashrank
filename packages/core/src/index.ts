@@ -11,3 +11,6 @@ export { getSeasonForDate, isSeasonExpired } from "./seasons.js";
 export type { SeasonInfo } from "./seasons.js";
 
 export { initI18n, getT, t } from "./i18n/index.js";
+
+export { generateMatchCommentary } from "./llm.js";
+export type { MatchCommentaryContext } from "./llm.js";

@@ -10,6 +10,9 @@ import { leaderboardCommand } from "./commands/leaderboard.js";
 import { statsCommand } from "./commands/stats.js";
 import { helpCommand } from "./commands/help.js";
 import { langCommand } from "./commands/lang.js";
+import { undoCommand } from "./commands/undo.js";
+import { h2hCommand } from "./commands/h2h.js";
+import { newgameCommand, newgameCallbackHandler, processNewgameScore } from "./commands/newgame.js";
 
 async function main(): Promise<void> {
   // Initialize i18n
@@ -36,6 +39,17 @@ async function main(): Promise<void> {
   bot.command("stats", statsCommand);
   bot.command("help", helpCommand);
   bot.command("lang", langCommand);
+  bot.command("undo", undoCommand);
+  bot.command("h2h", h2hCommand);
+  bot.command("newgame", newgameCommand);
+
+  // Callback query handler for /newgame inline keyboards
+  bot.on("callback_query:data", newgameCallbackHandler);
+
+  // Handle score replies to /newgame prompts
+  bot.on("message:text", async (ctx) => {
+    await processNewgameScore(ctx as SmashRankContext);
+  });
 
   // Start
   console.log("Bot starting...");

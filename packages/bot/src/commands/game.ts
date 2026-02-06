@@ -8,7 +8,9 @@ import {
   parseGameCommand,
   calculateElo,
   updateStreak,
+  generateMatchCommentary,
 } from "@smashrank/core";
+import type { MatchCommentaryContext } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { ensureActiveSeason } from "../helpers/ensure-season.js";
 
@@ -106,24 +108,48 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
     );
   });
 
-  // Build response
+  // Build response — try LLM commentary first, fall back to template
   const setScoresStr = data.setScores
     ? data.setScores.map((s) => `${s.w}-${s.l}`).join(", ")
     : null;
 
-  const templateKey = setScoresStr ? "game.result_with_sets" : "game.result";
-  const message = ctx.t(templateKey, {
-    winner: winner.display_name,
-    loser: loser.display_name,
-    winnerSets: data.winnerSets,
-    loserSets: data.loserSets,
-    setScores: setScoresStr,
-    eloBeforeWinner: winner.elo_rating,
-    eloAfterWinner: eloResult.winnerNewRating,
-    eloBeforeLoser: loser.elo_rating,
-    eloAfterLoser: eloResult.loserNewRating,
-    change: eloResult.change,
-  });
+  const commentaryContext: MatchCommentaryContext = {
+    winner: {
+      name: winner.display_name,
+      elo_before: winner.elo_rating,
+      elo_after: eloResult.winnerNewRating,
+    },
+    loser: {
+      name: loser.display_name,
+      elo_before: loser.elo_rating,
+      elo_after: eloResult.loserNewRating,
+    },
+    set_scores: setScoresStr ?? `${data.winnerSets}-${data.loserSets}`,
+    elo_change: eloResult.change,
+    is_upset: loser.elo_rating > winner.elo_rating,
+    elo_gap: Math.abs(winner.elo_rating - loser.elo_rating),
+    winner_streak: winnerStreak.currentStreak,
+  };
 
-  await ctx.reply(message);
+  const language = ctx.group?.language ?? "en";
+  const llmMessage = await generateMatchCommentary(commentaryContext, language);
+
+  if (llmMessage) {
+    await ctx.reply(llmMessage);
+  } else {
+    const templateKey = setScoresStr ? "game.result_with_sets" : "game.result";
+    const message = ctx.t(templateKey, {
+      winner: winner.display_name,
+      loser: loser.display_name,
+      winnerSets: data.winnerSets,
+      loserSets: data.loserSets,
+      setScores: setScoresStr,
+      eloBeforeWinner: winner.elo_rating,
+      eloAfterWinner: eloResult.winnerNewRating,
+      eloBeforeLoser: loser.elo_rating,
+      eloAfterLoser: eloResult.loserNewRating,
+      change: eloResult.change,
+    });
+    await ctx.reply(message);
+  }
 }

@@ -1,4 +1,4 @@
-import { getConnection, playerQueries } from "@smashrank/db";
+import { getConnection, playerQueries, groupQueries } from "@smashrank/db";
 import { getT } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 
@@ -14,8 +14,15 @@ export async function langCommand(ctx: SmashRankContext): Promise<void> {
   }
 
   const sql = getConnection();
-  const players = playerQueries(sql);
-  await players.updateLanguage(ctx.player.id, arg);
+
+  // In a group chat, update the group language; in DM, update the player language
+  if (ctx.group) {
+    const groups = groupQueries(sql);
+    await groups.updateLanguage(ctx.group.id, arg);
+  } else {
+    const players = playerQueries(sql);
+    await players.updateLanguage(ctx.player.id, arg);
+  }
 
   // Respond in the NEW language
   const t = getT(arg);

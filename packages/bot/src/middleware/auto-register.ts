@@ -7,6 +7,8 @@ import {
 import { getT } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 
+const defaultLang = process.env.DEFAULT_LANG ?? "ru";
+
 export async function autoRegister(
   ctx: SmashRankContext,
   next: NextFunction,
@@ -25,6 +27,7 @@ export async function autoRegister(
       telegram_id: from.id,
       telegram_username: from.username ?? null,
       display_name: from.first_name + (from.last_name ? ` ${from.last_name}` : ""),
+      language: defaultLang,
     });
   }
   ctx.player = player;
@@ -37,6 +40,7 @@ export async function autoRegister(
       group = await groups.create({
         chat_id: chat.id,
         name: chat.title ?? null,
+        language: defaultLang,
       });
     }
     await groups.ensureMembership(group.id, player.id);
@@ -46,7 +50,7 @@ export async function autoRegister(
   }
 
   // Set translation function
-  const lang = ctx.group?.language ?? ctx.player.language ?? "en";
+  const lang = ctx.group?.language ?? ctx.player.language ?? defaultLang;
   ctx.t = getT(lang);
   ctx.season = null;
 
