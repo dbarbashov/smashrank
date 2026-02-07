@@ -4,16 +4,12 @@ import {
   playerQueries,
   matchQueries,
   tournamentQueries,
-  achievementQueries,
 } from "@smashrank/db";
 import type { Tournament } from "@smashrank/db";
-import {
-  calculateDrawElo,
-  evaluateTournamentAchievements,
-  sortStandings,
-} from "@smashrank/core";
-import type { AchievementUnlock, Standing } from "@smashrank/core";
+import { calculateDrawElo } from "@smashrank/core";
+import type { AchievementUnlock } from "@smashrank/core";
 import { ensureActiveSeason } from "./ensure-season.js";
+import { evaluateAndPersistTournamentAchievements } from "./evaluate-tournament-achievements.js";
 
 export interface ForceCompleteResult {
   forfeitedFixtures: number;
@@ -39,7 +35,6 @@ export async function forceCompleteTournament(
     const txPlayers = playerQueries(txSql);
     const txMatches = matchQueries(txSql);
     const txTournaments = tournamentQueries(txSql);
-    const txAchievements = achievementQueries(txSql);
 
     // Get unplayed fixtures
     const unplayed = await txTournaments.getUnplayedFixtures(tournament.id);
@@ -83,93 +78,13 @@ export async function forceCompleteTournament(
 
     // Complete the tournament
     await txTournaments.updateStatus(tournament.id, "completed");
-
-    // Evaluate tournament achievements
-    const participants = await txTournaments.getParticipants(tournament.id);
-    const standings = await txTournaments.getStandings(tournament.id);
-    const participantIds = participants.map((p) => p.player_id);
-
-    // Build standings map
-    const standingsMap = new Map<string, { wins: number; draws: number; losses: number }>();
-    for (const s of standings) {
-      standingsMap.set(s.player_id, { wins: s.wins, draws: s.draws, losses: s.losses });
-    }
-
-    // Build H2H map for tiebreaking
-    const fixtures = await txTournaments.getFixtures(tournament.id);
-    const h2h = new Map<string, string | null>();
-    for (const f of fixtures) {
-      const key = f.player1_id < f.player2_id
-        ? `${f.player1_id}:${f.player2_id}`
-        : `${f.player2_id}:${f.player1_id}`;
-      if (f.winner_id && f.winner_score !== f.loser_score) {
-        h2h.set(key, f.winner_id);
-      } else {
-        h2h.set(key, null);
-      }
-    }
-
-    // Sort standings with tiebreakers
-    const sortableStandings: Standing[] = standings.map((s) => ({
-      playerId: s.player_id,
-      points: s.points,
-      wins: s.wins,
-      draws: s.draws,
-      losses: s.losses,
-      setsWon: s.sets_won,
-      setsLost: s.sets_lost,
-      eloRating: s.elo_rating,
-    }));
-    const sorted = sortStandings(sortableStandings, h2h);
-    winnerId = sorted.length > 0 ? sorted[0].playerId : null;
-    winnerName = winnerId
-      ? (participants.find((p) => p.player_id === winnerId)?.display_name ?? null)
-      : null;
-
-    // Count draws and fixtures played per player
-    const drawCounts = new Map<string, number>();
-    const fixturesPlayed = new Map<string, number>();
-    for (const f of fixtures) {
-      if (f.match_id) {
-        fixturesPlayed.set(f.player1_id, (fixturesPlayed.get(f.player1_id) ?? 0) + 1);
-        fixturesPlayed.set(f.player2_id, (fixturesPlayed.get(f.player2_id) ?? 0) + 1);
-        if (f.winner_score === f.loser_score) {
-          drawCounts.set(f.player1_id, (drawCounts.get(f.player1_id) ?? 0) + 1);
-          drawCounts.set(f.player2_id, (drawCounts.get(f.player2_id) ?? 0) + 1);
-        }
-      }
-    }
-
-    // Existing achievements
-    const existingAchievements = new Map<string, string[]>();
-    for (const playerId of participantIds) {
-      const existing = await txAchievements.getPlayerAchievementIds(playerId);
-      existingAchievements.set(playerId, existing);
-    }
-
-    const totalFixturesPerPlayer = participantIds.length - 1;
-
-    achievements = evaluateTournamentAchievements({
-      participantIds,
-      standings: standingsMap,
-      drawCounts,
-      existingAchievements,
-      fixturesPlayed,
-      totalFixturesPerPlayer,
-      winnerId,
-    });
-
-    // Persist tournament achievements (match_id null for tournament-level achievements)
-    if (achievements.length > 0) {
-      for (const a of achievements) {
-        await txSql`
-          INSERT INTO player_achievements (player_id, achievement_id)
-          VALUES (${a.playerId}, ${a.achievementId})
-          ON CONFLICT (player_id, achievement_id) DO NOTHING
-        `;
-      }
-    }
   });
+
+  // Evaluate and persist tournament achievements (outside transaction, reads committed data)
+  const achievementResult = await evaluateAndPersistTournamentAchievements(tournament.id);
+  achievements = achievementResult.achievements;
+  winnerId = achievementResult.winnerId;
+  winnerName = achievementResult.winnerName;
 
   return { forfeitedFixtures, achievements, winnerId, winnerName };
 }

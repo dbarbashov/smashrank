@@ -7,6 +7,7 @@ import { parseTournamentGameCommand, sortStandings } from "@smashrank/core";
 import type { Standing } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { recordTournamentMatch } from "../helpers/record-tournament-match.js";
+import { evaluateAndPersistTournamentAchievements } from "../helpers/evaluate-tournament-achievements.js";
 
 export async function tgameCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
@@ -161,6 +162,9 @@ export async function tgameCommand(ctx: SmashRankContext): Promise<void> {
       message += "\n" + ctx.t("tournament.champion", { name: nameMap.get(sorted[0].playerId)! });
     }
     message += "\n" + standingLines.join("\n");
+
+    // Evaluate and persist tournament achievements
+    await evaluateAndPersistTournamentAchievements(tournament.id);
   }
 
   await ctx.reply(message);
