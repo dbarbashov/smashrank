@@ -141,11 +141,10 @@ export async function processNewgameScore(ctx: SmashRankContext): Promise<boolea
   const opponent = await players.findById(session.opponentId);
   if (!opponent) return false;
 
-  // Build a fake /game command text for the parser
+  // Build a fake /game command for the parser — always use "won" format
+  // and swap winner/loser based on winnerSide
   const reporterUsername = ctx.from?.username ?? "me";
-  const fakeCommand = session.winnerSide === "me"
-    ? `/game @${opponent.telegram_username ?? "opp"} won ${scoreText}`
-    : `/game @${opponent.telegram_username ?? "opp"} lost ${scoreText}`;
+  const fakeCommand = `/game @${opponent.telegram_username ?? "opp"} won ${scoreText}`;
 
   const result = parseGameCommand(fakeCommand, reporterUsername);
   if (!result.ok) {
@@ -154,15 +153,8 @@ export async function processNewgameScore(ctx: SmashRankContext): Promise<boolea
   }
 
   const { data } = result;
-  const winner = data.winner === "reporter" ? ctx.player : opponent;
-  const loser = data.winner === "reporter" ? opponent : ctx.player;
-
-  // Cooldown check
-  const recent = await matches.findRecentBetweenPlayers(winner.id, loser.id);
-  if (recent) {
-    await ctx.reply(ctx.t("game.cooldown"));
-    return true;
-  }
+  const winner = session.winnerSide === "me" ? ctx.player : opponent;
+  const loser = session.winnerSide === "me" ? opponent : ctx.player;
 
   const season = await ensureActiveSeason(ctx.group.id);
   const eloResult = calculateElo({

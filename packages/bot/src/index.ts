@@ -32,6 +32,16 @@ async function main(): Promise<void> {
   // Middleware
   bot.use(autoRegister);
 
+  // Handle score replies to /newgame prompts (before commands so plain
+  // text messages aren't dropped by grammY's composer chain)
+  bot.use(async (ctx, next) => {
+    if (ctx.message?.text && !ctx.message.text.startsWith("/")) {
+      const handled = await processNewgameScore(ctx as SmashRankContext);
+      if (handled) return;
+    }
+    await next();
+  });
+
   // Commands
   bot.command("start", startCommand);
   bot.command("game", gameCommand);
@@ -45,11 +55,6 @@ async function main(): Promise<void> {
 
   // Callback query handler for /newgame inline keyboards
   bot.on("callback_query:data", newgameCallbackHandler);
-
-  // Handle score replies to /newgame prompts
-  bot.on("message:text", async (ctx) => {
-    await processNewgameScore(ctx as SmashRankContext);
-  });
 
   // Start
   console.log("Bot starting...");

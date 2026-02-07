@@ -48,13 +48,6 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   const winner = data.winner === "reporter" ? ctx.player : opponent;
   const loser = data.winner === "reporter" ? opponent : ctx.player;
 
-  // Cooldown check
-  const recent = await matches.findRecentBetweenPlayers(winner.id, loser.id);
-  if (recent) {
-    await ctx.reply(ctx.t("game.cooldown"));
-    return;
-  }
-
   // Ensure active season
   const season = await ensureActiveSeason(ctx.group.id);
 

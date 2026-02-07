@@ -39,7 +39,7 @@ export function matchQueries(sql: SqlLike) {
     async findRecentBetweenPlayers(
       playerA: string,
       playerB: string,
-      minutes: number = 2,
+      minutes: number = 0.5,
     ): Promise<Match | undefined> {
       const rows = await sql<Match[]>`
         SELECT * FROM matches
