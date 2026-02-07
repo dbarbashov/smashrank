@@ -1,0 +1,18 @@
+export function StreakBadge({ streak }: { streak: number }) {
+  if (streak === 0) return <span className="text-gray-400">-</span>;
+
+  if (streak > 0) {
+    return (
+      <span className="text-orange-500" title={`${streak}W streak`}>
+        {streak >= 5 ? "\u{1F525}" : "\u{1F53A}"} {streak}
+      </span>
+    );
+  }
+
+  const abs = Math.abs(streak);
+  return (
+    <span className="text-blue-500" title={`${abs}L streak`}>
+      {abs >= 5 ? "\u{1F9CA}" : "\u{1F53B}"} {abs}
+    </span>
+  );
+}

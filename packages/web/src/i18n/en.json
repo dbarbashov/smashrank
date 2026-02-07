@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "leaderboard": "Leaderboard",
+    "matches": "Matches",
+    "achievements": "Achievements",
+    "seasons": "Seasons"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "rank": "#",
+    "player": "Player",
+    "elo": "ELO",
+    "record": "W-L",
+    "winRate": "Win%",
+    "streak": "Streak",
+    "empty": "No players yet. Start playing!",
+    "seasonLabel": "Season"
+  },
+  "player": {
+    "title": "Player Profile",
+    "rank": "Rank #{{rank}}",
+    "gamesPlayed": "Games",
+    "record": "{{wins}}W - {{losses}}L",
+    "winRate": "Win Rate",
+    "streak": "Streak",
+    "bestStreak": "Best Streak",
+    "start": "Start",
+    "eloHistory": "ELO History",
+    "recentMatches": "Recent Matches",
+    "achievements": "Achievements",
+    "noAchievements": "No achievements earned yet",
+    "noMatches": "No matches played yet"
+  },
+  "matches": {
+    "title": "Match History",
+    "filterPlayer": "All Players",
+    "filterType": "All Types",
+    "singles": "Singles",
+    "doubles": "Doubles",
+    "beat": "beat",
+    "loadMore": "Load More",
+    "noMatches": "No matches found",
+    "eloChange": "+{{change}}"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "definitions": "All Achievements",
+    "recent": "Recent Unlocks",
+    "unlockedBy": "Earned by {{name}}",
+    "noRecent": "No achievements unlocked yet"
+  },
+  "achievementDefs": {
+    "first_blood": { "name": "First Blood", "desc": "Win your first match" },
+    "on_fire": { "name": "On Fire", "desc": "Win 5 matches in a row" },
+    "unstoppable": { "name": "Unstoppable", "desc": "Win 10 matches in a row" },
+    "giant_killer": { "name": "Giant Killer", "desc": "Beat a player 200+ ELO above you" },
+    "iron_man": { "name": "Iron Man", "desc": "Play 50 matches" },
+    "centurion": { "name": "Centurion", "desc": "Play 100 matches" },
+    "top_dog": { "name": "Top Dog", "desc": "Reach rank #1" },
+    "comeback_kid": { "name": "Comeback Kid", "desc": "Win a match after losing 3+ in a row" },
+    "rivalry": { "name": "Rival", "desc": "Play the same opponent 10 times" },
+    "perfect_game": { "name": "Flawless", "desc": "Win a set 11-0" },
+    "heartbreaker": { "name": "Heartbreaker", "desc": "Win a 3-set match after losing first set" },
+    "newcomer_threat": { "name": "Newcomer Threat", "desc": "Win 5 of your first 10 games" }
+  },
+  "seasons": {
+    "title": "Seasons",
+    "active": "Active",
+    "ended": "Ended",
+    "noSeasons": "No seasons yet",
+    "standings": "Final Standings",
+    "current": "Current Season"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "notFound": "Page not found",
+    "notFoundMessage": "The page you're looking for doesn't exist.",
+    "backHome": "Back to Leaderboard",
+    "of": "of"
+  }
+}

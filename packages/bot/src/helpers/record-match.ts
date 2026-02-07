@@ -4,6 +4,7 @@ import {
   playerQueries,
   matchQueries,
   achievementQueries,
+  groupQueries,
 } from "@smashrank/db";
 import type { Player, Group, Match } from "@smashrank/db";
 import {
@@ -42,6 +43,14 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
   const players = playerQueries(sql);
   const matches = matchQueries(sql);
   const achievements = achievementQueries(sql);
+
+  const groups = groupQueries(sql);
+
+  // Ensure all participants are members of the group
+  await Promise.all([
+    groups.ensureMembership(input.group.id, input.winner.id),
+    groups.ensureMembership(input.group.id, input.loser.id),
+  ]);
 
   const season = await ensureActiveSeason(input.group.id);
 

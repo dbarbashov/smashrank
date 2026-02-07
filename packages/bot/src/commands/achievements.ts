@@ -36,7 +36,9 @@ export async function achievementsCommand(ctx: SmashRankContext): Promise<void> 
   ];
 
   for (const a of playerAchievements) {
-    lines.push(`${a.emoji} ${a.name} — ${a.description}`);
+    const name = ctx.t(`achievement.${a.achievement_id}`) || a.name;
+    const desc = ctx.t(`achievement.desc.${a.achievement_id}`) || a.description;
+    lines.push(`${a.emoji} ${name} — ${desc}`);
   }
 
   await ctx.reply(lines.join("\n"));

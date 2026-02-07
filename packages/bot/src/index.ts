@@ -17,6 +17,9 @@ import { achievementsCommand } from "./commands/achievements.js";
 import { settingsCommand } from "./commands/settings.js";
 import { doublesCommand } from "./commands/doubles.js";
 import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } from "./commands/newdoubles.js";
+import { matchesCommand } from "./commands/matches.js";
+import { listAchievementsCommand } from "./commands/list-achievements.js";
+import { webCommand } from "./commands/web.js";
 import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
@@ -59,9 +62,12 @@ async function main(): Promise<void> {
   bot.command("h2h", h2hCommand);
   bot.command("newgame", newgameCommand);
   bot.command("achievements", achievementsCommand);
+  bot.command("matches", matchesCommand);
+  bot.command("listachievements", listAchievementsCommand);
   bot.command("settings", settingsCommand);
   bot.command("doubles", doublesCommand);
   bot.command("newdoubles", newdoublesCommand);
+  bot.command("web", webCommand);
 
   // Callback query handler for inline keyboards
   bot.on("callback_query:data", async (ctx) => {

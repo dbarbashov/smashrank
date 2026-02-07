@@ -59,10 +59,10 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
   const recent = await matches.getPlayerRecentMatches(target.id);
   if (recent.length > 0) {
     lines.push("");
-    lines.push("Recent:");
+    lines.push(ctx.t("stats.recent"));
     for (const m of recent) {
       const isWinner = m.winner_id === target.id;
-      const result = isWinner ? "W" : "L";
+      const result = isWinner ? ctx.t("stats.win_short") : ctx.t("stats.loss_short");
       const opponent = isWinner ? m.loser_name : m.winner_name;
       const change = isWinner ? `+${m.elo_change}` : `-${m.elo_change}`;
       lines.push(`  ${result} vs ${opponent} (${change})`);

@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "leaderboard": "Таблица лидеров",
+    "matches": "Матчи",
+    "achievements": "Достижения",
+    "seasons": "Сезоны"
+  },
+  "leaderboard": {
+    "title": "Таблица лидеров",
+    "rank": "#",
+    "player": "Игрок",
+    "elo": "ELO",
+    "record": "П-У",
+    "winRate": "Побед%",
+    "streak": "Серия",
+    "empty": "Пока нет игроков. Начните играть!",
+    "seasonLabel": "Сезон"
+  },
+  "player": {
+    "title": "Профиль игрока",
+    "rank": "Место #{{rank}}",
+    "gamesPlayed": "Игры",
+    "record": "{{wins}}П - {{losses}}У",
+    "winRate": "Процент побед",
+    "streak": "Серия",
+    "bestStreak": "Лучшая серия",
+    "start": "Старт",
+    "eloHistory": "История ELO",
+    "recentMatches": "Последние матчи",
+    "achievements": "Достижения",
+    "noAchievements": "Пока нет достижений",
+    "noMatches": "Пока нет матчей"
+  },
+  "matches": {
+    "title": "История матчей",
+    "filterPlayer": "Все игроки",
+    "filterType": "Все типы",
+    "singles": "Одиночные",
+    "doubles": "Парные",
+    "beat": "победил",
+    "loadMore": "Загрузить ещё",
+    "noMatches": "Матчи не найдены",
+    "eloChange": "+{{change}}"
+  },
+  "achievements": {
+    "title": "Достижения",
+    "definitions": "Все достижения",
+    "recent": "Недавние",
+    "unlockedBy": "Получено: {{name}}",
+    "noRecent": "Пока нет полученных достижений"
+  },
+  "achievementDefs": {
+    "first_blood": { "name": "Первая кровь", "desc": "Выиграйте свой первый матч" },
+    "on_fire": { "name": "В огне", "desc": "Выиграйте 5 матчей подряд" },
+    "unstoppable": { "name": "Неудержимый", "desc": "Выиграйте 10 матчей подряд" },
+    "giant_killer": { "name": "Убийца гигантов", "desc": "Победите игрока с ELO на 200+ выше" },
+    "iron_man": { "name": "Железный человек", "desc": "Сыграйте 50 матчей" },
+    "centurion": { "name": "Центурион", "desc": "Сыграйте 100 матчей" },
+    "top_dog": { "name": "Лидер", "desc": "Займите 1-е место в рейтинге" },
+    "comeback_kid": { "name": "Камбэк", "desc": "Выиграйте матч после 3+ поражений подряд" },
+    "rivalry": { "name": "Соперник", "desc": "Сыграйте с одним оппонентом 10 раз" },
+    "perfect_game": { "name": "Безупречный", "desc": "Выиграйте сет 11-0" },
+    "heartbreaker": { "name": "Разбиватель сердец", "desc": "Выиграйте матч из 3 сетов, проиграв первый" },
+    "newcomer_threat": { "name": "Новичок-угроза", "desc": "Выиграйте 5 из первых 10 игр" }
+  },
+  "seasons": {
+    "title": "Сезоны",
+    "active": "Активный",
+    "ended": "Завершён",
+    "noSeasons": "Пока нет сезонов",
+    "standings": "Итоговые результаты",
+    "current": "Текущий сезон"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Что-то пошло не так",
+    "notFound": "Страница не найдена",
+    "notFoundMessage": "Такой страницы не существует.",
+    "backHome": "К таблице лидеров",
+    "of": "из"
+  }
+}

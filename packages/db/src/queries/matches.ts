@@ -47,17 +47,21 @@ export function matchQueries(sql: SqlLike) {
     async findById(
       matchId: string,
     ): Promise<
-      | (Match & { winner_name: string; loser_name: string })
+      | (Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })
       | undefined
     > {
-      const rows = await sql<(Match & { winner_name: string; loser_name: string })[]>`
+      const rows = await sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
         SELECT
           m.*,
           w.display_name AS winner_name,
-          l.display_name AS loser_name
+          l.display_name AS loser_name,
+          wp.display_name AS winner_partner_name,
+          lp.display_name AS loser_partner_name
         FROM matches m
         JOIN players w ON w.id = m.winner_id
         JOIN players l ON l.id = m.loser_id
+        LEFT JOIN players wp ON wp.id = m.winner_partner_id
+        LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.id = ${matchId}
         LIMIT 1
       `;
@@ -67,30 +71,35 @@ export function matchQueries(sql: SqlLike) {
     async listByGroup(
       groupId: string,
       opts: { limit?: number; offset?: number; matchType?: string; playerId?: string } = {},
-    ): Promise<(Match & { winner_name: string; loser_name: string })[]> {
+    ): Promise<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]> {
       const limit = opts.limit ?? 20;
       const offset = opts.offset ?? 0;
 
       if (opts.matchType && opts.playerId) {
-        return sql<(Match & { winner_name: string; loser_name: string })[]>`
-          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+        return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name, wp.display_name AS winner_partner_name, lp.display_name AS loser_partner_name
           FROM matches m
           JOIN players w ON w.id = m.winner_id
           JOIN players l ON l.id = m.loser_id
+          LEFT JOIN players wp ON wp.id = m.winner_partner_id
+          LEFT JOIN players lp ON lp.id = m.loser_partner_id
           WHERE m.group_id = ${groupId}
             AND m.match_type = ${opts.matchType}
-            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId})
+            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId}
+                 OR m.winner_partner_id = ${opts.playerId} OR m.loser_partner_id = ${opts.playerId})
           ORDER BY m.played_at DESC
           LIMIT ${limit} OFFSET ${offset}
         `;
       }
 
       if (opts.matchType) {
-        return sql<(Match & { winner_name: string; loser_name: string })[]>`
-          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+        return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name, wp.display_name AS winner_partner_name, lp.display_name AS loser_partner_name
           FROM matches m
           JOIN players w ON w.id = m.winner_id
           JOIN players l ON l.id = m.loser_id
+          LEFT JOIN players wp ON wp.id = m.winner_partner_id
+          LEFT JOIN players lp ON lp.id = m.loser_partner_id
           WHERE m.group_id = ${groupId} AND m.match_type = ${opts.matchType}
           ORDER BY m.played_at DESC
           LIMIT ${limit} OFFSET ${offset}
@@ -98,23 +107,28 @@ export function matchQueries(sql: SqlLike) {
       }
 
       if (opts.playerId) {
-        return sql<(Match & { winner_name: string; loser_name: string })[]>`
-          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+        return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name, wp.display_name AS winner_partner_name, lp.display_name AS loser_partner_name
           FROM matches m
           JOIN players w ON w.id = m.winner_id
           JOIN players l ON l.id = m.loser_id
+          LEFT JOIN players wp ON wp.id = m.winner_partner_id
+          LEFT JOIN players lp ON lp.id = m.loser_partner_id
           WHERE m.group_id = ${groupId}
-            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId})
+            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId}
+                 OR m.winner_partner_id = ${opts.playerId} OR m.loser_partner_id = ${opts.playerId})
           ORDER BY m.played_at DESC
           LIMIT ${limit} OFFSET ${offset}
         `;
       }
 
-      return sql<(Match & { winner_name: string; loser_name: string })[]>`
-        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+      return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
+        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name, wp.display_name AS winner_partner_name, lp.display_name AS loser_partner_name
         FROM matches m
         JOIN players w ON w.id = m.winner_id
         JOIN players l ON l.id = m.loser_id
+        LEFT JOIN players wp ON wp.id = m.winner_partner_id
+        LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.group_id = ${groupId}
         ORDER BY m.played_at DESC
         LIMIT ${limit} OFFSET ${offset}
@@ -125,16 +139,19 @@ export function matchQueries(sql: SqlLike) {
       playerId: string,
       groupId: string,
       opts: { limit?: number; offset?: number } = {},
-    ): Promise<(Match & { winner_name: string; loser_name: string })[]> {
+    ): Promise<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]> {
       const limit = opts.limit ?? 20;
       const offset = opts.offset ?? 0;
-      return sql<(Match & { winner_name: string; loser_name: string })[]>`
-        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+      return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
+        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name, wp.display_name AS winner_partner_name, lp.display_name AS loser_partner_name
         FROM matches m
         JOIN players w ON w.id = m.winner_id
         JOIN players l ON l.id = m.loser_id
+        LEFT JOIN players wp ON wp.id = m.winner_partner_id
+        LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.group_id = ${groupId}
-          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId})
+          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId}
+               OR m.winner_partner_id = ${playerId} OR m.loser_partner_id = ${playerId})
         ORDER BY m.played_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
@@ -149,12 +166,14 @@ export function matchQueries(sql: SqlLike) {
           m.played_at,
           m.id AS match_id,
           CASE
-            WHEN m.winner_id = ${playerId} THEN m.elo_before_winner + m.elo_change
+            WHEN m.winner_id = ${playerId} OR m.winner_partner_id = ${playerId}
+              THEN m.elo_before_winner + m.elo_change
             ELSE m.elo_before_loser - m.elo_change
           END AS elo_after
         FROM matches m
         WHERE m.group_id = ${groupId}
-          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId})
+          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId}
+               OR m.winner_partner_id = ${playerId} OR m.loser_partner_id = ${playerId})
         ORDER BY m.played_at ASC
       `;
     },
@@ -257,17 +276,22 @@ export function matchQueries(sql: SqlLike) {
       playerId: string,
       limit: number = 5,
     ): Promise<
-      (Match & { winner_name: string; loser_name: string })[]
+      (Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]
     > {
-      return sql<(Match & { winner_name: string; loser_name: string })[]>`
+      return sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
         SELECT
           m.*,
           w.display_name AS winner_name,
-          l.display_name AS loser_name
+          l.display_name AS loser_name,
+          wp.display_name AS winner_partner_name,
+          lp.display_name AS loser_partner_name
         FROM matches m
         JOIN players w ON w.id = m.winner_id
         JOIN players l ON l.id = m.loser_id
+        LEFT JOIN players wp ON wp.id = m.winner_partner_id
+        LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.winner_id = ${playerId} OR m.loser_id = ${playerId}
+              OR m.winner_partner_id = ${playerId} OR m.loser_partner_id = ${playerId}
         ORDER BY m.played_at DESC
         LIMIT ${limit}
       `;
@@ -306,7 +330,7 @@ export function matchQueries(sql: SqlLike) {
       totalMatches: number;
       winsA: number;
       winsB: number;
-      recent: (Match & { winner_name: string; loser_name: string })[];
+      recent: (Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[];
     }> {
       const countRows = await sql<{ total: string; wins_a: string; wins_b: string }[]>`
         SELECT
@@ -321,14 +345,18 @@ export function matchQueries(sql: SqlLike) {
           )
       `;
 
-      const recent = await sql<(Match & { winner_name: string; loser_name: string })[]>`
+      const recent = await sql<(Match & { winner_name: string; loser_name: string; winner_partner_name: string | null; loser_partner_name: string | null })[]>`
         SELECT
           m.*,
           w.display_name AS winner_name,
-          l.display_name AS loser_name
+          l.display_name AS loser_name,
+          wp.display_name AS winner_partner_name,
+          lp.display_name AS loser_partner_name
         FROM matches m
         JOIN players w ON w.id = m.winner_id
         JOIN players l ON l.id = m.loser_id
+        LEFT JOIN players wp ON wp.id = m.winner_partner_id
+        LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.group_id = ${groupId}
           AND (
             (m.winner_id = ${playerA} AND m.loser_id = ${playerB})

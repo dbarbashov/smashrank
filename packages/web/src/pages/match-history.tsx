@@ -1,0 +1,90 @@
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useMatches, useLeaderboard } from "../api/queries.js";
+import { MatchCard } from "../components/match-card.js";
+import { Loading } from "../components/loading.js";
+import { ErrorMessage } from "../components/error-message.js";
+import type { LeaderboardEntry } from "../types.js";
+
+export function MatchHistory() {
+  const { slug } = useParams<{ slug: string }>();
+  const { t } = useTranslation();
+  const [playerFilter, setPlayerFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+
+  const { data: leaderboard } = useLeaderboard(slug!);
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMatches(slug!, {
+    player: playerFilter || undefined,
+    type: typeFilter || undefined,
+  });
+
+  const matches = data?.pages.flat() ?? [];
+  const players = (leaderboard as LeaderboardEntry[]) ?? [];
+
+  return (
+    <div>
+      <h2 className="mb-4 text-lg font-semibold">{t("matches.title")}</h2>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <select
+          value={playerFilter}
+          onChange={(e) => setPlayerFilter(e.target.value)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+        >
+          <option value="">{t("matches.filterPlayer")}</option>
+          {players.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.display_name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+        >
+          <option value="">{t("matches.filterType")}</option>
+          <option value="singles">{t("matches.singles")}</option>
+          <option value="doubles">{t("matches.doubles")}</option>
+        </select>
+      </div>
+
+      {isLoading ? (
+        <Loading />
+      ) : error ? (
+        <ErrorMessage message={error.message} />
+      ) : matches.length === 0 ? (
+        <p className="py-8 text-center text-gray-500">
+          {t("matches.noMatches")}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {matches.map((m) => (
+            <MatchCard key={m.id} match={m} />
+          ))}
+
+          {hasNextPage && (
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="mt-2 rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
+              {isFetchingNextPage
+                ? t("common.loading")
+                : t("matches.loadMore")}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

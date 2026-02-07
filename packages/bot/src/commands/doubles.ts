@@ -3,6 +3,7 @@ import {
   getConnection,
   playerQueries,
   matchQueries,
+  groupQueries,
 } from "@smashrank/db";
 import {
   parseGameCommand,
@@ -110,6 +111,15 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
         l: ourTeamWon ? s.opponentScore : s.reporterScore,
       }))
     : null;
+
+  // Ensure all 4 players are group members
+  const groups = groupQueries(sql);
+  await Promise.all([
+    groups.ensureMembership(ctx.group.id, winner1.id),
+    groups.ensureMembership(ctx.group.id, winner2.id),
+    groups.ensureMembership(ctx.group.id, loser1.id),
+    groups.ensureMembership(ctx.group.id, loser2.id),
+  ]);
 
   const season = await ensureActiveSeason(ctx.group.id);
 

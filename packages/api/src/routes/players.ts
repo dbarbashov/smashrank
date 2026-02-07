@@ -53,6 +53,14 @@ playersRoutes.get("/:id/matches", async (c) => {
   return c.json(matches);
 });
 
+playersRoutes.get("/:id/achievements", async (c) => {
+  const sql = getConnection();
+  const playerId = c.req.param("id");
+
+  const achievements = await achievementQueries(sql).getPlayerAchievements(playerId);
+  return c.json(achievements);
+});
+
 playersRoutes.get("/:id/h2h/:otherId", async (c) => {
   const group = c.get("group");
   const sql = getConnection();

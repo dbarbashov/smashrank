@@ -1,0 +1,79 @@
+import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useSeasonDetail } from "../api/queries.js";
+import { PlayerLink } from "../components/player-link.js";
+import { EloBadge } from "../components/elo-badge.js";
+import { Loading } from "../components/loading.js";
+import { ErrorMessage } from "../components/error-message.js";
+
+export function SeasonDetailPage() {
+  const { slug, seasonId } = useParams<{ slug: string; seasonId: string }>();
+  const { t } = useTranslation();
+  const { data, isLoading, error } = useSeasonDetail(slug!, seasonId!);
+
+  if (isLoading) return <Loading />;
+  if (error) return <ErrorMessage message={error.message} />;
+  if (!data) return null;
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">{data.name}</h2>
+        <p className="text-sm text-gray-500">
+          {new Date(data.start_date).toLocaleDateString()}
+          {data.end_date
+            ? ` - ${new Date(data.end_date).toLocaleDateString()}`
+            : ""}
+          {data.is_active && (
+            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+              {t("seasons.active")}
+            </span>
+          )}
+        </p>
+      </div>
+
+      <h3 className="mb-2 font-semibold">{t("seasons.standings")}</h3>
+
+      {data.standings.length === 0 ? (
+        <p className="text-gray-500">{t("leaderboard.empty")}</p>
+      ) : (
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700">
+              <th className="py-2 pr-2">{t("leaderboard.rank")}</th>
+              <th className="py-2">{t("leaderboard.player")}</th>
+              <th className="py-2 text-right">{t("leaderboard.elo")}</th>
+              <th className="py-2 text-right">{t("leaderboard.record")}</th>
+              <th className="py-2 text-right">{t("leaderboard.winRate")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.standings.map((s) => {
+              const gp = s.games_played;
+              const winPct =
+                gp > 0 ? Math.round((s.wins / gp) * 100) : 0;
+              return (
+                <tr
+                  key={s.player_id}
+                  className="border-b border-gray-100 dark:border-gray-800"
+                >
+                  <td className="py-2 pr-2 text-gray-500">{s.final_rank}</td>
+                  <td className="py-2">
+                    <PlayerLink id={s.player_id} name={s.display_name} />
+                  </td>
+                  <td className="py-2 text-right">
+                    <EloBadge elo={s.final_elo} />
+                  </td>
+                  <td className="py-2 text-right tabular-nums">
+                    {s.wins}-{s.losses}
+                  </td>
+                  <td className="py-2 text-right tabular-nums">{winPct}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
