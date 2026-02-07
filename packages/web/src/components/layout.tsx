@@ -18,6 +18,7 @@ export function Layout() {
     { to: `/g/${slug}/matches`, label: t("nav.matches") },
     { to: `/g/${slug}/achievements`, label: t("nav.achievements") },
     { to: `/g/${slug}/seasons`, label: t("nav.seasons") },
+    { to: `/g/${slug}/tournaments`, label: t("nav.tournaments") },
   ];
 
   return (

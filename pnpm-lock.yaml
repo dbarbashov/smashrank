@@ -20,6 +20,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.14.0
         version: 1.19.9(hono@4.11.8)
+      '@smashrank/core':
+        specifier: workspace:*
+        version: link:../core
       '@smashrank/db':
         specifier: workspace:*
         version: link:../db

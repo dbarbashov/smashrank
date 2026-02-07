@@ -13,6 +13,8 @@ import type {
   SeasonDetail,
   SeasonSnapshot,
   WeeklyStats,
+  TournamentSummary,
+  TournamentDetail,
 } from "../types.js";
 
 export function useGroupInfo(slug: string) {
@@ -125,5 +127,20 @@ export function useWeeklyStats(slug: string) {
   return useQuery({
     queryKey: ["weekly-stats", slug],
     queryFn: () => apiFetch<WeeklyStats>(`/${slug}/stats/weekly`),
+  });
+}
+
+export function useTournaments(slug: string) {
+  return useQuery({
+    queryKey: ["tournaments", slug],
+    queryFn: () => apiFetch<TournamentSummary[]>(`/${slug}/tournaments`),
+  });
+}
+
+export function useTournamentDetail(slug: string, tournamentId: string) {
+  return useQuery({
+    queryKey: ["tournament", slug, tournamentId],
+    queryFn: () => apiFetch<TournamentDetail>(`/${slug}/tournaments/${tournamentId}`),
+    enabled: !!tournamentId,
   });
 }

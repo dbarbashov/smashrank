@@ -29,9 +29,18 @@ afterAll(async () => {
 });
 
 export async function cleanDb(): Promise<void> {
-  await sql`TRUNCATE player_achievements, matches, season_snapshots, seasons, group_members, groups, players CASCADE`;
-  // Re-seed achievements
+  await sql`TRUNCATE tournament_standings, tournament_participants, tournaments, player_achievements, matches, season_snapshots, seasons, group_members, groups, players CASCADE`;
+  // Re-seed achievements (base + tournament)
   await sql`DELETE FROM achievement_definitions WHERE true`;
   const seed = readFileSync(join(MIGRATIONS_DIR, "002_seed_achievements.sql"), "utf-8");
   await sql.unsafe(seed);
+  // Seed tournament achievements
+  await sql`
+    INSERT INTO achievement_definitions (id, name, description, emoji) VALUES
+      ('tournament_champion',   'Tournament Champion',  'Win a tournament',                    '🏆'),
+      ('tournament_undefeated', 'Undefeated',           'Complete a tournament without a loss', '🛡️'),
+      ('tournament_ironman',    'Tournament Iron Man',  'Play all fixtures in a tournament',    '⚙️'),
+      ('draw_master',           'Draw Master',          'Draw 3+ matches in a single tournament', '🤝')
+    ON CONFLICT (id) DO NOTHING
+  `;
 }

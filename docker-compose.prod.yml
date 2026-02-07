@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: smashrank
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: smashrank
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smashrank"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  migrate:
+    image: ghcr.io/dbarbashov/smashrank:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://smashrank:${POSTGRES_PASSWORD}@postgres:5432/smashrank
+    command: ["node", "packages/db/dist/migrate.js"]
+    restart: "no"
+
+  bot:
+    image: ghcr.io/dbarbashov/smashrank:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://smashrank:${POSTGRES_PASSWORD}@postgres:5432/smashrank
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN in .env}
+      DEFAULT_LANG: ${DEFAULT_LANG:-en}
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/dbarbashov/smashrank:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://smashrank:${POSTGRES_PASSWORD}@postgres:5432/smashrank
+      PORT: "3000"
+      STATIC_DIR: ./packages/web/dist
+    ports:
+      - "${API_PORT:-3000}:3000"
+    command: ["node", "packages/api/dist/index.js"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:

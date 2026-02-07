@@ -4,6 +4,13 @@ import type { Group } from "../types.js";
 
 export function groupQueries(sql: SqlLike) {
   return {
+    async findById(id: string): Promise<Group | undefined> {
+      const rows = await sql<Group[]>`
+        SELECT * FROM groups WHERE id = ${id} LIMIT 1
+      `;
+      return rows[0];
+    },
+
     async findByChatId(chatId: number): Promise<Group | undefined> {
       const rows = await sql<Group[]>`
         SELECT * FROM groups WHERE chat_id = ${chatId} LIMIT 1

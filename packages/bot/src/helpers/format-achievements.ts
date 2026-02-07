@@ -15,6 +15,10 @@ const ACHIEVEMENT_EMOJI: Record<string, string> = {
   perfect_game: "\u2728",
   heartbreaker: "\u{1F494}",
   newcomer_threat: "\u{1F31F}",
+  tournament_champion: "\u{1F3C6}",
+  tournament_undefeated: "\u{1F6E1}\uFE0F",
+  tournament_ironman: "\u2699\uFE0F",
+  draw_master: "\u{1F91D}",
 };
 
 export function formatAchievementUnlocks(

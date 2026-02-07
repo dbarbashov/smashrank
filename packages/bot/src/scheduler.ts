@@ -3,6 +3,7 @@ import {
   getConnection,
   groupQueries,
   digestQueries,
+  tournamentQueries,
 } from "@smashrank/db";
 import {
   getT,
@@ -11,6 +12,7 @@ import {
 } from "@smashrank/core";
 import type { DigestData } from "@smashrank/core";
 import type { SmashRankContext } from "./context.js";
+import { forceCompleteTournament } from "./helpers/force-complete-tournament.js";
 
 const DIGEST_INTERVAL_MS = 60_000; // Check every 60 seconds
 const lastDigestSent = new Map<string, number>(); // groupId → timestamp
@@ -74,10 +76,49 @@ async function checkAndSendDigests(bot: Bot<SmashRankContext>): Promise<void> {
   }
 }
 
+async function checkStaleTournaments(bot: Bot<SmashRankContext>): Promise<void> {
+  try {
+    const sql = getConnection();
+    const tournaments = tournamentQueries(sql);
+    const groups = groupQueries(sql);
+
+    const stale = await tournaments.findStaleTournaments(14);
+
+    for (const tournament of stale) {
+      const group = await groups.findById(tournament.group_id);
+      if (!group) continue;
+
+      const result = await forceCompleteTournament(tournament, group.id);
+      const lang = group.language ?? "en";
+      const t = getT(lang);
+
+      let message = t("tournament.auto_completed", {
+        name: tournament.name,
+        forfeited: result.forfeitedFixtures,
+      });
+
+      if (result.winnerName) {
+        message += "\n" + t("tournament.champion", { name: result.winnerName });
+      }
+
+      try {
+        await bot.api.sendMessage(group.chat_id, message);
+      } catch {
+        // Group might have kicked the bot
+      }
+    }
+  } catch (err) {
+    console.error("Tournament stale check error:", err);
+  }
+}
+
 export function startScheduler(bot: Bot<SmashRankContext>): void {
   setInterval(() => {
     checkAndSendDigests(bot).catch((err) =>
       console.error("Digest scheduler error:", err),
+    );
+    checkStaleTournaments(bot).catch((err) =>
+      console.error("Tournament stale check error:", err),
     );
   }, DIGEST_INTERVAL_MS);
   console.log("Digest scheduler started.");

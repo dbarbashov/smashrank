@@ -40,3 +40,35 @@ export function calculateElo(input: EloInput): EloResult {
 
   return { winnerNewRating, loserNewRating, change };
 }
+
+export interface DrawEloInput {
+  playerARating: number;
+  playerBRating: number;
+  playerAGamesPlayed: number;
+  playerBGamesPlayed: number;
+}
+
+export interface DrawEloResult {
+  playerANewRating: number;
+  playerBNewRating: number;
+  playerAChange: number;
+  playerBChange: number;
+}
+
+export function calculateDrawElo(input: DrawEloInput): DrawEloResult {
+  const kA = getKFactor(input.playerAGamesPlayed);
+  const kB = getKFactor(input.playerBGamesPlayed);
+
+  const expectedA = expectedScore(input.playerARating, input.playerBRating);
+  const expectedB = expectedScore(input.playerBRating, input.playerARating);
+
+  const playerANewRating = Math.max(ELO_FLOOR, Math.round(input.playerARating + kA * (0.5 - expectedA)));
+  const playerBNewRating = Math.max(ELO_FLOOR, Math.round(input.playerBRating + kB * (0.5 - expectedB)));
+
+  return {
+    playerANewRating,
+    playerBNewRating,
+    playerAChange: playerANewRating - input.playerARating,
+    playerBChange: playerBNewRating - input.playerBRating,
+  };
+}

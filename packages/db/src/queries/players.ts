@@ -72,6 +72,20 @@ export function playerQueries(sql: SqlLike) {
       }
     },
 
+    async updateEloForDraw(
+      id: string,
+      eloRating: number,
+    ): Promise<void> {
+      await sql`
+        UPDATE players SET
+          elo_rating = ${eloRating},
+          games_played = games_played + 1,
+          current_streak = 0,
+          last_active = NOW()
+        WHERE id = ${id}
+      `;
+    },
+
     async updateLanguage(id: string, language: string): Promise<void> {
       await sql`UPDATE players SET language = ${language} WHERE id = ${id}`;
     },

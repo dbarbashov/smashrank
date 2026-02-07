@@ -57,6 +57,7 @@ export interface Match {
   elo_before_winner: number;
   elo_before_loser: number;
   elo_change: number;
+  tournament_id: string | null;
   reported_by: string;
   played_at: Date;
 }
@@ -85,4 +86,33 @@ export interface PlayerAchievement {
   achievement_id: string;
   match_id: string | null;
   unlocked_at: Date;
+}
+
+export interface Tournament {
+  id: string;
+  group_id: string;
+  name: string;
+  status: "open" | "active" | "completed";
+  created_by: string;
+  max_players: number;
+  created_at: Date;
+  started_at: Date | null;
+  completed_at: Date | null;
+}
+
+export interface TournamentParticipant {
+  tournament_id: string;
+  player_id: string;
+  joined_at: Date;
+}
+
+export interface TournamentStanding {
+  tournament_id: string;
+  player_id: string;
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  sets_won: number;
+  sets_lost: number;
 }

@@ -122,3 +122,68 @@ export function evaluateAchievements(ctx: AchievementContext): AchievementUnlock
 
   return unlocks;
 }
+
+export interface TournamentAchievementContext {
+  /** All participant IDs */
+  participantIds: string[];
+  /** Standings at tournament completion: playerId → { wins, draws, losses } */
+  standings: Map<string, { wins: number; draws: number; losses: number }>;
+  /** Draw count per player in this tournament */
+  drawCounts: Map<string, number>;
+  /** Existing achievement IDs per player */
+  existingAchievements: Map<string, string[]>;
+  /** Number of fixtures each player played (to detect ironman) */
+  fixturesPlayed: Map<string, number>;
+  /** Total fixtures each player should have played */
+  totalFixturesPerPlayer: number;
+  /** The winner (first place) player ID */
+  winnerId: string | null;
+}
+
+export function evaluateTournamentAchievements(
+  ctx: TournamentAchievementContext,
+): AchievementUnlock[] {
+  const unlocks: AchievementUnlock[] = [];
+  const alreadyGranted = new Set<string>();
+
+  function grant(achievementId: string, playerId: string): void {
+    const key = `${achievementId}:${playerId}`;
+    if (alreadyGranted.has(key)) return;
+    const existing = ctx.existingAchievements.get(playerId) ?? [];
+    if (!existing.includes(achievementId)) {
+      alreadyGranted.add(key);
+      unlocks.push({ achievementId, playerId });
+    }
+  }
+
+  // tournament_champion: Win a tournament
+  if (ctx.winnerId) {
+    grant("tournament_champion", ctx.winnerId);
+  }
+
+  // tournament_undefeated: Complete a tournament without a loss
+  for (const playerId of ctx.participantIds) {
+    const s = ctx.standings.get(playerId);
+    if (s && s.losses === 0) {
+      grant("tournament_undefeated", playerId);
+    }
+  }
+
+  // tournament_ironman: Play all fixtures in a tournament
+  for (const playerId of ctx.participantIds) {
+    const played = ctx.fixturesPlayed.get(playerId) ?? 0;
+    if (played >= ctx.totalFixturesPerPlayer) {
+      grant("tournament_ironman", playerId);
+    }
+  }
+
+  // draw_master: Draw 3+ matches in a single tournament
+  for (const playerId of ctx.participantIds) {
+    const drawCount = ctx.drawCounts.get(playerId) ?? 0;
+    if (drawCount >= 3) {
+      grant("draw_master", playerId);
+    }
+  }
+
+  return unlocks;
+}

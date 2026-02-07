@@ -3,7 +3,8 @@
     "leaderboard": "Leaderboard",
     "matches": "Matches",
     "achievements": "Achievements",
-    "seasons": "Seasons"
+    "seasons": "Seasons",
+    "tournaments": "Tournaments"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -61,7 +62,11 @@
     "rivalry": { "name": "Rival", "desc": "Play the same opponent 10 times" },
     "perfect_game": { "name": "Flawless", "desc": "Win a set 11-0" },
     "heartbreaker": { "name": "Heartbreaker", "desc": "Win a 3-set match after losing first set" },
-    "newcomer_threat": { "name": "Newcomer Threat", "desc": "Win 5 of your first 10 games" }
+    "newcomer_threat": { "name": "Newcomer Threat", "desc": "Win 5 of your first 10 games" },
+    "tournament_champion": { "name": "Tournament Champion", "desc": "Win a tournament" },
+    "tournament_undefeated": { "name": "Undefeated", "desc": "Complete a tournament without a loss" },
+    "tournament_ironman": { "name": "Tournament Iron Man", "desc": "Play all fixtures in a tournament" },
+    "draw_master": { "name": "Draw Master", "desc": "Draw 3+ matches in a single tournament" }
   },
   "seasons": {
     "title": "Seasons",
@@ -70,6 +75,18 @@
     "noSeasons": "No seasons yet",
     "standings": "Final Standings",
     "current": "Current Season"
+  },
+  "tournaments": {
+    "title": "Tournaments",
+    "empty": "No tournaments yet",
+    "players": "{{count}} players",
+    "status_open": "Open",
+    "status_active": "Active",
+    "status_completed": "Completed",
+    "standings": "Standings",
+    "fixtureMatrix": "Fixture Matrix",
+    "backToList": "Back to Tournaments",
+    "participants": "Participants"
   },
   "common": {
     "loading": "Loading...",

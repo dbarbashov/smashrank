@@ -20,6 +20,8 @@ import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } 
 import { matchesCommand } from "./commands/matches.js";
 import { listAchievementsCommand } from "./commands/list-achievements.js";
 import { webCommand } from "./commands/web.js";
+import { tournamentCommand } from "./commands/tournament.js";
+import { tgameCommand } from "./commands/tgame.js";
 import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
@@ -68,6 +70,8 @@ async function main(): Promise<void> {
   bot.command("doubles", doublesCommand);
   bot.command("newdoubles", newdoublesCommand);
   bot.command("web", webCommand);
+  bot.command("tournament", tournamentCommand);
+  bot.command("tgame", tgameCommand);
 
   // Callback query handler for inline keyboards
   bot.on("callback_query:data", async (ctx) => {

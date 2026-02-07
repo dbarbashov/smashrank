@@ -15,6 +15,8 @@ import { achievementsCommand } from "../commands/achievements.js";
 import { settingsCommand } from "../commands/settings.js";
 import { doublesCommand } from "../commands/doubles.js";
 import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } from "../commands/newdoubles.js";
+import { tournamentCommand } from "../commands/tournament.js";
+import { tgameCommand } from "../commands/tgame.js";
 
 export interface CapturedCall {
   method: string;
@@ -120,6 +122,8 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
   bot.command("settings", settingsCommand);
   bot.command("doubles", doublesCommand);
   bot.command("newdoubles", newdoublesCommand);
+  bot.command("tournament", tournamentCommand);
+  bot.command("tgame", tgameCommand);
 
   bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;

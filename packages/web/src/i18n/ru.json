@@ -3,7 +3,8 @@
     "leaderboard": "Таблица лидеров",
     "matches": "Матчи",
     "achievements": "Достижения",
-    "seasons": "Сезоны"
+    "seasons": "Сезоны",
+    "tournaments": "Турниры"
   },
   "leaderboard": {
     "title": "Таблица лидеров",
@@ -61,7 +62,11 @@
     "rivalry": { "name": "Соперник", "desc": "Сыграйте с одним оппонентом 10 раз" },
     "perfect_game": { "name": "Безупречный", "desc": "Выиграйте сет 11-0" },
     "heartbreaker": { "name": "Разбиватель сердец", "desc": "Выиграйте матч из 3 сетов, проиграв первый" },
-    "newcomer_threat": { "name": "Новичок-угроза", "desc": "Выиграйте 5 из первых 10 игр" }
+    "newcomer_threat": { "name": "Новичок-угроза", "desc": "Выиграйте 5 из первых 10 игр" },
+    "tournament_champion": { "name": "Чемпион турнира", "desc": "Выиграйте турнир" },
+    "tournament_undefeated": { "name": "Непобеждённый", "desc": "Завершите турнир без поражений" },
+    "tournament_ironman": { "name": "Турнирный железный человек", "desc": "Сыграйте все матчи турнира" },
+    "draw_master": { "name": "Мастер ничьих", "desc": "Сыграйте вничью 3+ раз в одном турнире" }
   },
   "seasons": {
     "title": "Сезоны",
@@ -70,6 +75,18 @@
     "noSeasons": "Пока нет сезонов",
     "standings": "Итоговые результаты",
     "current": "Текущий сезон"
+  },
+  "tournaments": {
+    "title": "Турниры",
+    "empty": "Пока нет турниров",
+    "players": "{{count}} игроков",
+    "status_open": "Открыт",
+    "status_active": "Активный",
+    "status_completed": "Завершён",
+    "standings": "Таблица",
+    "fixtureMatrix": "Матрица матчей",
+    "backToList": "К списку турниров",
+    "participants": "Участники"
   },
   "common": {
     "loading": "Загрузка...",

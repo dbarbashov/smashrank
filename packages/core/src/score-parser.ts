@@ -12,6 +12,19 @@ export interface ParsedGameCommand {
   setScores: SetScore[] | null;
 }
 
+export interface ParsedTournamentGameCommand {
+  opponentUsername: string;
+  /** Who won relative to the reporter: 'reporter' | 'opponent' | 'draw' */
+  winner: "reporter" | "opponent" | "draw";
+  reporterSets: number;
+  opponentSets: number;
+  setScores: SetScore[] | null;
+}
+
+export type TournamentParseResult =
+  | { ok: true; data: ParsedTournamentGameCommand }
+  | { ok: false; error: ParseError };
+
 export type ParseError =
   | "no_opponent"
   | "no_scores"
@@ -145,6 +158,122 @@ export function parseGameCommand(
         winner: reporterWon ? "reporter" : "opponent",
         winnerSets: Math.max(a, b),
         loserSets: Math.min(a, b),
+        setScores: null,
+      },
+    };
+  }
+}
+
+/**
+ * Parse /tgame command for tournament matches.
+ * Supports up to 4 sets, 2-2 draws allowed.
+ */
+export function parseTournamentGameCommand(
+  text: string,
+  reporterUsername?: string,
+): TournamentParseResult {
+  // Remove /tgame prefix
+  const cleaned = text.replace(/^\/tgame\s*/, "").trim();
+
+  const mentionMatch = cleaned.match(/@(\w+)/);
+  if (!mentionMatch) {
+    return { ok: false, error: "no_opponent" };
+  }
+
+  const opponentUsername = mentionMatch[1];
+
+  if (
+    reporterUsername &&
+    opponentUsername.toLowerCase() === reporterUsername.toLowerCase()
+  ) {
+    return { ok: false, error: "self_play" };
+  }
+
+  const afterMention = cleaned.slice(mentionMatch.index! + mentionMatch[0].length).trim();
+
+  if (!afterMention) {
+    return { ok: false, error: "no_scores" };
+  }
+
+  // Parse score pairs
+  const scoreStr = afterMention.replace(/,/g, " ");
+  const scorePairs = scoreStr.match(/\d+-\d+/g);
+
+  if (!scorePairs || scorePairs.length === 0) {
+    return { ok: false, error: "no_scores" };
+  }
+
+  const scores = scorePairs.map((pair) => {
+    const [a, b] = pair.split("-").map(Number);
+    return { a, b };
+  });
+
+  const looksLikeSetScores = scores.some((s) => s.a >= 11 || s.b >= 11);
+
+  if (looksLikeSetScores) {
+    if (scores.length > 4) {
+      return { ok: false, error: "invalid_score_format" };
+    }
+
+    const setScores: SetScore[] = [];
+    let reporterSets = 0;
+    let opponentSets = 0;
+
+    for (const s of scores) {
+      const high = Math.max(s.a, s.b);
+      const low = Math.min(s.a, s.b);
+      if (!isValidSetScore(high, low)) {
+        return { ok: false, error: "invalid_set_score" };
+      }
+      if (s.a > s.b) {
+        reporterSets++;
+      } else {
+        opponentSets++;
+      }
+      setScores.push({ reporterScore: s.a, opponentScore: s.b });
+    }
+
+    const isDraw = reporterSets === opponentSets;
+    const winner: "reporter" | "opponent" | "draw" = isDraw
+      ? "draw"
+      : reporterSets > opponentSets
+        ? "reporter"
+        : "opponent";
+
+    return {
+      ok: true,
+      data: {
+        opponentUsername,
+        winner,
+        reporterSets,
+        opponentSets,
+        setScores,
+      },
+    };
+  } else {
+    // Set count only, e.g. "2-2" or "3-1"
+    if (scores.length !== 1) {
+      return { ok: false, error: "invalid_score_format" };
+    }
+    const { a, b } = scores[0];
+    if (a + b > 4 || a + b < 1) {
+      return { ok: false, error: "invalid_score_format" };
+    }
+
+    const isDraw = a === b;
+    const winner: "reporter" | "opponent" | "draw" = isDraw
+      ? "draw"
+      : a > b
+        ? "reporter"
+        : "opponent";
+
+    return {
+      ok: true,
+      data: {
+        opponentUsername,
+        winner,
+        reporterSets: a,
+        opponentSets: b,
         setScores: null,
       },
     };

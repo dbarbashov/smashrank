@@ -117,3 +117,52 @@ export interface WeeklyStats {
   biggest_upset: Match | null;
   top_winner: { display_name: string; wins: number } | null;
 }
+
+export interface TournamentSummary {
+  id: string;
+  group_id: string;
+  name: string;
+  status: "open" | "active" | "completed";
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  participant_count: number;
+}
+
+export interface TournamentStanding {
+  rank: number;
+  player_id: string;
+  display_name: string;
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  sets_won: number;
+  sets_lost: number;
+  set_diff: number;
+}
+
+export interface TournamentFixture {
+  player1_id: string;
+  player1_name: string;
+  player2_id: string;
+  player2_name: string;
+  played: boolean;
+  winner_id: string | null;
+  winner_score: number | null;
+  loser_score: number | null;
+  is_draw: boolean;
+}
+
+export interface TournamentDetail {
+  id: string;
+  group_id: string;
+  name: string;
+  status: "open" | "active" | "completed";
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  participants: { player_id: string; display_name: string; elo_rating: number }[];
+  standings: TournamentStanding[];
+  fixtures: TournamentFixture[];
+}

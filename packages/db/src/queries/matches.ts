@@ -20,6 +20,7 @@ export function matchQueries(sql: SqlLike) {
       loser_partner_id?: string;
       elo_before_winner_partner?: number;
       elo_before_loser_partner?: number;
+      tournament_id?: string;
     }): Promise<Match> {
       const rows = await sql<Match[]>`
         INSERT INTO matches (
@@ -29,7 +30,8 @@ export function matchQueries(sql: SqlLike) {
           elo_before_winner, elo_before_loser, elo_change,
           reported_by,
           winner_partner_id, loser_partner_id,
-          elo_before_winner_partner, elo_before_loser_partner
+          elo_before_winner_partner, elo_before_loser_partner,
+          tournament_id
         ) VALUES (
           ${data.match_type}, ${data.season_id}, ${data.group_id},
           ${data.winner_id}, ${data.loser_id},
@@ -37,7 +39,8 @@ export function matchQueries(sql: SqlLike) {
           ${data.elo_before_winner}, ${data.elo_before_loser}, ${data.elo_change},
           ${data.reported_by},
           ${data.winner_partner_id ?? null}, ${data.loser_partner_id ?? null},
-          ${data.elo_before_winner_partner ?? null}, ${data.elo_before_loser_partner ?? null}
+          ${data.elo_before_winner_partner ?? null}, ${data.elo_before_loser_partner ?? null},
+          ${data.tournament_id ?? null}
         )
         RETURNING *
       `;

@@ -6,6 +6,8 @@ import { MatchHistory } from "./pages/match-history.js";
 import { Achievements } from "./pages/achievements.js";
 import { Seasons } from "./pages/seasons.js";
 import { SeasonDetailPage } from "./pages/season-detail.js";
+import { Tournaments } from "./pages/tournaments.js";
+import { TournamentDetailPage } from "./pages/tournament-detail.js";
 import { NotFound } from "./pages/not-found.js";
 
 const router = createBrowserRouter([
@@ -19,6 +21,8 @@ const router = createBrowserRouter([
       { path: "achievements", element: <Achievements /> },
       { path: "seasons", element: <Seasons /> },
       { path: "seasons/:seasonId", element: <SeasonDetailPage /> },
+      { path: "tournaments", element: <Tournaments /> },
+      { path: "tournaments/:tournamentId", element: <TournamentDetailPage /> },
     ],
   },
   { path: "*", element: <NotFound /> },
