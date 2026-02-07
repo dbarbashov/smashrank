@@ -3,6 +3,7 @@ import {
   getConnection,
   playerQueries,
   matchQueries,
+  achievementQueries,
 } from "@smashrank/db";
 import type { SmashRankContext } from "../context.js";
 
@@ -26,6 +27,10 @@ export async function undoCommand(ctx: SmashRankContext): Promise<void> {
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
     const txMatches = matchQueries(txSql);
+    const txAchievements = achievementQueries(txSql);
+
+    // Delete achievements earned from this match
+    await txAchievements.deleteByMatchId(match.id);
 
     // Delete the match first so recalculation excludes it
     await txMatches.deleteById(match.id);

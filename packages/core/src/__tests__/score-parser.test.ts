@@ -12,8 +12,8 @@ describe("parseGameCommand", () => {
       expect(result.data.winnerSets).toBe(2);
       expect(result.data.loserSets).toBe(0);
       expect(result.data.setScores).toEqual([
-        { w: 11, l: 7 },
-        { w: 11, l: 5 },
+        { reporterScore: 11, opponentScore: 7 },
+        { reporterScore: 11, opponentScore: 5 },
       ]);
     });
 
@@ -22,8 +22,8 @@ describe("parseGameCommand", () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.data.setScores).toEqual([
-        { w: 11, l: 7 },
-        { w: 11, l: 5 },
+        { reporterScore: 11, opponentScore: 7 },
+        { reporterScore: 11, opponentScore: 5 },
       ]);
     });
 

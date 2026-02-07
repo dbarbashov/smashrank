@@ -1,8 +1,11 @@
-export { getConnection, closeConnection } from "./connection.js";
+export { getConnection, setConnection, closeConnection } from "./connection.js";
 export { playerQueries } from "./queries/players.js";
 export { groupQueries } from "./queries/groups.js";
 export { seasonQueries } from "./queries/seasons.js";
 export { matchQueries } from "./queries/matches.js";
+export { achievementQueries } from "./queries/achievements.js";
+export { digestQueries } from "./queries/digest.js";
+export type { WeeklyStats } from "./queries/digest.js";
 export type {
   Player,
   Group,

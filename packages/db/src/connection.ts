@@ -2,6 +2,10 @@ import postgres from "postgres";
 
 let sql: postgres.Sql | undefined;
 
+export function setConnection(conn: postgres.Sql): void {
+  sql = conn;
+}
+
 export function getConnection(): postgres.Sql {
   if (!sql) {
     const url = process.env.DATABASE_URL;

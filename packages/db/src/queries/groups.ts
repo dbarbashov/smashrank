@@ -36,5 +36,20 @@ export function groupQueries(sql: SqlLike) {
     async updateLanguage(groupId: string, language: string): Promise<void> {
       await sql`UPDATE groups SET language = ${language} WHERE id = ${groupId}`;
     },
+
+    async updateSettings(groupId: string, settings: Record<string, unknown>): Promise<void> {
+      await sql`
+        UPDATE groups SET settings = settings || ${sql.json(settings as Record<string, string | number | boolean | null>)}
+        WHERE id = ${groupId}
+      `;
+    },
+
+    async getAllGroupsWithDigest(): Promise<Group[]> {
+      return sql<Group[]>`
+        SELECT * FROM groups
+        WHERE settings->>'digest' IS NOT NULL
+          AND settings->>'digest' != 'off'
+      `;
+    },
   };
 }

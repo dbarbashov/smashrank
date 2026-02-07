@@ -2,6 +2,7 @@ import {
   getConnection,
   playerQueries,
   matchQueries,
+  achievementQueries,
 } from "@smashrank/db";
 import type { SmashRankContext } from "../context.js";
 
@@ -9,6 +10,7 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
   const sql = getConnection();
   const players = playerQueries(sql);
   const matches = matchQueries(sql);
+  const achievements = achievementQueries(sql);
 
   // Determine target player: mentioned user or self
   const text = ctx.message?.text ?? "";
@@ -40,14 +42,17 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
     }
   }
 
+  const playerAchievements = await achievements.getPlayerAchievementIds(target.id);
+
   const lines = [
-    `📊 ${ctx.t("stats.title", { name: target.display_name })}`,
+    `\u{1F4CA} ${ctx.t("stats.title", { name: target.display_name })}`,
     "",
     ctx.t("stats.elo", { elo: target.elo_rating, rank }),
     ctx.t("stats.record", { wins: target.wins, losses: target.losses, winrate }),
     ctx.t("stats.games", { games: target.games_played }),
     ctx.t("stats.streak", { streak: target.current_streak }),
     ctx.t("stats.best_streak", { bestStreak: target.best_streak }),
+    ctx.t("stats.achievements", { count: playerAchievements.length }),
   ];
 
   // Recent matches

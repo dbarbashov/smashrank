@@ -6,6 +6,7 @@ export interface MatchCommentaryContext {
   is_upset: boolean;
   elo_gap: number;
   winner_streak: number;
+  achievements?: string[];
 }
 
 const SYSTEM_PROMPT = `You are SmashRank, a witty sports commentator for an office ping pong league.
@@ -14,7 +15,8 @@ You generate SHORT, fun, engaging messages about match results.
 Rules:
 - Max 3 lines of text. Be concise.
 - Use 1-2 relevant emojis per message.
-- Reference the context: streaks, rivalries, rank changes, upsets.
+- Reference the context: streaks, rivalries, rank changes, upsets, achievements.
+- If achievements were unlocked, celebrate them briefly.
 - Vary your style: sometimes hype, sometimes dry humor, sometimes dramatic.
 - Never be mean or personal — keep it lighthearted.
 - Always include the ELO changes as: "PlayerName: 1000 → 1016 (+16)"

@@ -16,6 +16,10 @@ export function matchQueries(sql: SqlLike) {
       elo_before_loser: number;
       elo_change: number;
       reported_by: string;
+      winner_partner_id?: string;
+      loser_partner_id?: string;
+      elo_before_winner_partner?: number;
+      elo_before_loser_partner?: number;
     }): Promise<Match> {
       const rows = await sql<Match[]>`
         INSERT INTO matches (
@@ -23,13 +27,17 @@ export function matchQueries(sql: SqlLike) {
           winner_id, loser_id,
           winner_score, loser_score, set_scores,
           elo_before_winner, elo_before_loser, elo_change,
-          reported_by
+          reported_by,
+          winner_partner_id, loser_partner_id,
+          elo_before_winner_partner, elo_before_loser_partner
         ) VALUES (
           ${data.match_type}, ${data.season_id}, ${data.group_id},
           ${data.winner_id}, ${data.loser_id},
           ${data.winner_score}, ${data.loser_score}, ${data.set_scores ? JSON.stringify(data.set_scores) : null}::jsonb,
           ${data.elo_before_winner}, ${data.elo_before_loser}, ${data.elo_change},
-          ${data.reported_by}
+          ${data.reported_by},
+          ${data.winner_partner_id ?? null}, ${data.loser_partner_id ?? null},
+          ${data.elo_before_winner_partner ?? null}, ${data.elo_before_loser_partner ?? null}
         )
         RETURNING *
       `;
@@ -218,6 +226,18 @@ export function matchQueries(sql: SqlLike) {
         winsB: parseInt(c.wins_b, 10),
         recent,
       };
+    },
+
+    async countMatchesBetween(
+      playerA: string,
+      playerB: string,
+    ): Promise<number> {
+      const rows = await sql<{ count: string }[]>`
+        SELECT COUNT(*)::text AS count FROM matches
+        WHERE (winner_id = ${playerA} AND loser_id = ${playerB})
+           OR (winner_id = ${playerB} AND loser_id = ${playerA})
+      `;
+      return parseInt(rows[0].count, 10);
     },
 
     async getRecentOpponents(

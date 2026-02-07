@@ -1,6 +1,6 @@
 export interface SetScore {
-  w: number;
-  l: number;
+  reporterScore: number;
+  opponentScore: number;
 }
 
 export interface ParsedGameCommand {
@@ -111,11 +111,10 @@ export function parseGameCommand(
       }
       if (s.a > s.b) {
         reporterSets++;
-        setScores.push({ w: s.a, l: s.b });
       } else {
         opponentSets++;
-        setScores.push({ w: s.b, l: s.a });
       }
+      setScores.push({ reporterScore: s.a, opponentScore: s.b });
     }
 
     const reporterWon = reporterSets > opponentSets;

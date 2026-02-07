@@ -50,6 +50,10 @@ export interface Match {
   winner_score: number;
   loser_score: number;
   set_scores: { w: number; l: number }[] | null;
+  winner_partner_id: string | null;
+  loser_partner_id: string | null;
+  elo_before_winner_partner: number | null;
+  elo_before_loser_partner: number | null;
   elo_before_winner: number;
   elo_before_loser: number;
   elo_change: number;

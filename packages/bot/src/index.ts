@@ -13,6 +13,11 @@ import { langCommand } from "./commands/lang.js";
 import { undoCommand } from "./commands/undo.js";
 import { h2hCommand } from "./commands/h2h.js";
 import { newgameCommand, newgameCallbackHandler, processNewgameScore } from "./commands/newgame.js";
+import { achievementsCommand } from "./commands/achievements.js";
+import { settingsCommand } from "./commands/settings.js";
+import { doublesCommand } from "./commands/doubles.js";
+import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } from "./commands/newdoubles.js";
+import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
   // Initialize i18n
@@ -32,11 +37,12 @@ async function main(): Promise<void> {
   // Middleware
   bot.use(autoRegister);
 
-  // Handle score replies to /newgame prompts (before commands so plain
-  // text messages aren't dropped by grammY's composer chain)
+  // Handle score replies to /newgame and /newdoubles prompts (before commands
+  // so plain text messages aren't dropped by grammY's composer chain)
   bot.use(async (ctx, next) => {
     if (ctx.message?.text && !ctx.message.text.startsWith("/")) {
-      const handled = await processNewgameScore(ctx as SmashRankContext);
+      const handled = await processNewgameScore(ctx as SmashRankContext)
+        || await processNewdoublesScore(ctx as SmashRankContext);
       if (handled) return;
     }
     await next();
@@ -52,9 +58,23 @@ async function main(): Promise<void> {
   bot.command("undo", undoCommand);
   bot.command("h2h", h2hCommand);
   bot.command("newgame", newgameCommand);
+  bot.command("achievements", achievementsCommand);
+  bot.command("settings", settingsCommand);
+  bot.command("doubles", doublesCommand);
+  bot.command("newdoubles", newdoublesCommand);
 
-  // Callback query handler for /newgame inline keyboards
-  bot.on("callback_query:data", newgameCallbackHandler);
+  // Callback query handler for inline keyboards
+  bot.on("callback_query:data", async (ctx) => {
+    const data = ctx.callbackQuery.data;
+    if (data.startsWith("ng:")) {
+      await newgameCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("nd:")) {
+      await newdoublesCallbackHandler(ctx as SmashRankContext);
+    }
+  });
+
+  // Start scheduler
+  startScheduler(bot);
 
   // Start
   console.log("Bot starting...");
