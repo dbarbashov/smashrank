@@ -4,68 +4,78 @@ export interface SeasonInfo {
   endDate: string;   // YYYY-MM-DD
 }
 
-const SEASON_BOUNDARIES = [
-  { month: 1, day: 1 },   // S1 starts Jan 1
-  { month: 3, day: 1 },   // S2 starts Mar 1
-  { month: 6, day: 1 },   // S3 starts Jun 1
-  { month: 9, day: 1 },   // S4 starts Sep 1
+const MONTH_NAMES = [
+  "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
 
+/** Last day of a given month (handles leap years). */
+function lastDay(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+/**
+ * Seasons:
+ *   S1: Dec 1 – Feb 28/29  (crosses year boundary)
+ *   S2: Mar 1 – May 31
+ *   S3: Jun 1 – Aug 31
+ *   S4: Sep 1 – Nov 30
+ */
 export function getSeasonForDate(date: Date): SeasonInfo {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // 1-12
-  const day = date.getDate();
 
-  // Find which season we're in
-  let seasonIndex = 0;
-  for (let i = SEASON_BOUNDARIES.length - 1; i >= 0; i--) {
-    const b = SEASON_BOUNDARIES[i];
-    if (month > b.month || (month === b.month && day >= b.day)) {
-      seasonIndex = i;
-      break;
-    }
-  }
-
-  const seasonNumber = seasonIndex + 1; // S1-S4
-  const start = SEASON_BOUNDARIES[seasonIndex];
-
-  // End date is the day before the next season starts (or Dec 31 for S4)
-  let endYear = year;
+  let sNum: number;
+  let startYear: number;
+  let startMonth: number;
+  let endYear: number;
   let endMonth: number;
-  let endDay: number;
 
-  if (seasonIndex < SEASON_BOUNDARIES.length - 1) {
-    const next = SEASON_BOUNDARIES[seasonIndex + 1];
-    // Last day of month before next season
-    endMonth = next.month;
-    endDay = next.day - 1;
-    if (endDay === 0) {
-      endMonth -= 1;
-      endDay = new Date(year, endMonth, 0).getDate();
-    }
+  if (month >= 12) {
+    // December → S1 starts this year, ends next Feb
+    sNum = 1;
+    startYear = year;
+    startMonth = 12;
+    endYear = year + 1;
+    endMonth = 2;
+  } else if (month <= 2) {
+    // Jan–Feb → S1 that started last Dec
+    sNum = 1;
+    startYear = year - 1;
+    startMonth = 12;
+    endYear = year;
+    endMonth = 2;
+  } else if (month <= 5) {
+    sNum = 2;
+    startYear = year;
+    startMonth = 3;
+    endYear = year;
+    endMonth = 5;
+  } else if (month <= 8) {
+    sNum = 3;
+    startYear = year;
+    startMonth = 6;
+    endYear = year;
+    endMonth = 8;
   } else {
-    endMonth = 12;
-    endDay = 31;
+    sNum = 4;
+    startYear = year;
+    startMonth = 9;
+    endYear = year;
+    endMonth = 11;
   }
 
-  const monthNames = [
-    "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
+  const startStr = `${startYear}-${pad(startMonth)}-01`;
+  const endStr = `${endYear}-${pad(endMonth)}-${pad(lastDay(endYear, endMonth))}`;
 
-  const startStr = `${year}-${pad(start.month)}-${pad(start.day)}`;
-  const endStr = `${endYear}-${pad(endMonth)}-${pad(endDay)}`;
+  // Label year = the year the season ends in
+  const label = `S${sNum} ${endYear} (${MONTH_NAMES[startMonth]}\u2013${MONTH_NAMES[endMonth]})`;
 
-  // Build name like "S1 2026 (Jan-Feb)"
-  const startMonthName = monthNames[start.month];
-  const endMonthName = monthNames[endMonth];
-  const name = `S${seasonNumber} ${year} (${startMonthName}\u2013${endMonthName})`;
-
-  return { name, startDate: startStr, endDate: endStr };
+  return { name: label, startDate: startStr, endDate: endStr };
 }
 
 export function isSeasonExpired(endDate: string, now: Date = new Date()): boolean {

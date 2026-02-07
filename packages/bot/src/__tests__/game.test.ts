@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getConnection, playerQueries } from "@smashrank/db";
+import { getConnection, playerQueries, groupQueries } from "@smashrank/db";
 import { createTestBot, sendMessage, lastReply, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
@@ -43,18 +43,22 @@ describe("/game", () => {
     expect(reply).toContain("11-7");
     expect(reply).toContain("11-5");
 
-    // Verify DB state
+    // Verify DB state via group_members
     const sql = getConnection();
     const players = playerQueries(sql);
+    const groups = groupQueries(sql);
     const alice = await players.findByTelegramId(100);
     const bob = await players.findByTelegramId(200);
-    expect(alice!.wins).toBe(1);
-    expect(alice!.losses).toBe(0);
-    expect(alice!.elo_rating).toBeGreaterThan(1000);
-    expect(alice!.current_streak).toBe(1);
-    expect(bob!.wins).toBe(0);
-    expect(bob!.losses).toBe(1);
-    expect(bob!.elo_rating).toBeLessThan(1000);
+    const group = await groups.findByChatId(-1001);
+    const aliceMember = await groups.getGroupMember(group!.id, alice!.id);
+    const bobMember = await groups.getGroupMember(group!.id, bob!.id);
+    expect(aliceMember!.wins).toBe(1);
+    expect(aliceMember!.losses).toBe(0);
+    expect(aliceMember!.elo_rating).toBeGreaterThan(1200);
+    expect(aliceMember!.current_streak).toBe(1);
+    expect(bobMember!.wins).toBe(0);
+    expect(bobMember!.losses).toBe(1);
+    expect(bobMember!.elo_rating).toBeLessThan(1200);
   });
 
   it("records a match with set count only", async () => {

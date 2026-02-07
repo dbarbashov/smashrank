@@ -5,6 +5,7 @@ import {
   playerQueries,
   matchQueries,
   achievementQueries,
+  groupQueries,
 } from "@smashrank/db";
 
 export const playersRoutes = new Hono<AppEnv>();
@@ -19,11 +20,18 @@ playersRoutes.get("/:id", async (c) => {
     return c.json({ error: "Player not found" }, 404);
   }
 
+  const member = await groupQueries(sql).getGroupMember(group.id, playerId);
   const stats = await matchQueries(sql).getPlayerStats(playerId, group.id);
-  const achievements = await achievementQueries(sql).getPlayerAchievements(playerId);
+  const achievements = await achievementQueries(sql).getPlayerAchievements(playerId, group.id);
 
   return c.json({
     ...player,
+    elo_rating: member?.elo_rating ?? 1200,
+    games_played: member?.games_played ?? 0,
+    wins: member?.wins ?? 0,
+    losses: member?.losses ?? 0,
+    current_streak: member?.current_streak ?? 0,
+    best_streak: member?.best_streak ?? 0,
     rank: stats?.rank ?? null,
     total_in_group: stats?.total_in_group ?? 0,
     achievement_count: achievements.length,

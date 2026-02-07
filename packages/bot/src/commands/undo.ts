@@ -23,6 +23,8 @@ export async function undoCommand(ctx: SmashRankContext): Promise<void> {
     return;
   }
 
+  const groupId = match.group_id;
+
   // Reverse everything in a transaction
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
@@ -35,32 +37,30 @@ export async function undoCommand(ctx: SmashRankContext): Promise<void> {
     // Delete the match first so recalculation excludes it
     await txMatches.deleteById(match.id);
 
-    // Recalculate streaks from remaining match history
-    const winnerStreaks = await txMatches.recalculateStreaks(match.winner_id);
-    const loserStreaks = await txMatches.recalculateStreaks(match.loser_id);
+    // Recalculate streaks from remaining match history (group-scoped)
+    const winnerStreaks = await txMatches.recalculateStreaks(match.winner_id, groupId);
+    const loserStreaks = await txMatches.recalculateStreaks(match.loser_id, groupId);
 
-    // Restore winner's stats
+    // Restore winner's stats on group_members
     await txSql`
-      UPDATE players SET
+      UPDATE group_members SET
         elo_rating = ${match.elo_before_winner},
         games_played = games_played - 1,
         wins = wins - 1,
         current_streak = ${winnerStreaks.currentStreak},
-        best_streak = ${winnerStreaks.bestStreak},
-        last_active = NOW()
-      WHERE id = ${match.winner_id}
+        best_streak = ${winnerStreaks.bestStreak}
+      WHERE group_id = ${groupId} AND player_id = ${match.winner_id}
     `;
 
-    // Restore loser's stats
+    // Restore loser's stats on group_members
     await txSql`
-      UPDATE players SET
+      UPDATE group_members SET
         elo_rating = ${match.elo_before_loser},
         games_played = games_played - 1,
         losses = losses - 1,
         current_streak = ${loserStreaks.currentStreak},
-        best_streak = ${loserStreaks.bestStreak},
-        last_active = NOW()
-      WHERE id = ${match.loser_id}
+        best_streak = ${loserStreaks.bestStreak}
+      WHERE group_id = ${groupId} AND player_id = ${match.loser_id}
     `;
   });
 

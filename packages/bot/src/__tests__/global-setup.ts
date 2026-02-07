@@ -9,6 +9,7 @@ const MIGRATION_FILES = [
   "002_seed_achievements.sql",
   "003_doubles_columns.sql",
   "004_tournaments.sql",
+  "005_per_group_stats.sql",
 ];
 
 export async function setup(): Promise<void> {

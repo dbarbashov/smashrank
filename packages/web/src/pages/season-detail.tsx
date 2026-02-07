@@ -1,8 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useSeasonDetail } from "../api/queries.js";
+import { useSeasonDetail, useMatches } from "../api/queries.js";
 import { PlayerLink } from "../components/player-link.js";
 import { EloBadge } from "../components/elo-badge.js";
+import { MatchCard } from "../components/match-card.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
 
@@ -10,10 +11,18 @@ export function SeasonDetailPage() {
   const { slug, seasonId } = useParams<{ slug: string; seasonId: string }>();
   const { t } = useTranslation();
   const { data, isLoading, error } = useSeasonDetail(slug!, seasonId!);
+  const {
+    data: matchPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMatches(slug!, { season: seasonId });
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
   if (!data) return null;
+
+  const matches = matchPages?.pages.flat() ?? [];
 
   return (
     <div>
@@ -73,6 +82,26 @@ export function SeasonDetailPage() {
             })}
           </tbody>
         </table>
+      )}
+
+      {matches.length > 0 && (
+        <div className="mt-6">
+          <h3 className="mb-2 font-semibold">{t("matches.title")}</h3>
+          <div className="flex flex-col gap-2">
+            {matches.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mt-2 rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                {isFetchingNextPage ? t("common.loading") : t("matches.loadMore")}
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

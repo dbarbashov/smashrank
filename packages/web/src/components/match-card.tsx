@@ -4,7 +4,9 @@ import type { Match } from "../types.js";
 
 export function MatchCard({ match }: { match: Match }) {
   const { t } = useTranslation();
-  const date = new Date(match.played_at).toLocaleDateString();
+  const date = new Date(match.played_at).toLocaleString(undefined, {
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+  });
 
   const score =
     match.winner_score != null && match.loser_score != null
@@ -55,8 +57,8 @@ export function MatchCard({ match }: { match: Match }) {
         {sets && (
           <span className="text-xs text-gray-400">({sets})</span>
         )}
-        <span className="text-green-600 dark:text-green-400">
-          +{match.elo_change}
+        <span className={match.elo_change >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+          {match.elo_change >= 0 ? "+" : ""}{match.elo_change}
         </span>
       </div>
     </div>

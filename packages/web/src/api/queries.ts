@@ -76,7 +76,7 @@ export function usePlayerAchievements(slug: string, playerId: string) {
 
 export function useMatches(
   slug: string,
-  filters?: { type?: string; player?: string },
+  filters?: { type?: string; player?: string; season?: string; tournament?: string },
 ) {
   return useInfiniteQuery({
     queryKey: ["matches", slug, filters],
@@ -86,6 +86,8 @@ export function useMatches(
       params.set("offset", String(pageParam));
       if (filters?.type) params.set("type", filters.type);
       if (filters?.player) params.set("player", filters.player);
+      if (filters?.season) params.set("season", filters.season);
+      if (filters?.tournament) params.set("tournament", filters.tournament);
       return apiFetch<Match[]>(`/${slug}/matches?${params}`);
     },
     initialPageParam: 0,

@@ -3,12 +3,6 @@ export interface Player {
   telegram_id: number;
   telegram_username: string | null;
   display_name: string;
-  elo_rating: number;
-  games_played: number;
-  wins: number;
-  losses: number;
-  current_streak: number;
-  best_streak: number;
   registered_at: Date;
   last_active: Date | null;
   language: string;
@@ -28,6 +22,17 @@ export interface GroupMember {
   group_id: string;
   player_id: string;
   joined_at: Date;
+  elo_rating: number;
+  games_played: number;
+  wins: number;
+  losses: number;
+  current_streak: number;
+  best_streak: number;
+}
+
+export interface GroupMemberWithPlayer extends GroupMember {
+  display_name: string;
+  telegram_username: string | null;
 }
 
 export interface Season {

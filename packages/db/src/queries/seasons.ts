@@ -65,30 +65,27 @@ export function seasonQueries(sql: SqlLike) {
         INSERT INTO season_snapshots (season_id, player_id, final_elo, final_rank, games_played, wins, losses)
         SELECT
           ${seasonId},
-          p.id,
-          p.elo_rating,
-          ROW_NUMBER() OVER (ORDER BY p.elo_rating DESC),
-          p.games_played,
-          p.wins,
-          p.losses
-        FROM players p
-        JOIN group_members gm ON gm.player_id = p.id
-        WHERE gm.group_id = ${groupId} AND p.games_played > 0
+          gm.player_id,
+          gm.elo_rating,
+          ROW_NUMBER() OVER (ORDER BY gm.elo_rating DESC),
+          gm.games_played,
+          gm.wins,
+          gm.losses
+        FROM group_members gm
+        WHERE gm.group_id = ${groupId} AND gm.games_played > 0
       `;
     },
 
     async resetPlayersForGroup(groupId: string): Promise<void> {
       await sql`
-        UPDATE players SET
-          elo_rating = 1000,
+        UPDATE group_members SET
+          elo_rating = 1200,
           games_played = 0,
           wins = 0,
           losses = 0,
           current_streak = 0,
           best_streak = 0
-        WHERE id IN (
-          SELECT player_id FROM group_members WHERE group_id = ${groupId}
-        )
+        WHERE group_id = ${groupId}
       `;
     },
   };

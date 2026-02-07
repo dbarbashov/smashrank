@@ -202,9 +202,9 @@ export async function processNewdoublesScore(ctx: SmashRankContext): Promise<boo
       }))
     : null;
 
-  // Ensure all 4 players are group members
+  // Get group member stats for all 4 players
   const groups = groupQueries(sql);
-  await Promise.all([
+  const [w1Member, w2Member, l1Member, l2Member] = await Promise.all([
     groups.ensureMembership(ctx.group.id, winner1.id),
     groups.ensureMembership(ctx.group.id, winner2.id),
     groups.ensureMembership(ctx.group.id, loser1.id),
@@ -214,25 +214,25 @@ export async function processNewdoublesScore(ctx: SmashRankContext): Promise<boo
   const season = await ensureActiveSeason(ctx.group.id);
 
   const eloResult = calculateDoublesElo({
-    winner1Rating: winner1.elo_rating,
-    winner2Rating: winner2.elo_rating,
-    loser1Rating: loser1.elo_rating,
-    loser2Rating: loser2.elo_rating,
-    winner1GamesPlayed: winner1.games_played,
-    winner2GamesPlayed: winner2.games_played,
-    loser1GamesPlayed: loser1.games_played,
-    loser2GamesPlayed: loser2.games_played,
+    winner1Rating: w1Member.elo_rating,
+    winner2Rating: w2Member.elo_rating,
+    loser1Rating: l1Member.elo_rating,
+    loser2Rating: l2Member.elo_rating,
+    winner1GamesPlayed: w1Member.games_played,
+    winner2GamesPlayed: w2Member.games_played,
+    loser1GamesPlayed: l1Member.games_played,
+    loser2GamesPlayed: l2Member.games_played,
   });
 
-  const w1Streak = updateStreak(winner1.current_streak, winner1.best_streak, true);
-  const w2Streak = updateStreak(winner2.current_streak, winner2.best_streak, true);
-  const l1Streak = updateStreak(loser1.current_streak, loser1.best_streak, false);
-  const l2Streak = updateStreak(loser2.current_streak, loser2.best_streak, false);
+  const w1Streak = updateStreak(w1Member.current_streak, w1Member.best_streak, true);
+  const w2Streak = updateStreak(w2Member.current_streak, w2Member.best_streak, true);
+  const l1Streak = updateStreak(l1Member.current_streak, l1Member.best_streak, false);
+  const l2Streak = updateStreak(l2Member.current_streak, l2Member.best_streak, false);
 
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
-    const txPlayers = playerQueries(txSql);
     const txMatches = matchQueries(txSql);
+    const txGroups = groupQueries(txSql);
 
     await txMatches.create({
       match_type: "doubles",
@@ -245,18 +245,18 @@ export async function processNewdoublesScore(ctx: SmashRankContext): Promise<boo
       winner_score: data.winnerSets,
       loser_score: data.loserSets,
       set_scores: orientedSetScores,
-      elo_before_winner: winner1.elo_rating,
-      elo_before_loser: loser1.elo_rating,
-      elo_before_winner_partner: winner2.elo_rating,
-      elo_before_loser_partner: loser2.elo_rating,
+      elo_before_winner: w1Member.elo_rating,
+      elo_before_loser: l1Member.elo_rating,
+      elo_before_winner_partner: w2Member.elo_rating,
+      elo_before_loser_partner: l2Member.elo_rating,
       elo_change: eloResult.change,
       reported_by: ctx.player.id,
     });
 
-    await txPlayers.updateElo(winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak);
-    await txPlayers.updateElo(winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak);
-    await txPlayers.updateElo(loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak);
-    await txPlayers.updateElo(loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak);
+    await txGroups.updateGroupElo(ctx.group!.id, winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak);
+    await txGroups.updateGroupElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak);
+    await txGroups.updateGroupElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak);
+    await txGroups.updateGroupElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak);
   });
 
   const setScoresStr = orientedSetScores

@@ -38,8 +38,8 @@ describe("seasons routes", () => {
   describe("GET /api/g/:slug/seasons/:id", () => {
     it("returns season detail with standings", async () => {
       const season = await createSeason({ group_id: group.id, name: "Season 1" });
-      const alice = await createPlayer({ display_name: "Alice", elo_rating: 1200, games_played: 10, wins: 7, losses: 3 });
-      await addToGroup(group.id, alice.id);
+      const alice = await createPlayer({ display_name: "Alice" });
+      await addToGroup(group.id, alice.id, { elo_rating: 1200, games_played: 10, wins: 7, losses: 3 });
 
       const sql = getSql();
       await sql`

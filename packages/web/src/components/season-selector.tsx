@@ -19,7 +19,7 @@ export function SeasonSelector({
       className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
     >
       <option value="">{t("seasons.current")}</option>
-      {seasons.map((s) => (
+      {seasons.filter((s) => !s.is_active).map((s) => (
         <option key={s.id} value={s.id}>
           {s.name}
         </option>

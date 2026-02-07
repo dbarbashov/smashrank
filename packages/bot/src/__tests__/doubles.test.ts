@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getConnection, playerQueries } from "@smashrank/db";
+import { getConnection, playerQueries, groupQueries } from "@smashrank/db";
 import { createTestBot, sendMessage, lastReply, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
@@ -39,26 +39,32 @@ describe("/doubles", () => {
     expect(reply).toContain("Charlie");
     expect(reply).toContain("Dave");
 
-    // Verify all 4 players' ELO updated
+    // Verify all 4 players' ELO updated via group_members
     const sql = getConnection();
     const players = playerQueries(sql);
+    const groups = groupQueries(sql);
+    const group = await groups.findByChatId(-1001);
     const alice = await players.findByTelegramId(100);
     const bob = await players.findByTelegramId(200);
     const charlie = await players.findByTelegramId(300);
     const dave = await players.findByTelegramId(400);
+    const aliceM = await groups.getGroupMember(group!.id, alice!.id);
+    const bobM = await groups.getGroupMember(group!.id, bob!.id);
+    const charlieM = await groups.getGroupMember(group!.id, charlie!.id);
+    const daveM = await groups.getGroupMember(group!.id, dave!.id);
 
     // Winners should gain ELO
-    expect(alice!.elo_rating).toBeGreaterThan(1000);
-    expect(bob!.elo_rating).toBeGreaterThan(1000);
+    expect(aliceM!.elo_rating).toBeGreaterThan(1200);
+    expect(bobM!.elo_rating).toBeGreaterThan(1200);
     // Losers should lose ELO
-    expect(charlie!.elo_rating).toBeLessThan(1000);
-    expect(dave!.elo_rating).toBeLessThan(1000);
+    expect(charlieM!.elo_rating).toBeLessThan(1200);
+    expect(daveM!.elo_rating).toBeLessThan(1200);
 
     // All should have 1 game played
-    expect(alice!.games_played).toBe(1);
-    expect(bob!.games_played).toBe(1);
-    expect(charlie!.games_played).toBe(1);
-    expect(dave!.games_played).toBe(1);
+    expect(aliceM!.games_played).toBe(1);
+    expect(bobM!.games_played).toBe(1);
+    expect(charlieM!.games_played).toBe(1);
+    expect(daveM!.games_played).toBe(1);
   });
 
   it("shows usage when format is wrong", async () => {

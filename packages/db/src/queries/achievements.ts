@@ -29,7 +29,16 @@ export function achievementQueries(sql: SqlLike) {
       `;
     },
 
-    async getPlayerAchievementIds(playerId: string): Promise<string[]> {
+    async getPlayerAchievementIds(playerId: string, groupId?: string): Promise<string[]> {
+      if (groupId) {
+        const rows = await sql<{ achievement_id: string }[]>`
+          SELECT DISTINCT pa.achievement_id FROM player_achievements pa
+          LEFT JOIN matches m ON m.id = pa.match_id
+          WHERE pa.player_id = ${playerId}
+            AND (m.group_id = ${groupId} OR pa.match_id IS NULL)
+        `;
+        return rows.map((r) => r.achievement_id);
+      }
       const rows = await sql<{ achievement_id: string }[]>`
         SELECT achievement_id FROM player_achievements
         WHERE player_id = ${playerId}
@@ -52,7 +61,23 @@ export function achievementQueries(sql: SqlLike) {
 
     async getPlayerAchievements(
       playerId: string,
+      groupId?: string,
     ): Promise<(PlayerAchievement & { name: string; description: string; emoji: string })[]> {
+      if (groupId) {
+        return sql<(PlayerAchievement & { name: string; description: string; emoji: string })[]>`
+          SELECT
+            pa.*,
+            ad.name,
+            ad.description,
+            ad.emoji
+          FROM player_achievements pa
+          JOIN achievement_definitions ad ON ad.id = pa.achievement_id
+          LEFT JOIN matches m ON m.id = pa.match_id
+          WHERE pa.player_id = ${playerId}
+            AND (m.group_id = ${groupId} OR pa.match_id IS NULL)
+          ORDER BY pa.unlocked_at DESC
+        `;
+      }
       return sql<(PlayerAchievement & { name: string; description: string; emoji: string })[]>`
         SELECT
           pa.*,

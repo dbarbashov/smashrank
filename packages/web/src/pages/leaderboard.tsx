@@ -31,7 +31,7 @@ export function Leaderboard() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t("leaderboard.title")}</h2>
-        {seasons && seasons.length > 0 && (
+        {seasons && seasons.some((s) => !s.is_active) && (
           <SeasonSelector
             seasons={seasons}
             value={seasonId}

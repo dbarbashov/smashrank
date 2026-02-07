@@ -1,12 +1,11 @@
 import type postgres from "postgres";
 import {
   getConnection,
-  playerQueries,
   matchQueries,
   achievementQueries,
   groupQueries,
 } from "@smashrank/db";
-import type { Player, Group, Match } from "@smashrank/db";
+import type { Player, Group, GroupMember, Match } from "@smashrank/db";
 import {
   calculateElo,
   updateStreak,
@@ -36,35 +35,35 @@ export interface RecordMatchResult {
   winnerStreak: StreakResult;
   loserStreak: StreakResult;
   newAchievements: AchievementUnlock[];
+  winnerMember: GroupMember;
+  loserMember: GroupMember;
 }
 
 export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchResult> {
   const sql = getConnection();
-  const players = playerQueries(sql);
   const matches = matchQueries(sql);
   const achievements = achievementQueries(sql);
-
   const groups = groupQueries(sql);
 
-  // Ensure all participants are members of the group
-  await Promise.all([
+  // Ensure all participants are members of the group (returns GroupMember with stats)
+  const [winnerMember, loserMember] = await Promise.all([
     groups.ensureMembership(input.group.id, input.winner.id),
     groups.ensureMembership(input.group.id, input.loser.id),
   ]);
 
   const season = await ensureActiveSeason(input.group.id);
 
-  // Calculate ELO
+  // Calculate ELO using group-scoped stats
   const eloResult = calculateElo({
-    winnerRating: input.winner.elo_rating,
-    loserRating: input.loser.elo_rating,
-    winnerGamesPlayed: input.winner.games_played,
-    loserGamesPlayed: input.loser.games_played,
+    winnerRating: winnerMember.elo_rating,
+    loserRating: loserMember.elo_rating,
+    winnerGamesPlayed: winnerMember.games_played,
+    loserGamesPlayed: loserMember.games_played,
   });
 
-  // Calculate streaks
-  const winnerStreak = updateStreak(input.winner.current_streak, input.winner.best_streak, true);
-  const loserStreak = updateStreak(input.loser.current_streak, input.loser.best_streak, false);
+  // Calculate streaks using group-scoped stats
+  const winnerStreak = updateStreak(winnerMember.current_streak, winnerMember.best_streak, true);
+  const loserStreak = updateStreak(loserMember.current_streak, loserMember.best_streak, false);
 
   let match!: Match;
   let newAchievements: AchievementUnlock[] = [];
@@ -74,9 +73,9 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
 
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
-    const txPlayers = playerQueries(txSql);
     const txMatches = matchQueries(txSql);
     const txAchievements = achievementQueries(txSql);
+    const txGroups = groupQueries(txSql);
 
     match = await txMatches.create({
       match_type: input.matchType ?? "singles",
@@ -87,13 +86,14 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       winner_score: input.winnerSets,
       loser_score: input.loserSets,
       set_scores: input.setScores,
-      elo_before_winner: input.winner.elo_rating,
-      elo_before_loser: input.loser.elo_rating,
+      elo_before_winner: winnerMember.elo_rating,
+      elo_before_loser: loserMember.elo_rating,
       elo_change: eloResult.change,
       reported_by: input.reportedBy,
     });
 
-    await txPlayers.updateElo(
+    await txGroups.updateGroupElo(
+      input.group.id,
       input.winner.id,
       eloResult.winnerNewRating,
       true,
@@ -101,7 +101,8 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       winnerStreak.bestStreak,
     );
 
-    await txPlayers.updateElo(
+    await txGroups.updateGroupElo(
+      input.group.id,
       input.loser.id,
       eloResult.loserNewRating,
       false,
@@ -112,9 +113,9 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
     // Evaluate and persist achievements
     if (achievementsEnabled) {
       const [winnerExisting, loserExisting, matchCount, rankData] = await Promise.all([
-        txAchievements.getPlayerAchievementIds(input.winner.id),
-        txAchievements.getPlayerAchievementIds(input.loser.id),
-        txMatches.countMatchesBetween(input.winner.id, input.loser.id),
+        txAchievements.getPlayerAchievementIds(input.winner.id, input.group.id),
+        txAchievements.getPlayerAchievementIds(input.loser.id, input.group.id),
+        txMatches.countMatchesBetween(input.winner.id, input.loser.id, input.group.id),
         txMatches.getPlayerStats(input.winner.id, input.group.id),
       ]);
 
@@ -122,12 +123,12 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
         winnerId: input.winner.id,
         loserId: input.loser.id,
         winnerStreak: winnerStreak.currentStreak,
-        winnerStreakBefore: input.winner.current_streak,
-        winnerElo: input.winner.elo_rating,
-        loserElo: input.loser.elo_rating,
-        winnerGamesPlayed: input.winner.games_played + 1,
-        loserGamesPlayed: input.loser.games_played + 1,
-        winnerWins: input.winner.wins + 1,
+        winnerStreakBefore: winnerMember.current_streak,
+        winnerElo: winnerMember.elo_rating,
+        loserElo: loserMember.elo_rating,
+        winnerGamesPlayed: winnerMember.games_played + 1,
+        loserGamesPlayed: loserMember.games_played + 1,
+        winnerWins: winnerMember.wins + 1,
         setScores: input.setScores,
         matchesBetween: matchCount,
         winnerRank: rankData?.rank ?? null,
@@ -147,5 +148,5 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
     }
   });
 
-  return { match, eloResult, winnerStreak, loserStreak, newAchievements };
+  return { match, eloResult, winnerStreak, loserStreak, newAchievements, winnerMember, loserMember };
 }

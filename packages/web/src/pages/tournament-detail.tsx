@@ -1,9 +1,21 @@
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useTournamentDetail } from "../api/queries.js";
+import { useTournamentDetail, useMatches } from "../api/queries.js";
+import { MatchCard } from "../components/match-card.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
 import type { TournamentDetail as TournamentDetailType, TournamentFixture } from "../types.js";
+
+function Tip({ label, tip }: { label: string; tip: string }) {
+  return (
+    <span className="group relative cursor-help">
+      {label}
+      <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs font-normal text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-gray-200 dark:text-gray-900">
+        {tip}
+      </span>
+    </span>
+  );
+}
 
 function FixtureMatrix({ tournament }: { tournament: TournamentDetailType }) {
   const { t } = useTranslation();
@@ -81,10 +93,18 @@ export function TournamentDetailPage() {
   const { slug, tournamentId } = useParams<{ slug: string; tournamentId: string }>();
   const { t } = useTranslation();
   const { data: tournament, isLoading, error } = useTournamentDetail(slug!, tournamentId!);
+  const {
+    data: matchPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMatches(slug!, { tournament: tournamentId });
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
   if (!tournament) return <ErrorMessage message="Tournament not found" />;
+
+  const matches = matchPages?.pages.flat() ?? [];
 
   const statusColors: Record<string, string> = {
     open: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -115,18 +135,18 @@ export function TournamentDetailPage() {
       {tournament.standings.length > 0 && (
         <div className="mb-6">
           <h3 className="mb-2 font-semibold">{t("tournaments.standings")}</h3>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" style={{ overflow: "visible" }}>
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="px-2 py-1 text-left">#</th>
                   <th className="px-2 py-1 text-left">{t("leaderboard.player")}</th>
-                  <th className="px-2 py-1 text-center">P</th>
-                  <th className="px-2 py-1 text-center">W</th>
-                  <th className="px-2 py-1 text-center">D</th>
-                  <th className="px-2 py-1 text-center">L</th>
-                  <th className="px-2 py-1 text-center">SD</th>
-                  <th className="px-2 py-1 text-center font-bold">PTS</th>
+                  <th className="px-2 py-1 text-center"><Tip label={t("tournaments.col_played")} tip={t("tournaments.col_played_tip")} /></th>
+                  <th className="px-2 py-1 text-center"><Tip label={t("tournaments.col_wins")} tip={t("tournaments.col_wins_tip")} /></th>
+                  <th className="px-2 py-1 text-center"><Tip label={t("tournaments.col_draws")} tip={t("tournaments.col_draws_tip")} /></th>
+                  <th className="px-2 py-1 text-center"><Tip label={t("tournaments.col_losses")} tip={t("tournaments.col_losses_tip")} /></th>
+                  <th className="px-2 py-1 text-center"><Tip label={t("tournaments.col_sd")} tip={t("tournaments.col_sd_tip")} /></th>
+                  <th className="px-2 py-1 text-center font-bold"><Tip label={t("tournaments.col_pts")} tip={t("tournaments.col_pts_tip")} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -170,6 +190,39 @@ export function TournamentDetailPage() {
               <li key={p.player_id}>{p.display_name}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      <details className="mt-6">
+        <summary className="cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200">
+          {t("tournaments.rules")}
+        </summary>
+        <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
+          <li>{t("tournaments.rules_format")}</li>
+          <li>{t("tournaments.rules_players")}</li>
+          <li>{t("tournaments.rules_scoring")}</li>
+          <li>{t("tournaments.rules_tiebreakers")}</li>
+          <li>{t("tournaments.rules_stale")}</li>
+        </ul>
+      </details>
+
+      {matches.length > 0 && (
+        <div className="mt-6">
+          <h3 className="mb-2 font-semibold">{t("matches.title")}</h3>
+          <div className="flex flex-col gap-2">
+            {matches.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mt-2 rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              >
+                {isFetchingNextPage ? t("common.loading") : t("matches.loadMore")}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

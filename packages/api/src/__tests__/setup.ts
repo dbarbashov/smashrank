@@ -26,7 +26,7 @@ afterAll(async () => {
 });
 
 export async function cleanDb(): Promise<void> {
-  await sql`TRUNCATE player_achievements, matches, season_snapshots, seasons, group_members, groups, players CASCADE`;
+  await sql`TRUNCATE tournament_standings, tournament_participants, tournaments, player_achievements, matches, season_snapshots, seasons, group_members, groups, players CASCADE`;
   await sql`DELETE FROM achievement_definitions WHERE true`;
   const seed = readFileSync(join(MIGRATIONS_DIR, "002_seed_achievements.sql"), "utf-8");
   await sql.unsafe(seed);
@@ -59,28 +59,47 @@ export async function createPlayer(data: {
   losses?: number;
   current_streak?: number;
   best_streak?: number;
-}): Promise<{ id: string }> {
+}): Promise<{ id: string; _stats: { elo_rating: number; games_played: number; wins: number; losses: number; current_streak: number; best_streak: number } }> {
   const rows = await sql<{ id: string }[]>`
-    INSERT INTO players (telegram_id, display_name, elo_rating, games_played, wins, losses, current_streak, best_streak)
+    INSERT INTO players (telegram_id, display_name)
     VALUES (
       ${data.telegram_id ?? Math.floor(Math.random() * 1000000)},
-      ${data.display_name},
-      ${data.elo_rating ?? 1000},
-      ${data.games_played ?? 0},
-      ${data.wins ?? 0},
-      ${data.losses ?? 0},
-      ${data.current_streak ?? 0},
-      ${data.best_streak ?? 0}
+      ${data.display_name}
     )
     RETURNING id
   `;
-  return rows[0];
+  return {
+    ...rows[0],
+    _stats: {
+      elo_rating: data.elo_rating ?? 1200,
+      games_played: data.games_played ?? 0,
+      wins: data.wins ?? 0,
+      losses: data.losses ?? 0,
+      current_streak: data.current_streak ?? 0,
+      best_streak: data.best_streak ?? 0,
+    },
+  };
 }
 
-export async function addToGroup(groupId: string, playerId: string): Promise<void> {
+export async function addToGroup(groupId: string, playerId: string, stats?: {
+  elo_rating?: number;
+  games_played?: number;
+  wins?: number;
+  losses?: number;
+  current_streak?: number;
+  best_streak?: number;
+}): Promise<void> {
   await sql`
-    INSERT INTO group_members (group_id, player_id)
-    VALUES (${groupId}, ${playerId})
+    INSERT INTO group_members (group_id, player_id, elo_rating, games_played, wins, losses, current_streak, best_streak)
+    VALUES (
+      ${groupId}, ${playerId},
+      ${stats?.elo_rating ?? 1200},
+      ${stats?.games_played ?? 0},
+      ${stats?.wins ?? 0},
+      ${stats?.losses ?? 0},
+      ${stats?.current_streak ?? 0},
+      ${stats?.best_streak ?? 0}
+    )
     ON CONFLICT DO NOTHING
   `;
 }

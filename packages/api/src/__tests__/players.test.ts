@@ -17,10 +17,10 @@ describe("players routes", () => {
   beforeEach(async () => {
     await cleanDb();
     group = await createGroup({ slug: "test-players" });
-    alice = await createPlayer({ display_name: "Alice", elo_rating: 1100, games_played: 5, wins: 3, losses: 2 });
-    bob = await createPlayer({ display_name: "Bob", elo_rating: 1050, games_played: 5, wins: 2, losses: 3 });
-    await addToGroup(group.id, alice.id);
-    await addToGroup(group.id, bob.id);
+    alice = await createPlayer({ display_name: "Alice" });
+    bob = await createPlayer({ display_name: "Bob" });
+    await addToGroup(group.id, alice.id, { elo_rating: 1100, games_played: 5, wins: 3, losses: 2 });
+    await addToGroup(group.id, bob.id, { elo_rating: 1050, games_played: 5, wins: 2, losses: 3 });
     season = await createSeason({ group_id: group.id, name: "S1", is_active: true });
   });
 

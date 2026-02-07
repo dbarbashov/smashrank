@@ -2,6 +2,7 @@ import {
   getConnection,
   playerQueries,
   achievementQueries,
+  groupQueries,
 } from "@smashrank/db";
 import type { SmashRankContext } from "../context.js";
 
@@ -12,6 +13,7 @@ export async function achievementsCommand(ctx: SmashRankContext): Promise<void> 
   const sql = getConnection();
   const players = playerQueries(sql);
   const achievements = achievementQueries(sql);
+  const groups = groupQueries(sql);
 
   let target = ctx.player;
   if (mentionMatch) {
@@ -20,10 +22,18 @@ export async function achievementsCommand(ctx: SmashRankContext): Promise<void> 
       await ctx.reply(ctx.t("game.player_not_found", { username: mentionMatch[1] }));
       return;
     }
+    // Check target is a member of this group
+    if (ctx.group) {
+      const isMember = await groups.isMember(ctx.group.id, found.id);
+      if (!isMember) {
+        await ctx.reply(ctx.t("game.not_group_member", { username: mentionMatch[1] }));
+        return;
+      }
+    }
     target = found;
   }
 
-  const playerAchievements = await achievements.getPlayerAchievements(target.id);
+  const playerAchievements = await achievements.getPlayerAchievements(target.id, ctx.group?.id);
 
   if (playerAchievements.length === 0) {
     await ctx.reply(ctx.t("achievement.none", { name: target.display_name }));

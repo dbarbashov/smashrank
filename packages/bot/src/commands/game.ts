@@ -1,6 +1,7 @@
 import {
   getConnection,
   playerQueries,
+  groupQueries,
 } from "@smashrank/db";
 import {
   parseGameCommand,
@@ -32,11 +33,19 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   const { data } = result;
   const sql = getConnection();
   const players = playerQueries(sql);
+  const groups = groupQueries(sql);
 
   // Find opponent
   const opponent = await players.findByUsername(data.opponentUsername);
   if (!opponent) {
     await ctx.reply(ctx.t("game.player_not_found", { username: data.opponentUsername }));
+    return;
+  }
+
+  // Check opponent is a member of this group
+  const opponentIsMember = await groups.isMember(ctx.group.id, opponent.id);
+  if (!opponentIsMember) {
+    await ctx.reply(ctx.t("game.not_group_member", { username: data.opponentUsername }));
     return;
   }
 
@@ -55,7 +64,7 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
       })
     : null;
 
-  const { eloResult, winnerStreak, newAchievements } = await recordMatch({
+  const { eloResult, winnerStreak, newAchievements, winnerMember, loserMember } = await recordMatch({
     group: ctx.group,
     winner,
     loser,
@@ -73,18 +82,18 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   const commentaryContext: MatchCommentaryContext = {
     winner: {
       name: winner.display_name,
-      elo_before: winner.elo_rating,
+      elo_before: winnerMember.elo_rating,
       elo_after: eloResult.winnerNewRating,
     },
     loser: {
       name: loser.display_name,
-      elo_before: loser.elo_rating,
+      elo_before: loserMember.elo_rating,
       elo_after: eloResult.loserNewRating,
     },
     set_scores: setScoresStr ?? `${data.winnerSets}-${data.loserSets}`,
     elo_change: eloResult.change,
-    is_upset: loser.elo_rating > winner.elo_rating,
-    elo_gap: Math.abs(winner.elo_rating - loser.elo_rating),
+    is_upset: loserMember.elo_rating > winnerMember.elo_rating,
+    elo_gap: Math.abs(winnerMember.elo_rating - loserMember.elo_rating),
     winner_streak: winnerStreak.currentStreak,
     achievements: newAchievements.map((a) => a.achievementId),
   };
@@ -106,9 +115,9 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
       winnerSets: data.winnerSets,
       loserSets: data.loserSets,
       setScores: setScoresStr,
-      eloBeforeWinner: winner.elo_rating,
+      eloBeforeWinner: winnerMember.elo_rating,
       eloAfterWinner: eloResult.winnerNewRating,
-      eloBeforeLoser: loser.elo_rating,
+      eloBeforeLoser: loserMember.elo_rating,
       eloAfterLoser: eloResult.loserNewRating,
       change: eloResult.change,
     });

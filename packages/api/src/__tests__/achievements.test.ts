@@ -33,7 +33,9 @@ describe("achievements routes", () => {
       const alice = await createPlayer({ display_name: "Alice" });
       await addToGroup(group.id, alice.id);
       const season = await createSeason({ group_id: group.id, name: "S1", is_active: true });
-      const match = await createMatch({ group_id: group.id, season_id: season.id, winner_id: alice.id, loser_id: (await createPlayer({ display_name: "Bob" })).id });
+      const bob = await createPlayer({ display_name: "Bob" });
+      await addToGroup(group.id, bob.id);
+      const match = await createMatch({ group_id: group.id, season_id: season.id, winner_id: alice.id, loser_id: bob.id });
 
       const sql = getSql();
       const defs = await sql<{ id: string }[]>`SELECT id FROM achievement_definitions LIMIT 1`;

@@ -30,10 +30,10 @@ describe("GET /api/g/:slug/leaderboard", () => {
 
   it("returns players sorted by elo", async () => {
     const group = await createGroup({ slug: "test-lb2" });
-    const p1 = await createPlayer({ display_name: "Alice", elo_rating: 1100, games_played: 5, wins: 3, losses: 2 });
-    const p2 = await createPlayer({ display_name: "Bob", elo_rating: 1200, games_played: 5, wins: 4, losses: 1 });
-    await addToGroup(group.id, p1.id);
-    await addToGroup(group.id, p2.id);
+    const p1 = await createPlayer({ display_name: "Alice" });
+    const p2 = await createPlayer({ display_name: "Bob" });
+    await addToGroup(group.id, p1.id, { elo_rating: 1100, games_played: 5, wins: 3, losses: 2 });
+    await addToGroup(group.id, p2.id, { elo_rating: 1200, games_played: 5, wins: 4, losses: 1 });
 
     const res = await get("/api/g/test-lb2/leaderboard");
     expect(res.status).toBe(200);
@@ -47,8 +47,8 @@ describe("GET /api/g/:slug/leaderboard", () => {
 
   it("returns season snapshots when ?season=id", async () => {
     const group = await createGroup({ slug: "test-lb3" });
-    const p1 = await createPlayer({ display_name: "Carol", elo_rating: 1300, games_played: 10, wins: 7, losses: 3 });
-    await addToGroup(group.id, p1.id);
+    const p1 = await createPlayer({ display_name: "Carol" });
+    await addToGroup(group.id, p1.id, { elo_rating: 1300, games_played: 10, wins: 7, losses: 3 });
 
     const season = await createSeason({ group_id: group.id, name: "Season 1" });
     const sql = getSql();

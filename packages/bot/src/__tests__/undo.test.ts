@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getConnection, playerQueries, achievementQueries } from "@smashrank/db";
+import { getConnection, playerQueries, achievementQueries, groupQueries } from "@smashrank/db";
 import { createTestBot, sendMessage, lastReply, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
@@ -40,17 +40,21 @@ describe("/undo", () => {
     expect(reply).toContain("Alice");
     expect(reply).toContain("Bob");
 
-    // Verify ELO restored
+    // Verify ELO restored via group_members
     const sql = getConnection();
     const players = playerQueries(sql);
+    const groups = groupQueries(sql);
     const alice = await players.findByTelegramId(100);
     const bob = await players.findByTelegramId(200);
-    expect(alice!.elo_rating).toBe(1000);
-    expect(alice!.wins).toBe(0);
-    expect(alice!.games_played).toBe(0);
-    expect(bob!.elo_rating).toBe(1000);
-    expect(bob!.losses).toBe(0);
-    expect(bob!.games_played).toBe(0);
+    const group = await groups.findByChatId(-1001);
+    const aliceMember = await groups.getGroupMember(group!.id, alice!.id);
+    const bobMember = await groups.getGroupMember(group!.id, bob!.id);
+    expect(aliceMember!.elo_rating).toBe(1200);
+    expect(aliceMember!.wins).toBe(0);
+    expect(aliceMember!.games_played).toBe(0);
+    expect(bobMember!.elo_rating).toBe(1200);
+    expect(bobMember!.losses).toBe(0);
+    expect(bobMember!.games_played).toBe(0);
   });
 
   it("undoes achievements from the match", async () => {

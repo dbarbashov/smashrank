@@ -41,7 +41,9 @@ export function PlayerProfile() {
     ? [
         { date: t("player.start"), elo: 1000 },
         ...eloHistory.map((e) => ({
-          date: new Date(e.played_at).toLocaleDateString(),
+          date: new Date(e.played_at).toLocaleString(undefined, {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+          }),
           elo: e.elo_after,
         })),
       ]

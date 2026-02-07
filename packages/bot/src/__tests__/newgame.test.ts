@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getConnection, playerQueries } from "@smashrank/db";
+import { getConnection, playerQueries, groupQueries } from "@smashrank/db";
 import { createTestBot, sendMessage, sendCallback, lastReply, getSentMessages, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
@@ -69,8 +69,11 @@ describe("/newgame", () => {
     expect(reply).toContain("Bob");
 
     // Verify match recorded in DB — alice now has 2 wins (1 setup + 1 newgame)
+    const groups = groupQueries(sql);
+    const group = await groups.findByChatId(-1001);
     const aliceAfter = await players.findByTelegramId(100);
-    expect(aliceAfter!.wins).toBe(2);
+    const aliceMember = await groups.getGroupMember(group!.id, aliceAfter!.id);
+    expect(aliceMember!.wins).toBe(2);
   });
 
   it("shows no_opponents when no prior matches", async () => {

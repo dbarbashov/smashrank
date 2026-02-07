@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getConnection, playerQueries, tournamentQueries, achievementQueries } from "@smashrank/db";
+import { getConnection, playerQueries, tournamentQueries, achievementQueries, groupQueries } from "@smashrank/db";
 import { createTestBot, sendMessage, lastReply, getSentMessages, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
@@ -385,11 +385,14 @@ describe("/tgame", () => {
     expect(reply).toContain("beat");
     expect(reply).toContain("Remaining fixtures: 2");
 
-    // Verify DB: alice won
+    // Verify DB: alice won (group-scoped stats)
     const sql = getConnection();
     const alice = await playerQueries(sql).findByTelegramId(100);
-    expect(alice!.wins).toBe(1);
-    expect(alice!.elo_rating).toBeGreaterThan(1000);
+    const groups = groupQueries(sql);
+    const group = await groups.findByChatId(-1001);
+    const aliceMember = await groups.getGroupMember(group!.id, alice!.id);
+    expect(aliceMember!.wins).toBe(1);
+    expect(aliceMember!.elo_rating).toBeGreaterThan(1200);
 
     // Check standings
     const tournament = await sql`SELECT * FROM tournaments WHERE status = 'active'`;
@@ -433,9 +436,12 @@ describe("/tgame", () => {
       }
     }
 
-    // Streaks should be reset to 0
-    const alice = await playerQueries(sql).findByTelegramId(100);
-    expect(alice!.current_streak).toBe(0);
+    // Streaks should be reset to 0 (group-scoped)
+    const groups2 = groupQueries(sql);
+    const grp = await groups2.findByChatId(-1001);
+    const alicePlayer = await playerQueries(sql).findByTelegramId(100);
+    const aliceMbr = await groups2.getGroupMember(grp!.id, alicePlayer!.id);
+    expect(aliceMbr!.current_streak).toBe(0);
   });
 
   it("prevents duplicate fixture play", async () => {
@@ -596,15 +602,19 @@ describe("/tgame", () => {
     expect(reply).toContain("beat");
     expect(reply).toContain("Alice");
 
-    // Verify DB: Bob won
+    // Verify DB: Bob won (group-scoped stats)
     const sql = getConnection();
+    const groups = groupQueries(sql);
+    const group = await groups.findByChatId(-1001);
     const bob = await playerQueries(sql).findByTelegramId(200);
-    expect(bob!.wins).toBe(1);
-    expect(bob!.elo_rating).toBeGreaterThan(1000);
+    const bobMember = await groups.getGroupMember(group!.id, bob!.id);
+    expect(bobMember!.wins).toBe(1);
+    expect(bobMember!.elo_rating).toBeGreaterThan(1200);
 
     const alice = await playerQueries(sql).findByTelegramId(100);
-    expect(alice!.losses).toBe(1);
-    expect(alice!.elo_rating).toBeLessThan(1000);
+    const aliceMember = await groups.getGroupMember(group!.id, alice!.id);
+    expect(aliceMember!.losses).toBe(1);
+    expect(aliceMember!.elo_rating).toBeLessThan(1200);
   });
 
   it("records a draw with set count only", async () => {

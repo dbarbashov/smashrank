@@ -72,9 +72,11 @@ export function tournamentQueries(sql: SqlLike) {
 
     async getParticipants(tournamentId: string): Promise<(TournamentParticipant & { display_name: string; elo_rating: number })[]> {
       return sql<(TournamentParticipant & { display_name: string; elo_rating: number })[]>`
-        SELECT tp.*, p.display_name, p.elo_rating
+        SELECT tp.*, p.display_name, gm.elo_rating
         FROM tournament_participants tp
         JOIN players p ON p.id = tp.player_id
+        JOIN tournaments t ON t.id = tp.tournament_id
+        JOIN group_members gm ON gm.player_id = tp.player_id AND gm.group_id = t.group_id
         WHERE tp.tournament_id = ${tournamentId}
         ORDER BY tp.joined_at ASC
       `;
@@ -110,11 +112,13 @@ export function tournamentQueries(sql: SqlLike) {
 
     async getStandings(tournamentId: string): Promise<(TournamentStanding & { display_name: string; elo_rating: number })[]> {
       return sql<(TournamentStanding & { display_name: string; elo_rating: number })[]>`
-        SELECT ts.*, p.display_name, p.elo_rating
+        SELECT ts.*, p.display_name, gm.elo_rating
         FROM tournament_standings ts
         JOIN players p ON p.id = ts.player_id
+        JOIN tournaments t ON t.id = ts.tournament_id
+        JOIN group_members gm ON gm.player_id = ts.player_id AND gm.group_id = t.group_id
         WHERE ts.tournament_id = ${tournamentId}
-        ORDER BY ts.points DESC, (ts.sets_won - ts.sets_lost) DESC, p.elo_rating DESC
+        ORDER BY ts.points DESC, (ts.sets_won - ts.sets_lost) DESC, gm.elo_rating DESC
       `;
     },
 

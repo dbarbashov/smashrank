@@ -19,6 +19,7 @@
   "game.result_with_sets": "{{winner}} beat {{loser}} {{winnerSets}}-{{loserSets}} ({{setScores}})\n{{winner}}: {{eloBeforeWinner}} \u2192 {{eloAfterWinner}} (+{{change}})\n{{loser}}: {{eloBeforeLoser}} \u2192 {{eloAfterLoser}} (-{{change}})",
   "game.cooldown": "You just logged a match with this player. Wait a couple minutes.",
   "game.player_not_found": "Player @{{username}} not found. They need to /start first.",
+  "game.not_group_member": "Player @{{username}} is not a member of this group.",
   "error.self_play": "You can't play against yourself.",
   "error.no_opponent": "Please mention your opponent: /game @username scores",
   "error.no_scores": "Please provide the score: /game @username 11-7 11-5",

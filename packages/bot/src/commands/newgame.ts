@@ -152,7 +152,7 @@ export async function processNewgameScore(ctx: SmashRankContext): Promise<boolea
       })
     : null;
 
-  const { eloResult, winnerStreak, newAchievements } = await recordMatch({
+  const { eloResult, winnerStreak, newAchievements, winnerMember, loserMember } = await recordMatch({
     group: ctx.group,
     winner,
     loser,
@@ -170,18 +170,18 @@ export async function processNewgameScore(ctx: SmashRankContext): Promise<boolea
   const commentaryContext: MatchCommentaryContext = {
     winner: {
       name: winner.display_name,
-      elo_before: winner.elo_rating,
+      elo_before: winnerMember.elo_rating,
       elo_after: eloResult.winnerNewRating,
     },
     loser: {
       name: loser.display_name,
-      elo_before: loser.elo_rating,
+      elo_before: loserMember.elo_rating,
       elo_after: eloResult.loserNewRating,
     },
     set_scores: setScoresStr ?? `${data.winnerSets}-${data.loserSets}`,
     elo_change: eloResult.change,
-    is_upset: loser.elo_rating > winner.elo_rating,
-    elo_gap: Math.abs(winner.elo_rating - loser.elo_rating),
+    is_upset: loserMember.elo_rating > winnerMember.elo_rating,
+    elo_gap: Math.abs(winnerMember.elo_rating - loserMember.elo_rating),
     winner_streak: winnerStreak.currentStreak,
     achievements: newAchievements.map((a) => a.achievementId),
   };
@@ -203,9 +203,9 @@ export async function processNewgameScore(ctx: SmashRankContext): Promise<boolea
       winnerSets: data.winnerSets,
       loserSets: data.loserSets,
       setScores: setScoresStr,
-      eloBeforeWinner: winner.elo_rating,
+      eloBeforeWinner: winnerMember.elo_rating,
       eloAfterWinner: eloResult.winnerNewRating,
-      eloBeforeLoser: loser.elo_rating,
+      eloBeforeLoser: loserMember.elo_rating,
       eloAfterLoser: eloResult.loserNewRating,
       change: eloResult.change,
     });

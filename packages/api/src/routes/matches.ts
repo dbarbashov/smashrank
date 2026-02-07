@@ -11,12 +11,16 @@ matchesRoutes.get("/", async (c) => {
   const offset = parseInt(c.req.query("offset") ?? "0", 10);
   const matchType = c.req.query("type");
   const playerId = c.req.query("player");
+  const seasonId = c.req.query("season");
+  const tournamentId = c.req.query("tournament");
 
   const matches = await matchQueries(sql).listByGroup(group.id, {
     limit,
     offset,
     matchType: matchType || undefined,
     playerId: playerId || undefined,
+    seasonId: seasonId || undefined,
+    tournamentId: tournamentId || undefined,
   });
   return c.json(matches);
 });

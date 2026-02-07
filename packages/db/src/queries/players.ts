@@ -40,52 +40,6 @@ export function playerQueries(sql: SqlLike) {
       return rows[0];
     },
 
-    async updateElo(
-      id: string,
-      eloRating: number,
-      won: boolean,
-      currentStreak: number,
-      bestStreak: number,
-    ): Promise<void> {
-      if (won) {
-        await sql`
-          UPDATE players SET
-            elo_rating = ${eloRating},
-            games_played = games_played + 1,
-            wins = wins + 1,
-            current_streak = ${currentStreak},
-            best_streak = ${bestStreak},
-            last_active = NOW()
-          WHERE id = ${id}
-        `;
-      } else {
-        await sql`
-          UPDATE players SET
-            elo_rating = ${eloRating},
-            games_played = games_played + 1,
-            losses = losses + 1,
-            current_streak = ${currentStreak},
-            best_streak = ${bestStreak},
-            last_active = NOW()
-          WHERE id = ${id}
-        `;
-      }
-    },
-
-    async updateEloForDraw(
-      id: string,
-      eloRating: number,
-    ): Promise<void> {
-      await sql`
-        UPDATE players SET
-          elo_rating = ${eloRating},
-          games_played = games_played + 1,
-          current_streak = 0,
-          last_active = NOW()
-        WHERE id = ${id}
-      `;
-    },
-
     async updateLanguage(id: string, language: string): Promise<void> {
       await sql`UPDATE players SET language = ${language} WHERE id = ${id}`;
     },

@@ -11,6 +11,7 @@ export type {
   Player,
   Group,
   GroupMember,
+  GroupMemberWithPlayer,
   Season,
   Match,
   SeasonSnapshot,

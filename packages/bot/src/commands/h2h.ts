@@ -2,6 +2,7 @@ import {
   getConnection,
   playerQueries,
   matchQueries,
+  groupQueries,
 } from "@smashrank/db";
 import type { SmashRankContext } from "../context.js";
 
@@ -22,6 +23,7 @@ export async function h2hCommand(ctx: SmashRankContext): Promise<void> {
   const sql = getConnection();
   const players = playerQueries(sql);
   const matches = matchQueries(sql);
+  const groups = groupQueries(sql);
 
   const opponent = await players.findByUsername(opponentUsername);
   if (!opponent) {
@@ -31,6 +33,13 @@ export async function h2hCommand(ctx: SmashRankContext): Promise<void> {
 
   if (opponent.id === ctx.player.id) {
     await ctx.reply(ctx.t("error.self_play"));
+    return;
+  }
+
+  // Check opponent is a member of this group
+  const opponentIsMember = await groups.isMember(ctx.group.id, opponent.id);
+  if (!opponentIsMember) {
+    await ctx.reply(ctx.t("game.not_group_member", { username: opponentUsername }));
     return;
   }
 
