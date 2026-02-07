@@ -16,7 +16,7 @@ export async function setup(): Promise<void> {
     throw new Error("TEST_DATABASE_URL or DATABASE_URL must be set for E2E tests");
   }
 
-  const sql = postgres(url);
+  const sql = postgres(url, { onnotice: () => {} });
 
   // Drop all tables first so migrations are idempotent
   await sql.unsafe(`
