@@ -3,6 +3,32 @@ import type { AchievementDefinition, PlayerAchievement } from "../types.js";
 
 export function achievementQueries(sql: SqlLike) {
   return {
+    async listDefinitions(): Promise<AchievementDefinition[]> {
+      return sql<AchievementDefinition[]>`
+        SELECT * FROM achievement_definitions ORDER BY id ASC
+      `;
+    },
+
+    async listRecent(
+      groupId: string,
+      limit: number = 10,
+    ): Promise<(PlayerAchievement & { player_name: string; achievement_name: string; emoji: string })[]> {
+      return sql<(PlayerAchievement & { player_name: string; achievement_name: string; emoji: string })[]>`
+        SELECT
+          pa.*,
+          p.display_name AS player_name,
+          ad.name AS achievement_name,
+          ad.emoji
+        FROM player_achievements pa
+        JOIN players p ON p.id = pa.player_id
+        JOIN achievement_definitions ad ON ad.id = pa.achievement_id
+        JOIN matches m ON m.id = pa.match_id
+        WHERE m.group_id = ${groupId}
+        ORDER BY pa.unlocked_at DESC
+        LIMIT ${limit}
+      `;
+    },
+
     async getPlayerAchievementIds(playerId: string): Promise<string[]> {
       const rows = await sql<{ achievement_id: string }[]>`
         SELECT achievement_id FROM player_achievements

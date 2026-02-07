@@ -44,6 +44,121 @@ export function matchQueries(sql: SqlLike) {
       return rows[0];
     },
 
+    async findById(
+      matchId: string,
+    ): Promise<
+      | (Match & { winner_name: string; loser_name: string })
+      | undefined
+    > {
+      const rows = await sql<(Match & { winner_name: string; loser_name: string })[]>`
+        SELECT
+          m.*,
+          w.display_name AS winner_name,
+          l.display_name AS loser_name
+        FROM matches m
+        JOIN players w ON w.id = m.winner_id
+        JOIN players l ON l.id = m.loser_id
+        WHERE m.id = ${matchId}
+        LIMIT 1
+      `;
+      return rows[0];
+    },
+
+    async listByGroup(
+      groupId: string,
+      opts: { limit?: number; offset?: number; matchType?: string; playerId?: string } = {},
+    ): Promise<(Match & { winner_name: string; loser_name: string })[]> {
+      const limit = opts.limit ?? 20;
+      const offset = opts.offset ?? 0;
+
+      if (opts.matchType && opts.playerId) {
+        return sql<(Match & { winner_name: string; loser_name: string })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+          FROM matches m
+          JOIN players w ON w.id = m.winner_id
+          JOIN players l ON l.id = m.loser_id
+          WHERE m.group_id = ${groupId}
+            AND m.match_type = ${opts.matchType}
+            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId})
+          ORDER BY m.played_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      }
+
+      if (opts.matchType) {
+        return sql<(Match & { winner_name: string; loser_name: string })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+          FROM matches m
+          JOIN players w ON w.id = m.winner_id
+          JOIN players l ON l.id = m.loser_id
+          WHERE m.group_id = ${groupId} AND m.match_type = ${opts.matchType}
+          ORDER BY m.played_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      }
+
+      if (opts.playerId) {
+        return sql<(Match & { winner_name: string; loser_name: string })[]>`
+          SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+          FROM matches m
+          JOIN players w ON w.id = m.winner_id
+          JOIN players l ON l.id = m.loser_id
+          WHERE m.group_id = ${groupId}
+            AND (m.winner_id = ${opts.playerId} OR m.loser_id = ${opts.playerId})
+          ORDER BY m.played_at DESC
+          LIMIT ${limit} OFFSET ${offset}
+        `;
+      }
+
+      return sql<(Match & { winner_name: string; loser_name: string })[]>`
+        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+        FROM matches m
+        JOIN players w ON w.id = m.winner_id
+        JOIN players l ON l.id = m.loser_id
+        WHERE m.group_id = ${groupId}
+        ORDER BY m.played_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    },
+
+    async listByPlayer(
+      playerId: string,
+      groupId: string,
+      opts: { limit?: number; offset?: number } = {},
+    ): Promise<(Match & { winner_name: string; loser_name: string })[]> {
+      const limit = opts.limit ?? 20;
+      const offset = opts.offset ?? 0;
+      return sql<(Match & { winner_name: string; loser_name: string })[]>`
+        SELECT m.*, w.display_name AS winner_name, l.display_name AS loser_name
+        FROM matches m
+        JOIN players w ON w.id = m.winner_id
+        JOIN players l ON l.id = m.loser_id
+        WHERE m.group_id = ${groupId}
+          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId})
+        ORDER BY m.played_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    },
+
+    async getEloHistory(
+      playerId: string,
+      groupId: string,
+    ): Promise<{ played_at: Date; elo_after: number; match_id: string }[]> {
+      return sql<{ played_at: Date; elo_after: number; match_id: string }[]>`
+        SELECT
+          m.played_at,
+          m.id AS match_id,
+          CASE
+            WHEN m.winner_id = ${playerId} THEN m.elo_before_winner + m.elo_change
+            ELSE m.elo_before_loser - m.elo_change
+          END AS elo_after
+        FROM matches m
+        WHERE m.group_id = ${groupId}
+          AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId})
+        ORDER BY m.played_at ASC
+      `;
+    },
+
     async findRecentBetweenPlayers(
       playerA: string,
       playerB: string,
@@ -67,22 +182,26 @@ export function matchQueries(sql: SqlLike) {
       limit: number = 20,
     ): Promise<
       {
+        id: string;
         display_name: string;
         elo_rating: number;
         games_played: number;
         wins: number;
         losses: number;
         current_streak: number;
+        best_streak: number;
       }[]
     > {
       return sql`
         SELECT
+          p.id,
           p.display_name,
           p.elo_rating,
           p.games_played,
           p.wins,
           p.losses,
-          p.current_streak
+          p.current_streak,
+          p.best_streak
         FROM players p
         JOIN group_members gm ON gm.player_id = p.id
         WHERE gm.group_id = ${groupId} AND p.games_played > 0

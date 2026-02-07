@@ -1,8 +1,35 @@
 import type { SqlLike } from "../sql-type.js";
-import type { Season } from "../types.js";
+import type { Season, SeasonSnapshot } from "../types.js";
 
 export function seasonQueries(sql: SqlLike) {
   return {
+    async findById(seasonId: string): Promise<Season | undefined> {
+      const rows = await sql<Season[]>`
+        SELECT * FROM seasons WHERE id = ${seasonId} LIMIT 1
+      `;
+      return rows[0];
+    },
+
+    async listByGroup(groupId: string): Promise<Season[]> {
+      return sql<Season[]>`
+        SELECT * FROM seasons
+        WHERE group_id = ${groupId}
+        ORDER BY start_date DESC
+      `;
+    },
+
+    async getSnapshots(
+      seasonId: string,
+    ): Promise<(SeasonSnapshot & { display_name: string })[]> {
+      return sql<(SeasonSnapshot & { display_name: string })[]>`
+        SELECT ss.*, p.display_name
+        FROM season_snapshots ss
+        JOIN players p ON p.id = ss.player_id
+        WHERE ss.season_id = ${seasonId}
+        ORDER BY ss.final_rank ASC
+      `;
+    },
+
     async findActive(groupId: string): Promise<Season | undefined> {
       const rows = await sql<Season[]>`
         SELECT * FROM seasons

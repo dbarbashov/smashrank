@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/db" },
     { "path": "packages/core" },
-    { "path": "packages/bot" }
+    { "path": "packages/bot" },
+    { "path": "packages/api" }
   ]
 }

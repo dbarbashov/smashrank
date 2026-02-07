@@ -11,6 +11,13 @@ export function groupQueries(sql: SqlLike) {
       return rows[0];
     },
 
+    async findBySlug(slug: string): Promise<Group | undefined> {
+      const rows = await sql<Group[]>`
+        SELECT * FROM groups WHERE slug = ${slug} LIMIT 1
+      `;
+      return rows[0];
+    },
+
     async create(data: {
       chat_id: number;
       name: string | null;

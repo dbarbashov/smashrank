@@ -15,6 +15,34 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/api:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.14.0
+        version: 1.19.9(hono@4.11.8)
+      '@smashrank/db':
+        specifier: workspace:*
+        version: link:../db
+      hono:
+        specifier: ^4.7.0
+        version: 4.11.8
+    devDependencies:
+      '@types/node':
+        specifier: ^25.2.1
+        version: 25.2.1
+      postgres:
+        specifier: ^3.4.8
+        version: 3.4.8
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.1)(tsx@4.21.0)
+
   packages/bot:
     dependencies:
       '@smashrank/core':
@@ -239,6 +267,12 @@ packages:
 
   '@grammyjs/types@3.23.0':
     resolution: {integrity: sha512-D3jQ4UWERPsyR3op/YFudMMIPNTU47vy7L51uO9/73tMELmjO/+LX5N36/Y0CG5IQfIsz43MxiHI5rgsK0/k+g==}
+
+  '@hono/node-server@1.19.9':
+    resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -494,6 +528,10 @@ packages:
   grammy@1.39.3:
     resolution: {integrity: sha512-7arRRoOtOh9UwMwANZ475kJrWV6P3/EGNooeHlY0/SwZv4t3ZZ3Uiz9cAXK8Zg9xSdgmm8T21kx6n7SZaWvOcw==}
     engines: {node: ^12.20.0 || >=14.13.1}
+
+  hono@4.11.8:
+    resolution: {integrity: sha512-eVkB/CYCCei7K2WElZW9yYQFWssG0DhaDhVvr7wy5jJ22K+ck8fWW0EsLpB0sITUTvPnc97+rrbQqIr5iqiy9Q==}
+    engines: {node: '>=16.9.0'}
 
   i18next@24.2.3:
     resolution: {integrity: sha512-lfbf80OzkocvX7nmZtu7nSTNbrTYR52sLWxPtlXX1zAhVw8WEnFk4puUkCR4B1dNQwbSpEHHHemcZu//7EcB7A==}
@@ -781,6 +819,10 @@ snapshots:
 
   '@grammyjs/types@3.23.0': {}
 
+  '@hono/node-server@1.19.9(hono@4.11.8)':
+    dependencies:
+      hono: 4.11.8
+
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@rollup/rollup-android-arm-eabi@4.57.1':
@@ -996,6 +1038,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  hono@4.11.8: {}
 
   i18next@24.2.3(typescript@5.9.3):
     dependencies:
