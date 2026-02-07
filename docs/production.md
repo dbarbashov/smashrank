@@ -6,11 +6,11 @@ This guide covers deploying SmashRank on a single server using Docker Compose wi
 
 ```
                     ┌─────────────┐
-  Telegram ◄───────►│     bot     │──────►┐
+  Telegram <───────>│     bot     │──────>┐
                     └─────────────┘       │
-                                          ▼
+                                          v
                     ┌─────────────┐  ┌──────────┐
-  Browser ◄────────►│  api + web  │──►│ postgres │
+  Browser <────────>│  api + web  │──>│ postgres │
                     └──────┬──────┘  └──────────┘
                            │
                      port 3000
@@ -49,19 +49,40 @@ curl -LO https://raw.githubusercontent.com/dbarbashov/smashrank/main/docker-comp
 
 ```bash
 cat > .env << 'EOF'
+# Required
 POSTGRES_PASSWORD=change-me-to-a-strong-password
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+
+# Optional
 DEFAULT_LANG=en
 API_PORT=3000
+WEB_URL=https://smashrank.example.com
+
+# Optional — LLM-powered match/digest commentary
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=google/gemini-2.0-flash-001
 EOF
 ```
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `POSTGRES_PASSWORD` | Yes | — | Password for the PostgreSQL database |
-| `TELEGRAM_BOT_TOKEN` | Yes | — | Token from @BotFather |
-| `DEFAULT_LANG` | No | `en` | Default language (`en` or `ru`) |
-| `API_PORT` | No | `3000` | Host port for the web dashboard |
+### Environment Variables
+
+| Variable | Required | Default | Service | Description |
+|----------|----------|---------|---------|-------------|
+| `POSTGRES_PASSWORD` | Yes | — | postgres | Password for the PostgreSQL database |
+| `TELEGRAM_BOT_TOKEN` | Yes | — | bot | Token from [@BotFather](https://t.me/BotFather) |
+| `DEFAULT_LANG` | No | `en` | bot | Default language for new groups (`en` or `ru`) |
+| `API_PORT` | No | `3000` | api | Host port for the web dashboard |
+| `WEB_URL` | No | — | bot | Public URL of the web dashboard. Enables the `/web` bot command that links users to the dashboard (e.g. `https://smashrank.example.com`) |
+| `OPENROUTER_API_KEY` | No | — | bot | [OpenRouter](https://openrouter.ai) API key. Enables LLM-generated match commentary and weekly digest commentary |
+| `OPENROUTER_MODEL` | No | `google/gemini-2.0-flash-001` | bot | LLM model to use for commentary |
+
+The following are set automatically by `docker-compose.prod.yml` and should **not** be added to `.env`:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `DATABASE_URL` | `postgres://smashrank:$POSTGRES_PASSWORD@postgres:5432/smashrank` | Built from `POSTGRES_PASSWORD` |
+| `PORT` | `3000` | API server listen port inside the container |
+| `STATIC_DIR` | `./packages/web/dist` | Tells the API to serve the web SPA |
 
 ### 3. Start everything
 
@@ -137,6 +158,8 @@ server {
 }
 ```
 
+If you set up a reverse proxy with a public URL, set `WEB_URL` in `.env` to that URL so the bot's `/web` command links users correctly.
+
 ## Backup & Restore
 
 The PostgreSQL data lives in a Docker volume called `pgdata`.
@@ -167,6 +190,13 @@ The migrate service exits after running. Check its logs for SQL errors.
 
 **Web dashboard shows "Group not found":**
 The dashboard URL must include a valid group slug (e.g., `http://localhost:3000/g/my-group`). The group is created automatically the first time someone uses the bot in a Telegram group.
+
+**LLM commentary not working:**
+Check that `OPENROUTER_API_KEY` is set in `.env` and the bot container has it:
+```bash
+docker compose -f docker-compose.prod.yml exec bot printenv OPENROUTER_API_KEY
+```
+Commentary is optional — if the key is missing, the bot works normally without it.
 
 **Reset everything:**
 ```bash
