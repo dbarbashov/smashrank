@@ -39,7 +39,7 @@ export function PlayerProfile() {
 
   const chartData = eloHistory
     ? [
-        { date: t("player.start"), elo: 1000 },
+        { date: t("player.start"), elo: 1200 },
         ...eloHistory.map((e) => ({
           date: new Date(e.played_at).toLocaleString(undefined, {
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
@@ -138,7 +138,7 @@ export function PlayerProfile() {
         ) : (
           <div className="flex flex-col gap-2">
             {matches.slice(0, 10).map((m) => (
-              <MatchCard key={m.id} match={m} />
+              <MatchCard key={m.id} match={m} perspectivePlayerId={id} />
             ))}
           </div>
         )}

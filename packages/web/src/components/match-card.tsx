@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { PlayerLink } from "./player-link.js";
 import type { Match } from "../types.js";
 
-export function MatchCard({ match }: { match: Match }) {
+export function MatchCard({ match, perspectivePlayerId }: { match: Match; perspectivePlayerId?: string }) {
   const { t } = useTranslation();
   const date = new Date(match.played_at).toLocaleString(undefined, {
     day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
@@ -57,9 +57,15 @@ export function MatchCard({ match }: { match: Match }) {
         {sets && (
           <span className="text-xs text-gray-400">({sets})</span>
         )}
-        <span className={match.elo_change >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-          {match.elo_change >= 0 ? "+" : ""}{match.elo_change}
-        </span>
+        {(() => {
+          const isLoser = perspectivePlayerId && (match.loser_id === perspectivePlayerId || match.loser_partner_id === perspectivePlayerId);
+          const displayChange = isLoser ? -match.elo_change : match.elo_change;
+          return (
+            <span className={displayChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+              {displayChange >= 0 ? "+" : ""}{displayChange}
+            </span>
+          );
+        })()}
       </div>
     </div>
   );
