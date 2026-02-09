@@ -27,6 +27,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/core/package.json packages/core/
 COPY packages/bot/package.json packages/bot/
 COPY packages/api/package.json packages/api/
+COPY packages/web/package.json packages/web/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /app/packages/db/dist packages/db/dist
