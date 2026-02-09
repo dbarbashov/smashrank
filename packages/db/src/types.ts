@@ -6,6 +6,8 @@ export interface Player {
   registered_at: Date;
   last_active: Date | null;
   language: string;
+  avatar_file_id: string | null;
+  avatar_updated_at: Date | null;
 }
 
 export interface Group {

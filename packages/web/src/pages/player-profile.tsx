@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LineChart,
@@ -13,10 +13,12 @@ import {
   useEloHistory,
   usePlayerMatches,
   usePlayerAchievements,
+  usePlayerOpponents,
 } from "../api/queries.js";
 import { EloBadge } from "../components/elo-badge.js";
 import { StreakBadge } from "../components/streak-badge.js";
 import { MatchCard } from "../components/match-card.js";
+import { Avatar } from "../components/avatar.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
 
@@ -28,6 +30,7 @@ export function PlayerProfile() {
   const { data: eloHistory } = useEloHistory(slug!, id!);
   const { data: matchPages } = usePlayerMatches(slug!, id!);
   const { data: achievements } = usePlayerAchievements(slug!, id!);
+  const { data: opponents } = usePlayerOpponents(slug!, id!);
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
@@ -53,7 +56,10 @@ export function PlayerProfile() {
     <div className="space-y-6">
       {/* Header */}
       <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-        <h2 className="text-xl font-bold">{player.display_name}</h2>
+        <div className="flex items-center gap-3">
+          <Avatar playerId={player.id} name={player.display_name} size="lg" />
+          <h2 className="text-xl font-bold">{player.display_name}</h2>
+        </div>
         {player.rank && (
           <p className="text-sm text-gray-500">
             {t("player.rank", { rank: player.rank })} {t("common.of")}{" "}
@@ -125,6 +131,30 @@ export function PlayerProfile() {
               >
                 {a.emoji} {t(`achievementDefs.${a.achievement_id}.name`, a.name)}
               </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Frequent Opponents */}
+      {opponents && opponents.length > 0 && (
+        <div>
+          <h3 className="mb-2 font-semibold">{t("player.frequentOpponents")}</h3>
+          <div className="flex flex-col gap-1">
+            {opponents.map((opp) => (
+              <Link
+                key={opp.id}
+                to={`/g/${slug}/player/${id}/h2h/${opp.id}`}
+                className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                <div className="flex items-center gap-2">
+                  <Avatar playerId={opp.id} name={opp.display_name} size="sm" />
+                  <span className="font-medium">{opp.display_name}</span>
+                </div>
+                <span className="text-sm text-gray-500 tabular-nums">
+                  {opp.wins}W-{opp.losses}L ({opp.match_count})
+                </span>
+              </Link>
             ))}
           </div>
         </div>

@@ -4,18 +4,23 @@ import {
   groupQueries,
   digestQueries,
   tournamentQueries,
+  matchupQueries,
 } from "@smashrank/db";
 import {
   getT,
   generateDigestCommentary,
   formatDigestFallback,
+  generateMatchupCommentary,
 } from "@smashrank/core";
 import type { DigestData } from "@smashrank/core";
 import type { SmashRankContext } from "./context.js";
 import { forceCompleteTournament } from "./helpers/force-complete-tournament.js";
+import { cleanupExpiredChallenges } from "./commands/challenge.js";
 
 const DIGEST_INTERVAL_MS = 60_000; // Check every 60 seconds
 const lastDigestSent = new Map<string, number>(); // groupId → timestamp
+const lastMatchupSent = new Map<string, number>(); // groupId → timestamp
+const MATCHUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function getDigestIntervalMs(digest: string): number {
   if (digest === "daily") return 24 * 60 * 60 * 1000;
@@ -112,6 +117,75 @@ async function checkStaleTournaments(bot: Bot<SmashRankContext>): Promise<void> 
   }
 }
 
+async function checkAndSendMatchups(bot: Bot<SmashRankContext>): Promise<void> {
+  try {
+    const sql = getConnection();
+    const groups = groupQueries(sql);
+    const matchup = matchupQueries(sql);
+
+    const eligibleGroups = await groups.getAllGroupsWithMatchup();
+
+    for (const group of eligibleGroups) {
+      const lastSent = lastMatchupSent.get(group.id) ?? 0;
+      const now = Date.now();
+
+      if (now - lastSent < MATCHUP_INTERVAL_MS) continue;
+
+      const candidates = await matchup.getMatchupCandidates(group.id);
+      if (candidates.length === 0) {
+        lastMatchupSent.set(group.id, now);
+        continue;
+      }
+
+      // Pick randomly from top 3 closest-ELO candidates
+      const top = candidates.slice(0, Math.min(3, candidates.length));
+      const pick = top[Math.floor(Math.random() * top.length)];
+
+      const lang = group.language ?? "en";
+      const t = getT(lang);
+
+      const llmMessage = await generateMatchupCommentary(
+        {
+          player1: { name: pick.player1_name, elo: pick.player1_elo },
+          player2: { name: pick.player2_name, elo: pick.player2_elo },
+          h2h: pick.h2h_total > 0
+            ? { wins1: pick.h2h_p1_wins, wins2: pick.h2h_p2_wins, total: pick.h2h_total }
+            : undefined,
+        },
+        lang,
+      );
+
+      let message: string;
+      if (llmMessage) {
+        message = llmMessage;
+      } else {
+        message = t("matchup.title") + "\n\n"
+          + t("matchup.vs", { player1: pick.player1_name, player2: pick.player2_name }) + "\n"
+          + t("matchup.elo", { elo1: pick.player1_elo, elo2: pick.player2_elo });
+        if (pick.h2h_total > 0) {
+          message += "\n" + t("matchup.h2h", {
+            wins1: pick.h2h_p1_wins,
+            wins2: pick.h2h_p2_wins,
+            total: pick.h2h_total,
+          });
+        } else {
+          message += "\n" + t("matchup.no_h2h");
+        }
+      }
+
+      try {
+        await bot.api.sendMessage(group.chat_id, message);
+      } catch {
+        // Group might have kicked the bot
+      }
+
+      lastMatchupSent.set(group.id, now);
+    }
+  } catch (err) {
+    console.error("Matchup scheduler error:", err);
+  }
+}
+
 export function startScheduler(bot: Bot<SmashRankContext>): void {
   setInterval(() => {
     checkAndSendDigests(bot).catch((err) =>
@@ -120,6 +194,10 @@ export function startScheduler(bot: Bot<SmashRankContext>): void {
     checkStaleTournaments(bot).catch((err) =>
       console.error("Tournament stale check error:", err),
     );
+    checkAndSendMatchups(bot).catch((err) =>
+      console.error("Matchup scheduler error:", err),
+    );
+    cleanupExpiredChallenges();
   }, DIGEST_INTERVAL_MS);
-  console.log("Digest scheduler started.");
+  console.log("Scheduler started.");
 }

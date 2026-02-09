@@ -7,6 +7,8 @@ export { achievementQueries } from "./queries/achievements.js";
 export { digestQueries } from "./queries/digest.js";
 export type { WeeklyStats } from "./queries/digest.js";
 export { tournamentQueries } from "./queries/tournaments.js";
+export { matchupQueries } from "./queries/matchup.js";
+export type { MatchupCandidate } from "./queries/matchup.js";
 export type {
   Player,
   Group,

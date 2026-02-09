@@ -30,7 +30,14 @@
     "recentMatches": "Recent Matches",
     "achievements": "Achievements",
     "noAchievements": "No achievements earned yet",
-    "noMatches": "No matches played yet"
+    "noMatches": "No matches played yet",
+    "frequentOpponents": "Frequent Opponents"
+  },
+  "h2h": {
+    "totalMatches": "{{count}} matches",
+    "currentStreak": "{{name}} on a {{count}}-game winning streak",
+    "eloComparison": "ELO Comparison",
+    "recentMatches": "Recent Matches"
   },
   "matches": {
     "title": "Match History",

@@ -15,6 +15,8 @@ import type {
   WeeklyStats,
   TournamentSummary,
   TournamentDetail,
+  H2HData,
+  OpponentEntry,
 } from "../types.js";
 
 export function useGroupInfo(slug: string) {
@@ -144,5 +146,22 @@ export function useTournamentDetail(slug: string, tournamentId: string) {
     queryKey: ["tournament", slug, tournamentId],
     queryFn: () => apiFetch<TournamentDetail>(`/${slug}/tournaments/${tournamentId}`),
     enabled: !!tournamentId,
+  });
+}
+
+export function useH2H(slug: string, playerId: string, otherId: string) {
+  return useQuery({
+    queryKey: ["h2h", slug, playerId, otherId],
+    queryFn: () =>
+      apiFetch<H2HData>(`/${slug}/players/${playerId}/h2h/${otherId}`),
+    enabled: !!playerId && !!otherId,
+  });
+}
+
+export function usePlayerOpponents(slug: string, playerId: string) {
+  return useQuery({
+    queryKey: ["player-opponents", slug, playerId],
+    queryFn: () =>
+      apiFetch<OpponentEntry[]>(`/${slug}/players/${playerId}/opponents`),
   });
 }

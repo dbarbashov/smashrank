@@ -21,6 +21,7 @@ export interface PlayerProfile {
   telegram_id: string;
   telegram_username: string | null;
   display_name: string;
+  avatar_file_id: string | null;
   elo_rating: number;
   games_played: number;
   wins: number;
@@ -165,4 +166,24 @@ export interface TournamentDetail {
   participants: { player_id: string; display_name: string; elo_rating: number }[];
   standings: TournamentStanding[];
   fixtures: TournamentFixture[];
+}
+
+export interface H2HData {
+  totalMatches: number;
+  winsA: number;
+  winsB: number;
+  recent: Match[];
+  playerA: { id: string; display_name: string; elo_rating: number } | null;
+  playerB: { id: string; display_name: string; elo_rating: number } | null;
+  eloHistoryA: EloHistoryEntry[];
+  eloHistoryB: EloHistoryEntry[];
+  currentStreak: { playerId: string; count: number } | null;
+}
+
+export interface OpponentEntry {
+  id: string;
+  display_name: string;
+  match_count: number;
+  wins: number;
+  losses: number;
 }

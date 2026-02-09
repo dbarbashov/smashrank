@@ -1,0 +1,153 @@
+import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { useH2H } from "../api/queries.js";
+import { Avatar } from "../components/avatar.js";
+import { H2HBar } from "../components/h2h-bar.js";
+import { EloBadge } from "../components/elo-badge.js";
+import { MatchCard } from "../components/match-card.js";
+import { Loading } from "../components/loading.js";
+import { ErrorMessage } from "../components/error-message.js";
+
+export function H2HPage() {
+  const { slug, id, otherId } = useParams<{
+    slug: string;
+    id: string;
+    otherId: string;
+  }>();
+  const { t } = useTranslation();
+
+  const { data, isLoading, error } = useH2H(slug!, id!, otherId!);
+
+  if (isLoading) return <Loading />;
+  if (error) return <ErrorMessage message={error.message} />;
+  if (!data) return null;
+
+  const { playerA, playerB, winsA, winsB, totalMatches, recent, eloHistoryA, eloHistoryB, currentStreak } = data;
+
+  // Build dual ELO chart data
+  const allDates = new Map<string, { eloA?: number; eloB?: number }>();
+  for (const e of eloHistoryA) {
+    const key = e.played_at;
+    const existing = allDates.get(key) ?? {};
+    existing.eloA = e.elo_after;
+    allDates.set(key, existing);
+  }
+  for (const e of eloHistoryB) {
+    const key = e.played_at;
+    const existing = allDates.get(key) ?? {};
+    existing.eloB = e.elo_after;
+    allDates.set(key, existing);
+  }
+
+  const sortedKeys = [...allDates.keys()].sort();
+  let lastA = 1200;
+  let lastB = 1200;
+  const chartData = sortedKeys.map((key) => {
+    const entry = allDates.get(key)!;
+    if (entry.eloA !== undefined) lastA = entry.eloA;
+    if (entry.eloB !== undefined) lastB = entry.eloB;
+    return {
+      date: new Date(key).toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+      }),
+      [playerA?.display_name ?? "Player A"]: lastA,
+      [playerB?.display_name ?? "Player B"]: lastB,
+    };
+  });
+
+  const nameA = playerA?.display_name ?? "Player A";
+  const nameB = playerB?.display_name ?? "Player B";
+
+  return (
+    <div className="space-y-6">
+      {/* Header with avatars */}
+      <div className="flex items-center justify-center gap-6">
+        <div className="flex flex-col items-center gap-1">
+          {playerA && <Avatar playerId={playerA.id} name={nameA} size="lg" />}
+          <span className="font-semibold">{nameA}</span>
+          {playerA && <EloBadge elo={playerA.elo_rating} />}
+        </div>
+        <span className="text-2xl font-bold text-gray-400">vs</span>
+        <div className="flex flex-col items-center gap-1">
+          {playerB && <Avatar playerId={playerB.id} name={nameB} size="lg" />}
+          <span className="font-semibold">{nameB}</span>
+          {playerB && <EloBadge elo={playerB.elo_rating} />}
+        </div>
+      </div>
+
+      {/* Record summary */}
+      <div className="rounded-lg border border-gray-200 p-4 text-center dark:border-gray-700">
+        <div className="text-lg font-bold tabular-nums">
+          {winsA} - {winsB}
+        </div>
+        <div className="text-sm text-gray-500">
+          {t("h2h.totalMatches", { count: totalMatches })}
+        </div>
+        {currentStreak && currentStreak.count > 1 && (
+          <div className="mt-1 text-sm text-gray-500">
+            {t("h2h.currentStreak", {
+              name: currentStreak.playerId === id ? nameA : nameB,
+              count: currentStreak.count,
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Win distribution bar */}
+      {totalMatches > 0 && (
+        <H2HBar winsA={winsA} winsB={winsB} nameA={nameA} nameB={nameB} />
+      )}
+
+      {/* Dual ELO chart */}
+      {chartData.length > 1 && (
+        <div>
+          <h3 className="mb-2 font-semibold">{t("h2h.eloComparison")}</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={chartData}>
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey={nameA}
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey={nameB}
+                stroke="#ef4444"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Recent matches */}
+      {recent.length > 0 && (
+        <div>
+          <h3 className="mb-2 font-semibold">{t("h2h.recentMatches")}</h3>
+          <div className="flex flex-col gap-2">
+            {recent.map((m) => (
+              <MatchCard key={m.id} match={m} perspectivePlayerId={id} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

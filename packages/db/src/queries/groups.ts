@@ -131,5 +131,12 @@ export function groupQueries(sql: SqlLike) {
           AND settings->>'digest' != 'off'
       `;
     },
+
+    async getAllGroupsWithMatchup(): Promise<Group[]> {
+      return sql<Group[]>`
+        SELECT * FROM groups
+        WHERE settings->>'matchup_of_day' = 'on'
+      `;
+    },
   };
 }

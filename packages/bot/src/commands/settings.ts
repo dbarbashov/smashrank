@@ -8,6 +8,7 @@ const VALID_KEYS: Record<string, string[]> = {
   commentary: ["on", "off"],
   achievements: ["on", "off"],
   digest: ["daily", "weekly", "off"],
+  matchup_of_day: ["on", "off"],
 };
 
 export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
@@ -38,14 +39,15 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
   if (!args[0] || args.length < 2) {
     if (!args[0]) {
       const settings = ctx.group.settings ?? {};
-      await ctx.reply(ctx.t("settings.current", {
+      await ctx.reply(ctx.t("settings.current_with_matchup", {
         commentary: settings.commentary !== false ? "on" : "off",
         achievements: settings.achievements !== false ? "on" : "off",
         digest: (settings.digest as string) ?? "off",
+        matchup_of_day: (settings.matchup_of_day as string) === "on" ? "on" : "off",
       }));
       return;
     }
-    await ctx.reply(ctx.t("settings.usage"));
+    await ctx.reply(ctx.t("settings.usage_with_matchup"));
     return;
   }
 
@@ -61,7 +63,7 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
   const groups = groupQueries(sql);
 
   let settingValue: unknown;
-  if (key === "digest") {
+  if (key === "digest" || key === "matchup_of_day") {
     settingValue = value;
   } else {
     settingValue = value === "on";

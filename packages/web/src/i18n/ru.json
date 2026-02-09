@@ -30,7 +30,14 @@
     "recentMatches": "Последние матчи",
     "achievements": "Достижения",
     "noAchievements": "Пока нет достижений",
-    "noMatches": "Пока нет матчей"
+    "noMatches": "Пока нет матчей",
+    "frequentOpponents": "Частые соперники"
+  },
+  "h2h": {
+    "totalMatches": "{{count}} матчей",
+    "currentStreak": "{{name}}: серия из {{count}} побед",
+    "eloComparison": "Сравнение ELO",
+    "recentMatches": "Последние матчи"
   },
   "matches": {
     "title": "История матчей",

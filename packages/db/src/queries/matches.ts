@@ -379,6 +379,33 @@ export function matchQueries(sql: SqlLike) {
       return count;
     },
 
+    async getFrequentOpponents(
+      playerId: string,
+      groupId: string,
+      limit: number = 5,
+    ): Promise<{ id: string; display_name: string; match_count: number; wins: number; losses: number }[]> {
+      return sql<{ id: string; display_name: string; match_count: number; wins: number; losses: number }[]>`
+        SELECT
+          opponent_id AS id,
+          p.display_name,
+          COUNT(*)::int AS match_count,
+          COUNT(*) FILTER (WHERE winner_id = ${playerId})::int AS wins,
+          COUNT(*) FILTER (WHERE loser_id = ${playerId})::int AS losses
+        FROM (
+          SELECT
+            CASE WHEN winner_id = ${playerId} THEN loser_id ELSE winner_id END AS opponent_id,
+            winner_id, loser_id
+          FROM matches
+          WHERE group_id = ${groupId}
+            AND (winner_id = ${playerId} OR loser_id = ${playerId})
+        ) sub
+        JOIN players p ON p.id = sub.opponent_id
+        GROUP BY opponent_id, p.display_name
+        ORDER BY match_count DESC
+        LIMIT ${limit}
+      `;
+    },
+
     async getRecentOpponents(
       playerId: string,
       groupId: string,

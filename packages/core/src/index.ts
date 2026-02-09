@@ -26,3 +26,9 @@ export type { DoublesEloInput, DoublesEloResult } from "./doubles.js";
 
 export { generateFixtures, sortStandings } from "./tournaments.js";
 export type { Standing, Fixture } from "./tournaments.js";
+
+export { generateChallengeCommentary } from "./challenge-llm.js";
+export type { ChallengeCommentaryContext } from "./challenge-llm.js";
+
+export { generateMatchupCommentary } from "./matchup-llm.js";
+export type { MatchupCommentaryContext } from "./matchup-llm.js";

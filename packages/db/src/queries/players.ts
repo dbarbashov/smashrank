@@ -43,5 +43,9 @@ export function playerQueries(sql: SqlLike) {
     async updateLanguage(id: string, language: string): Promise<void> {
       await sql`UPDATE players SET language = ${language} WHERE id = ${id}`;
     },
+
+    async updateAvatar(id: string, fileId: string): Promise<void> {
+      await sql`UPDATE players SET avatar_file_id = ${fileId}, avatar_updated_at = NOW() WHERE id = ${id}`;
+    },
   };
 }

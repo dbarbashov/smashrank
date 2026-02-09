@@ -8,6 +8,7 @@ import { Seasons } from "./pages/seasons.js";
 import { SeasonDetailPage } from "./pages/season-detail.js";
 import { Tournaments } from "./pages/tournaments.js";
 import { TournamentDetailPage } from "./pages/tournament-detail.js";
+import { H2HPage } from "./pages/h2h.js";
 import { NotFound } from "./pages/not-found.js";
 
 const router = createBrowserRouter([
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Leaderboard /> },
       { path: "player/:id", element: <PlayerProfile /> },
+      { path: "player/:id/h2h/:otherId", element: <H2HPage /> },
       { path: "matches", element: <MatchHistory /> },
       { path: "achievements", element: <Achievements /> },
       { path: "seasons", element: <Seasons /> },

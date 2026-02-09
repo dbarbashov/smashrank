@@ -22,6 +22,7 @@ import { listAchievementsCommand } from "./commands/list-achievements.js";
 import { webCommand } from "./commands/web.js";
 import { tournamentCommand } from "./commands/tournament.js";
 import { tgameCommand } from "./commands/tgame.js";
+import { challengeCommand, challengeCallbackHandler, processChallengeScore } from "./commands/challenge.js";
 import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
@@ -46,7 +47,8 @@ async function main(): Promise<void> {
   // so plain text messages aren't dropped by grammY's composer chain)
   bot.use(async (ctx, next) => {
     if (ctx.message?.text && !ctx.message.text.startsWith("/")) {
-      const handled = await processNewgameScore(ctx as SmashRankContext)
+      const handled = await processChallengeScore(ctx as SmashRankContext)
+        || await processNewgameScore(ctx as SmashRankContext)
         || await processNewdoublesScore(ctx as SmashRankContext);
       if (handled) return;
     }
@@ -72,6 +74,7 @@ async function main(): Promise<void> {
   bot.command("web", webCommand);
   bot.command("tournament", tournamentCommand);
   bot.command("tgame", tgameCommand);
+  bot.command("challenge", challengeCommand);
 
   // Callback query handler for inline keyboards
   bot.on("callback_query:data", async (ctx) => {
@@ -80,6 +83,8 @@ async function main(): Promise<void> {
       await newgameCallbackHandler(ctx as SmashRankContext);
     } else if (data.startsWith("nd:")) {
       await newdoublesCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("ch:")) {
+      await challengeCallbackHandler(ctx as SmashRankContext);
     }
   });
 

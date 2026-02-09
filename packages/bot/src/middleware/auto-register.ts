@@ -30,6 +30,24 @@ export async function autoRegister(
       language: defaultLang,
     });
   }
+  // Update avatar if missing or stale (>24h)
+  const avatarStale = !player.avatar_updated_at
+    || (Date.now() - new Date(player.avatar_updated_at).getTime()) > 24 * 60 * 60 * 1000;
+  if (avatarStale) {
+    try {
+      const photos = await ctx.api.getUserProfilePhotos(from.id, { limit: 1 });
+      if (photos.total_count > 0 && photos.photos[0]?.[0]) {
+        const fileId = photos.photos[0][0].file_id;
+        if (fileId !== player.avatar_file_id) {
+          await players.updateAvatar(player.id, fileId);
+          player = { ...player, avatar_file_id: fileId, avatar_updated_at: new Date() };
+        }
+      }
+    } catch {
+      // Non-critical — ignore avatar fetch failures
+    }
+  }
+
   ctx.player = player;
 
   // Handle group context
