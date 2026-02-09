@@ -19,6 +19,14 @@ const ACHIEVEMENT_EMOJI: Record<string, string> = {
   tournament_undefeated: "\u{1F6E1}\uFE0F",
   tournament_ironman: "\u2699\uFE0F",
   draw_master: "\u{1F91D}",
+  free_fall: "\u{1F4C9}",
+  rock_bottom: "\u{1FAA8}",
+  punching_bag: "\u{1F94A}",
+  upset_victim: "\u{1F921}",
+  humbled: "\u{1F636}",
+  bottled_it: "\u{1FAE3}",
+  glass_cannon: "\u{1F4A5}",
+  doormat: "\u{1F9FD}",
 };
 
 export function formatAchievementUnlocks(
