@@ -17,6 +17,8 @@ function baseContext(overrides: Partial<AchievementContext> = {}): AchievementCo
     winnerRank: 3,
     winnerExistingAchievements: [],
     loserExistingAchievements: [],
+    loserStreak: -1,
+    loserConsecutiveLossesVsWinner: 1,
     ...overrides,
   };
 }
@@ -162,5 +164,121 @@ describe("evaluateAchievements", () => {
     expect(ids(result)).toContain("giant_killer");
     expect(ids(result)).toContain("comeback_kid");
     expect(ids(result)).toContain("newcomer_threat");
+  });
+
+  // --- Negative (shame) achievements ---
+
+  it("grants free_fall at 5 loss streak", () => {
+    const result = evaluateAchievements(baseContext({ loserStreak: -5 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("free_fall");
+  });
+
+  it("does not grant free_fall at -4 loss streak", () => {
+    const result = evaluateAchievements(baseContext({ loserStreak: -4 }));
+    expect(ids(result)).not.toContain("free_fall");
+  });
+
+  it("grants rock_bottom at 10 loss streak (and free_fall)", () => {
+    const result = evaluateAchievements(baseContext({ loserStreak: -10 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    const loserIds = loserGrants.map((r) => r.achievementId);
+    expect(loserIds).toContain("rock_bottom");
+    expect(loserIds).toContain("free_fall");
+  });
+
+  it("does not grant rock_bottom at -9 loss streak", () => {
+    const result = evaluateAchievements(baseContext({ loserStreak: -9 }));
+    expect(ids(result)).not.toContain("rock_bottom");
+  });
+
+  it("grants punching_bag when loser is 200+ ELO above winner", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 1000 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("punching_bag");
+  });
+
+  it("does not grant punching_bag at 199 ELO gap", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 999 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("punching_bag");
+  });
+
+  it("grants humbled on 0-11 set loss", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 11, l: 0 }, { w: 11, l: 5 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("humbled");
+  });
+
+  it("does not grant humbled on 11-1", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 11, l: 1 }, { w: 11, l: 5 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("humbled");
+  });
+
+  it("grants bottled_it when loser won first set of 3-set match", () => {
+    // setScores oriented from winner perspective: w < l means winner lost first set => loser won first set
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 9, l: 11 }, { w: 11, l: 7 }, { w: 11, l: 8 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("bottled_it");
+  });
+
+  it("does not grant bottled_it when loser lost first set", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 11, l: 9 }, { w: 7, l: 11 }, { w: 11, l: 8 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("bottled_it");
+  });
+
+  it("does not grant bottled_it on 2-set match", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 9, l: 11 }, { w: 11, l: 7 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("bottled_it");
+  });
+
+  it("grants glass_cannon when loser blanked winner in a set but lost match", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 0, l: 11 }, { w: 11, l: 5 }, { w: 11, l: 3 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("glass_cannon");
+  });
+
+  it("does not grant glass_cannon when loser scored in all sets", () => {
+    const result = evaluateAchievements(baseContext({
+      setScores: [{ w: 1, l: 11 }, { w: 11, l: 5 }, { w: 11, l: 3 }],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("glass_cannon");
+  });
+
+  it("grants doormat at 5 consecutive losses to same opponent", () => {
+    const result = evaluateAchievements(baseContext({ loserConsecutiveLossesVsWinner: 5 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("doormat");
+  });
+
+  it("does not grant doormat at 4 consecutive losses", () => {
+    const result = evaluateAchievements(baseContext({ loserConsecutiveLossesVsWinner: 4 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("doormat");
+  });
+
+  it("skips already-earned negative achievements", () => {
+    const result = evaluateAchievements(baseContext({
+      loserStreak: -5,
+      loserExistingAchievements: ["free_fall"],
+    }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("free_fall");
   });
 });

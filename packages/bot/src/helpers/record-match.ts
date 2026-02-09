@@ -112,11 +112,12 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
 
     // Evaluate and persist achievements
     if (achievementsEnabled) {
-      const [winnerExisting, loserExisting, matchCount, rankData] = await Promise.all([
+      const [winnerExisting, loserExisting, matchCount, rankData, consecutiveWins] = await Promise.all([
         txAchievements.getPlayerAchievementIds(input.winner.id, input.group.id),
         txAchievements.getPlayerAchievementIds(input.loser.id, input.group.id),
         txMatches.countMatchesBetween(input.winner.id, input.loser.id, input.group.id),
         txMatches.getPlayerStats(input.winner.id, input.group.id),
+        txMatches.getConsecutiveWinsAgainst(input.winner.id, input.loser.id, input.group.id),
       ]);
 
       newAchievements = evaluateAchievements({
@@ -134,6 +135,8 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
         winnerRank: rankData?.rank ?? null,
         winnerExistingAchievements: winnerExisting,
         loserExistingAchievements: loserExisting,
+        loserStreak: loserStreak.currentStreak,
+        loserConsecutiveLossesVsWinner: consecutiveWins,
       });
 
       if (newAchievements.length > 0) {

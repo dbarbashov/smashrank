@@ -67,7 +67,14 @@
     "tournament_champion": { "name": "Tournament Champion", "desc": "Win a tournament" },
     "tournament_undefeated": { "name": "Undefeated", "desc": "Complete a tournament without a loss" },
     "tournament_ironman": { "name": "Tournament Iron Man", "desc": "Play all fixtures in a tournament" },
-    "draw_master": { "name": "Draw Master", "desc": "Draw 3+ matches in a single tournament" }
+    "draw_master": { "name": "Draw Master", "desc": "Draw 3+ matches in a single tournament" },
+    "free_fall": { "name": "Free Fall", "desc": "Lose 5 matches in a row" },
+    "rock_bottom": { "name": "Rock Bottom", "desc": "Lose 10 matches in a row" },
+    "punching_bag": { "name": "Punching Bag", "desc": "Lose to a player 200+ ELO below you" },
+    "humbled": { "name": "Humbled", "desc": "Lose a set 0-11" },
+    "bottled_it": { "name": "Bottled It", "desc": "Lose a 3-set match after winning the first set" },
+    "glass_cannon": { "name": "Glass Cannon", "desc": "Win a set 11-0 but lose the match" },
+    "doormat": { "name": "Doormat", "desc": "Lose to the same opponent 5 times in a row" }
   },
   "seasons": {
     "title": "Seasons",

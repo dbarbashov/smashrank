@@ -356,6 +356,29 @@ export function matchQueries(sql: SqlLike) {
       return parseInt(rows[0].count, 10);
     },
 
+    async getConsecutiveWinsAgainst(
+      winnerId: string,
+      loserId: string,
+      groupId: string,
+    ): Promise<number> {
+      const rows = await sql<{ winner_id: string }[]>`
+        SELECT winner_id FROM matches
+        WHERE group_id = ${groupId}
+          AND ((winner_id = ${winnerId} AND loser_id = ${loserId})
+            OR (winner_id = ${loserId} AND loser_id = ${winnerId}))
+        ORDER BY played_at DESC
+      `;
+      let count = 0;
+      for (const row of rows) {
+        if (row.winner_id === winnerId) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      return count;
+    },
+
     async getRecentOpponents(
       playerId: string,
       groupId: string,

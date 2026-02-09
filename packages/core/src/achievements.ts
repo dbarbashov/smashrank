@@ -22,6 +22,10 @@ export interface AchievementContext {
   winnerExistingAchievements: string[];
   /** Achievement IDs the loser already has */
   loserExistingAchievements: string[];
+  /** Loser's streak AFTER this match (negative = loss streak) */
+  loserStreak: number;
+  /** How many consecutive recent matches between these two the current loser lost */
+  loserConsecutiveLossesVsWinner: number;
 }
 
 export interface AchievementUnlock {
@@ -118,6 +122,56 @@ export function evaluateAchievements(ctx: AchievementContext): AchievementUnlock
   // newcomer_threat: Win 5 of your first 10 games
   if (ctx.winnerGamesPlayed <= 10 && ctx.winnerWins >= 5) {
     grant("newcomer_threat", ctx.winnerId);
+  }
+
+  // --- Negative (shame) achievements ---
+
+  // free_fall: Lose 5 in a row
+  if (ctx.loserStreak <= -5) {
+    grant("free_fall", ctx.loserId);
+  }
+
+  // rock_bottom: Lose 10 in a row
+  if (ctx.loserStreak <= -10) {
+    grant("rock_bottom", ctx.loserId);
+  }
+
+  // punching_bag: Lose to player 200+ ELO below you
+  if (ctx.loserElo - ctx.winnerElo >= 200) {
+    grant("punching_bag", ctx.loserId);
+  }
+
+  // humbled: Lose a set 0-11
+  if (ctx.setScores) {
+    for (const s of ctx.setScores) {
+      if (s.w >= 11 && s.l === 0) {
+        grant("humbled", ctx.loserId);
+        break;
+      }
+    }
+  }
+
+  // bottled_it: Lose 3-set match after winning 1st set
+  if (ctx.setScores && ctx.setScores.length >= 3) {
+    const firstSet = ctx.setScores[0];
+    if (firstSet.w < firstSet.l) {
+      grant("bottled_it", ctx.loserId);
+    }
+  }
+
+  // glass_cannon: Win a set 11-0 but lose the match
+  if (ctx.setScores) {
+    for (const s of ctx.setScores) {
+      if (s.l >= 11 && s.w === 0) {
+        grant("glass_cannon", ctx.loserId);
+        break;
+      }
+    }
+  }
+
+  // doormat: Lose to same opponent 5 times in a row
+  if (ctx.loserConsecutiveLossesVsWinner >= 5) {
+    grant("doormat", ctx.loserId);
   }
 
   return unlocks;
