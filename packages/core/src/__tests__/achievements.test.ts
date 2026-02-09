@@ -192,16 +192,28 @@ describe("evaluateAchievements", () => {
     expect(ids(result)).not.toContain("rock_bottom");
   });
 
-  it("grants punching_bag when loser is 200+ ELO above winner", () => {
-    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 1000 }));
+  it("grants punching_bag when loser is 200+ ELO below winner", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 1200, loserElo: 1000 }));
     const loserGrants = result.filter((r) => r.playerId === "loser-1");
     expect(loserGrants.map((r) => r.achievementId)).toContain("punching_bag");
   });
 
-  it("does not grant punching_bag at 199 ELO gap", () => {
-    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 999 }));
+  it("does not grant punching_bag at 199 ELO gap (winner above)", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 1199, loserElo: 1000 }));
     const loserGrants = result.filter((r) => r.playerId === "loser-1");
     expect(loserGrants.map((r) => r.achievementId)).not.toContain("punching_bag");
+  });
+
+  it("grants upset_victim when loser is 200+ ELO above winner", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 1000 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).toContain("upset_victim");
+  });
+
+  it("does not grant upset_victim at 199 ELO gap (loser above)", () => {
+    const result = evaluateAchievements(baseContext({ winnerElo: 800, loserElo: 999 }));
+    const loserGrants = result.filter((r) => r.playerId === "loser-1");
+    expect(loserGrants.map((r) => r.achievementId)).not.toContain("upset_victim");
   });
 
   it("grants humbled on 0-11 set loss", () => {

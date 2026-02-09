@@ -136,9 +136,14 @@ export function evaluateAchievements(ctx: AchievementContext): AchievementUnlock
     grant("rock_bottom", ctx.loserId);
   }
 
-  // punching_bag: Lose to player 200+ ELO below you
-  if (ctx.loserElo - ctx.winnerElo >= 200) {
+  // punching_bag: Lose to player 200+ ELO above you
+  if (ctx.winnerElo - ctx.loserElo >= 200) {
     grant("punching_bag", ctx.loserId);
+  }
+
+  // upset_victim: Lose to player 200+ ELO below you
+  if (ctx.loserElo - ctx.winnerElo >= 200) {
+    grant("upset_victim", ctx.loserId);
   }
 
   // humbled: Lose a set 0-11
