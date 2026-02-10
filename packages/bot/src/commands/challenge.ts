@@ -93,7 +93,7 @@ export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
     challengerTelegramId: ctx.from!.id,
     challengerName: ctx.player.display_name,
     challengedId: opponent.id,
-    challengedTelegramId: opponent.telegram_id,
+    challengedTelegramId: Number(opponent.telegram_id),
     challengedName: opponent.display_name,
     groupId: ctx.group.id,
     chatId: ctx.chat!.id,

@@ -17,6 +17,10 @@ import { doublesCommand } from "../commands/doubles.js";
 import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } from "../commands/newdoubles.js";
 import { tournamentCommand } from "../commands/tournament.js";
 import { tgameCommand } from "../commands/tgame.js";
+import { challengeCommand, challengeCallbackHandler, processChallengeScore } from "../commands/challenge.js";
+import { matchesCommand } from "../commands/matches.js";
+import { listAchievementsCommand } from "../commands/list-achievements.js";
+import { webCommand } from "../commands/web.js";
 
 export interface CapturedCall {
   method: string;
@@ -82,6 +86,16 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
       return Promise.resolve({ ok: true, result: true });
     }
 
+    if (method === "getUserProfilePhotos") {
+      return Promise.resolve({
+        ok: true,
+        result: {
+          total_count: 1,
+          photos: [[{ file_id: "test_avatar_file_id", file_unique_id: "test_unique", width: 100, height: 100 }]],
+        },
+      });
+    }
+
     if (method === "getChatMember") {
       return Promise.resolve({
         ok: true,
@@ -102,7 +116,8 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
 
   bot.use(async (ctx, next) => {
     if (ctx.message?.text && !ctx.message.text.startsWith("/")) {
-      const handled = await processNewgameScore(ctx as SmashRankContext)
+      const handled = await processChallengeScore(ctx as SmashRankContext)
+        || await processNewgameScore(ctx as SmashRankContext)
         || await processNewdoublesScore(ctx as SmashRankContext);
       if (handled) return;
     }
@@ -124,6 +139,10 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
   bot.command("newdoubles", newdoublesCommand);
   bot.command("tournament", tournamentCommand);
   bot.command("tgame", tgameCommand);
+  bot.command("challenge", challengeCommand);
+  bot.command("matches", matchesCommand);
+  bot.command("listachievements", listAchievementsCommand);
+  bot.command("web", webCommand);
 
   bot.on("callback_query:data", async (ctx) => {
     const data = ctx.callbackQuery.data;
@@ -131,6 +150,8 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
       await newgameCallbackHandler(ctx as SmashRankContext);
     } else if (data.startsWith("nd:")) {
       await newdoublesCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("ch:")) {
+      await challengeCallbackHandler(ctx as SmashRankContext);
     }
   });
 
@@ -236,4 +257,17 @@ export function getSentMessages(calls: CapturedCall[]): { text: string; chatId: 
 export function lastReply(calls: CapturedCall[]): string {
   const messages = getSentMessages(calls);
   return messages[messages.length - 1]?.text ?? "";
+}
+
+/** Filter captured calls for editMessageText responses */
+export function getEditedMessages(calls: CapturedCall[]): { text: string }[] {
+  return calls
+    .filter((c) => c.method === "editMessageText")
+    .map((c) => ({ text: c.payload.text as string }));
+}
+
+/** Get last editMessageText text */
+export function lastEdit(calls: CapturedCall[]): string {
+  const edits = getEditedMessages(calls);
+  return edits[edits.length - 1]?.text ?? "";
 }

@@ -19,7 +19,7 @@ describe("/settings", () => {
     calls.length = 0;
   }
 
-  it("shows current default settings", async () => {
+  it("shows current default settings including matchup_of_day", async () => {
     await registerPlayer(100, "alice", "Alice");
 
     await sendMessage(bot, { text: "/settings", userId: 100, username: "alice", displayName: "Alice" });
@@ -27,6 +27,7 @@ describe("/settings", () => {
     expect(reply).toContain("Commentary: on");
     expect(reply).toContain("Achievements: on");
     expect(reply).toContain("Digest: off");
+    expect(reply).toContain("Matchup of the Day: off");
   });
 
   it("updates commentary setting", async () => {
@@ -78,6 +79,25 @@ describe("/settings", () => {
     await sendMessage(bot, { text: "/achievements", userId: 100, username: "alice", displayName: "Alice" });
     const achReply = lastReply(calls);
     expect(achReply).toContain("no achievements");
+  });
+
+  it("updates matchup_of_day setting", async () => {
+    await registerPlayer(100, "alice", "Alice");
+
+    await sendMessage(bot, {
+      text: "/settings matchup_of_day on",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    let reply = lastReply(calls);
+    expect(reply).toContain("updated");
+    calls.length = 0;
+
+    // Verify the change persisted
+    await sendMessage(bot, { text: "/settings", userId: 100, username: "alice", displayName: "Alice" });
+    reply = lastReply(calls);
+    expect(reply).toContain("Matchup of the Day: on");
   });
 
   it("shows group_only error in private chat", async () => {

@@ -117,6 +117,33 @@ export async function createSeason(data: {
   return rows[0];
 }
 
+export async function createTournament(data: {
+  group_id: string;
+  name: string;
+  status?: "open" | "active" | "completed";
+  created_by: string;
+}): Promise<{ id: string }> {
+  const rows = await sql<{ id: string }[]>`
+    INSERT INTO tournaments (group_id, name, status, created_by)
+    VALUES (${data.group_id}, ${data.name}, ${data.status ?? "open"}, ${data.created_by})
+    RETURNING id
+  `;
+  return rows[0];
+}
+
+export async function addTournamentParticipant(tournamentId: string, playerId: string): Promise<void> {
+  await sql`
+    INSERT INTO tournament_participants (tournament_id, player_id)
+    VALUES (${tournamentId}, ${playerId})
+    ON CONFLICT DO NOTHING
+  `;
+  await sql`
+    INSERT INTO tournament_standings (tournament_id, player_id)
+    VALUES (${tournamentId}, ${playerId})
+    ON CONFLICT DO NOTHING
+  `;
+}
+
 export async function createMatch(data: {
   group_id: string;
   season_id: string;
