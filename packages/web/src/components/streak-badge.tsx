@@ -3,7 +3,7 @@ export function StreakBadge({ streak }: { streak: number }) {
 
   if (streak > 0) {
     return (
-      <span className="text-orange-500" title={`${streak}W streak`}>
+      <span className="text-green-500" title={`${streak}W streak`}>
         {streak >= 5 ? "\u{1F525}" : "\u{1F53A}"} {streak}
       </span>
     );
