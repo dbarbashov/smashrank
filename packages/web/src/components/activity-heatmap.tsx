@@ -35,15 +35,17 @@ export function ActivityHeatmap({
     let sum = 0;
     if (data) {
       for (const entry of data) {
-        lookup.set(entry.date, entry.count);
+        // Normalize: handle both "YYYY-MM-DD" and "YYYY-MM-DDT..." ISO strings
+        const dateKey = String(entry.date).slice(0, 10);
+        lookup.set(dateKey, (lookup.get(dateKey) ?? 0) + entry.count);
         sum += entry.count;
       }
     }
 
     const today = new Date();
+    // Start at Sunday, (WEEKS-1) weeks before the current week's Sunday
     const start = new Date(today);
-    start.setDate(start.getDate() - (WEEKS * 7 - 1));
-    start.setDate(start.getDate() - start.getDay());
+    start.setDate(today.getDate() - today.getDay() - (WEEKS - 1) * 7);
 
     const cells: { date: string; count: number; col: number; row: number }[] = [];
     const months: { label: string; col: number }[] = [];
