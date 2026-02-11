@@ -55,7 +55,7 @@ export function ActivityHeatmap({
         cellDate.setDate(start.getDate() + w * 7 + d);
         if (cellDate > today) continue;
 
-        const key = cellDate.toISOString().slice(0, 10);
+        const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
         cells.push({ date: key, count: lookup.get(key) ?? 0, col: w, row: d });
 
         const m = cellDate.getMonth();
