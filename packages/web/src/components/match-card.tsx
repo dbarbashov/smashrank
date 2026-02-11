@@ -40,7 +40,7 @@ export function MatchCard({ match, perspectivePlayerId }: { match: Match; perspe
             />
           </>
         )}
-        <span className="text-gray-500">{t("matches.beat")}</span>
+        <span className="text-gray-500">{match.winner_partner_name ? t("matches.beat_doubles") : t("matches.beat")}</span>
         <PlayerLink id={match.loser_id} name={match.loser_name} />
         {match.loser_partner_name && (
           <>

@@ -110,6 +110,7 @@
   "matches_cmd.title": "Последние матчи",
   "matches_cmd.empty": "Ещё ни одной игры. Начни с /game!",
   "matches_cmd.beat": "победил",
+  "matches_cmd.beat_doubles": "победили",
   "matches_cmd.singles": "Одиночный",
   "matches_cmd.doubles": "Парный",
   "web.link": "Статистика группы онлайн:\n<a href=\"{{url}}\">{{url}}</a>",

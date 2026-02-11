@@ -52,6 +52,7 @@
     "doubles": "Парные",
     "tournament": "Турнир",
     "beat": "победил",
+    "beat_doubles": "победили",
     "loadMore": "Загрузить ещё",
     "noMatches": "Матчи не найдены",
     "eloChange": "+{{change}}"

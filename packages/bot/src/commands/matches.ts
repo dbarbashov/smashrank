@@ -32,7 +32,8 @@ export async function matchesCommand(ctx: SmashRankContext): Promise<void> {
     const type = isDoubles ? ctx.t("matches_cmd.doubles") : ctx.t("matches_cmd.singles");
     const score = `${m.winner_score}-${m.loser_score}`;
     const date = new Date(m.played_at).toLocaleDateString();
-    lines.push(`[${type}] ${winner} ${ctx.t("matches_cmd.beat")} ${loser} ${score} (+${m.elo_change}) — ${date}`);
+    const beat = isDoubles ? ctx.t("matches_cmd.beat_doubles") : ctx.t("matches_cmd.beat");
+    lines.push(`[${type}] ${winner} ${beat} ${loser} ${score} (+${m.elo_change}) — ${date}`);
   }
 
   await ctx.reply(lines.join("\n"));

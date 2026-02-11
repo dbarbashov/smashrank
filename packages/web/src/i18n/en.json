@@ -52,6 +52,7 @@
     "doubles": "Doubles",
     "tournament": "Tournament",
     "beat": "beat",
+    "beat_doubles": "beat",
     "loadMore": "Load More",
     "noMatches": "No matches found",
     "eloChange": "+{{change}}"

@@ -94,6 +94,7 @@
   "matches_cmd.title": "Recent Matches",
   "matches_cmd.empty": "No matches yet. Start with /game!",
   "matches_cmd.beat": "beat",
+  "matches_cmd.beat_doubles": "beat",
   "matches_cmd.singles": "Singles",
   "matches_cmd.doubles": "Doubles",
   "web.link": "View your group stats online:\n<a href=\"{{url}}\">{{url}}</a>",
