@@ -32,7 +32,7 @@ export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
     const tier = getTier(row.elo_rating);
     const isInactive = row.last_active
       ? now - new Date(row.last_active).getTime() > inactiveCutoff
-      : true;
+      : false;
     const inactiveTag = isInactive ? ` ${ctx.t("leaderboard.inactive")}` : "";
     return ctx.t("leaderboard.row", {
       rank: i + 1,

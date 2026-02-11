@@ -14,7 +14,7 @@ import type { LeaderboardEntry, SeasonSnapshot } from "../types.js";
 
 const INACTIVE_DAYS = 14;
 function isPlayerInactive(lastActive: string | null | undefined): boolean {
-  if (!lastActive) return true;
+  if (!lastActive) return false;
   return Date.now() - new Date(lastActive).getTime() > INACTIVE_DAYS * 86400000;
 }
 
