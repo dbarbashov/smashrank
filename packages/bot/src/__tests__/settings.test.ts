@@ -19,7 +19,7 @@ describe("/settings", () => {
     calls.length = 0;
   }
 
-  it("shows current default settings including matchup_of_day", async () => {
+  it("shows current default settings including matchup_of_day and elo_decay", async () => {
     await registerPlayer(100, "alice", "Alice");
 
     await sendMessage(bot, { text: "/settings", userId: 100, username: "alice", displayName: "Alice" });
@@ -28,6 +28,7 @@ describe("/settings", () => {
     expect(reply).toContain("Achievements: on");
     expect(reply).toContain("Digest: off");
     expect(reply).toContain("Matchup of the Day: off");
+    expect(reply).toContain("ELO Decay: off");
   });
 
   it("updates commentary setting", async () => {
@@ -98,6 +99,25 @@ describe("/settings", () => {
     await sendMessage(bot, { text: "/settings", userId: 100, username: "alice", displayName: "Alice" });
     reply = lastReply(calls);
     expect(reply).toContain("Matchup of the Day: on");
+  });
+
+  it("updates elo_decay setting", async () => {
+    await registerPlayer(100, "alice", "Alice");
+
+    await sendMessage(bot, {
+      text: "/settings elo_decay on",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    let reply = lastReply(calls);
+    expect(reply).toContain("updated");
+    calls.length = 0;
+
+    // Verify the change persisted
+    await sendMessage(bot, { text: "/settings", userId: 100, username: "alice", displayName: "Alice" });
+    reply = lastReply(calls);
+    expect(reply).toContain("ELO Decay: on");
   });
 
   it("shows group_only error in private chat", async () => {

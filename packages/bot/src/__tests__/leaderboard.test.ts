@@ -50,6 +50,26 @@ describe("/leaderboard", () => {
     expect(reply).toContain("Bob");
   });
 
+  it("shows tier emoji in leaderboard rows", async () => {
+    await registerPlayer(100, "alice", "Alice");
+    await registerPlayer(200, "bob", "Bob");
+
+    // Alice beats Bob
+    await sendMessage(bot, {
+      text: "/game @bob 11-5 11-3",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    calls.length = 0;
+
+    await sendMessage(bot, { text: "/leaderboard", userId: 100, username: "alice", displayName: "Alice" });
+    const reply = lastReply(calls);
+
+    // Default ELO ~1200 is Gold tier — gold medal emoji
+    expect(reply).toContain("\u{1F947}");
+  });
+
   it("shows doubles leaderboard after doubles games", async () => {
     await registerPlayer(100, "alice", "Alice");
     await registerPlayer(200, "bob", "Bob");

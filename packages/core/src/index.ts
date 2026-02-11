@@ -32,3 +32,6 @@ export type { ChallengeCommentaryContext } from "./challenge-llm.js";
 
 export { generateMatchupCommentary } from "./matchup-llm.js";
 export type { MatchupCommentaryContext } from "./matchup-llm.js";
+
+export { getTier, getTierChange } from "./tiers.js";
+export type { RatingTier } from "./tiers.js";

@@ -9,6 +9,7 @@ const VALID_KEYS: Record<string, string[]> = {
   achievements: ["on", "off"],
   digest: ["daily", "weekly", "off"],
   matchup_of_day: ["on", "off"],
+  elo_decay: ["on", "off"],
 };
 
 export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
@@ -39,15 +40,16 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
   if (!args[0] || args.length < 2) {
     if (!args[0]) {
       const settings = ctx.group.settings ?? {};
-      await ctx.reply(ctx.t("settings.current_with_matchup", {
+      await ctx.reply(ctx.t("settings.current_all", {
         commentary: settings.commentary !== false ? "on" : "off",
         achievements: settings.achievements !== false ? "on" : "off",
         digest: (settings.digest as string) ?? "off",
         matchup_of_day: (settings.matchup_of_day as string) === "on" ? "on" : "off",
+        elo_decay: (settings.elo_decay as string) === "on" ? "on" : "off",
       }));
       return;
     }
-    await ctx.reply(ctx.t("settings.usage_with_matchup"));
+    await ctx.reply(ctx.t("settings.usage_all"));
     return;
   }
 
@@ -63,7 +65,7 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
   const groups = groupQueries(sql);
 
   let settingValue: unknown;
-  if (key === "digest" || key === "matchup_of_day") {
+  if (key === "digest" || key === "matchup_of_day" || key === "elo_decay") {
     settingValue = value;
   } else {
     settingValue = value === "on";

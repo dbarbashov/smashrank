@@ -21,6 +21,11 @@ const DIGEST_INTERVAL_MS = 60_000; // Check every 60 seconds
 const lastDigestSent = new Map<string, number>(); // groupId → timestamp
 const lastMatchupSent = new Map<string, number>(); // groupId → timestamp
 const MATCHUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const DECAY_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const DECAY_PER_WEEK = 5;
+const DECAY_FLOOR = 800;
+const DECAY_INACTIVE_DAYS = 14;
+const lastDecayApplied = new Map<string, number>(); // groupId → timestamp
 
 function getDigestIntervalMs(digest: string): number {
   if (digest === "daily") return 24 * 60 * 60 * 1000;
@@ -186,6 +191,34 @@ async function checkAndSendMatchups(bot: Bot<SmashRankContext>): Promise<void> {
   }
 }
 
+async function checkEloDecay(): Promise<void> {
+  try {
+    const sql = getConnection();
+    const groups = groupQueries(sql);
+
+    const eligibleGroups = await groups.getAllGroupsWithDecay();
+
+    for (const group of eligibleGroups) {
+      const lastApplied = lastDecayApplied.get(group.id) ?? 0;
+      const now = Date.now();
+
+      if (now - lastApplied < DECAY_INTERVAL_MS) continue;
+
+      const inactive = await groups.getInactiveMembers(group.id, DECAY_INACTIVE_DAYS);
+
+      for (const member of inactive) {
+        if (member.elo_rating <= DECAY_FLOOR) continue;
+        const newElo = Math.max(DECAY_FLOOR, member.elo_rating - DECAY_PER_WEEK);
+        await groups.setEloRating(group.id, member.player_id, newElo);
+      }
+
+      lastDecayApplied.set(group.id, now);
+    }
+  } catch (err) {
+    console.error("ELO decay scheduler error:", err);
+  }
+}
+
 export function startScheduler(bot: Bot<SmashRankContext>): void {
   setInterval(() => {
     checkAndSendDigests(bot).catch((err) =>
@@ -198,6 +231,9 @@ export function startScheduler(bot: Bot<SmashRankContext>): void {
       console.error("Matchup scheduler error:", err),
     );
     cleanupExpiredChallenges();
+    checkEloDecay().catch((err) =>
+      console.error("ELO decay scheduler error:", err),
+    );
   }, DIGEST_INTERVAL_MS);
   console.log("Scheduler started.");
 }

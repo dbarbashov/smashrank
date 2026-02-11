@@ -128,6 +128,11 @@
     "rules_players": "3 to 12 players",
     "rules_stale": "Auto-completed after 14 days of inactivity"
   },
+  "heatmap": {
+    "title": "Activity",
+    "match": "match",
+    "matches": "matches"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

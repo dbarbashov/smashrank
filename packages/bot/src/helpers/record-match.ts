@@ -4,6 +4,7 @@ import {
   matchQueries,
   achievementQueries,
   groupQueries,
+  playerQueries,
 } from "@smashrank/db";
 import type { Player, Group, GroupMember, Match } from "@smashrank/db";
 import {
@@ -150,6 +151,13 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       }
     }
   });
+
+  // Update last_active for both players (fire-and-forget, outside transaction)
+  const players = playerQueries(sql);
+  await Promise.all([
+    players.updateLastActive(input.winner.id),
+    players.updateLastActive(input.loser.id),
+  ]);
 
   return { match, eloResult, winnerStreak, loserStreak, newAchievements, winnerMember, loserMember };
 }

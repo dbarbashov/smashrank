@@ -194,6 +194,7 @@ export function matchQueries(sql: SqlLike) {
         losses: number;
         current_streak: number;
         best_streak: number;
+        last_active: Date | null;
       }[]
     > {
       if (matchType === "doubles") {
@@ -206,7 +207,8 @@ export function matchQueries(sql: SqlLike) {
             gm.doubles_wins AS wins,
             gm.doubles_losses AS losses,
             gm.doubles_current_streak AS current_streak,
-            gm.doubles_best_streak AS best_streak
+            gm.doubles_best_streak AS best_streak,
+            p.last_active
           FROM group_members gm
           JOIN players p ON p.id = gm.player_id
           WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
@@ -223,7 +225,8 @@ export function matchQueries(sql: SqlLike) {
           gm.wins,
           gm.losses,
           gm.current_streak,
-          gm.best_streak
+          gm.best_streak,
+          p.last_active
         FROM group_members gm
         JOIN players p ON p.id = gm.player_id
         WHERE gm.group_id = ${groupId} AND gm.games_played > 0
@@ -460,6 +463,96 @@ export function matchQueries(sql: SqlLike) {
         GROUP BY opponent_id, p.display_name
         ORDER BY match_count DESC
         LIMIT ${limit}
+      `;
+    },
+
+    async getLeaderboardSparklines(
+      groupId: string,
+      playerIds: string[],
+      limit: number = 20,
+      matchType?: string,
+    ): Promise<Record<string, number[]>> {
+      if (playerIds.length === 0) return {};
+      const isDoubles = matchType === "doubles";
+      const rows = await sql<{ player_id: string; elo_after: number }[]>`
+        SELECT sub.player_id, sub.elo_after
+        FROM (
+          SELECT
+            CASE
+              WHEN m.winner_id = ANY(${playerIds}::uuid[]) AND (m.winner_id = m.winner_id)
+                THEN m.winner_id
+              WHEN m.loser_id = ANY(${playerIds}::uuid[])
+                THEN m.loser_id
+              WHEN m.winner_partner_id = ANY(${playerIds}::uuid[])
+                THEN m.winner_partner_id
+              WHEN m.loser_partner_id = ANY(${playerIds}::uuid[])
+                THEN m.loser_partner_id
+            END AS player_id,
+            CASE
+              WHEN m.winner_id = ANY(${playerIds}::uuid[]) OR m.winner_partner_id = ANY(${playerIds}::uuid[])
+                THEN m.elo_before_winner + m.elo_change
+              ELSE m.elo_before_loser - m.elo_change
+            END AS elo_after,
+            ROW_NUMBER() OVER (
+              PARTITION BY
+                CASE
+                  WHEN m.winner_id = ANY(${playerIds}::uuid[]) THEN m.winner_id
+                  WHEN m.loser_id = ANY(${playerIds}::uuid[]) THEN m.loser_id
+                  WHEN m.winner_partner_id = ANY(${playerIds}::uuid[]) THEN m.winner_partner_id
+                  WHEN m.loser_partner_id = ANY(${playerIds}::uuid[]) THEN m.loser_partner_id
+                END
+              ORDER BY m.played_at DESC
+            ) AS rn
+          FROM matches m
+          WHERE m.group_id = ${groupId}
+            AND ${isDoubles ? sql`m.match_type = 'doubles'` : sql`m.match_type != 'doubles'`}
+            AND (
+              m.winner_id = ANY(${playerIds}::uuid[])
+              OR m.loser_id = ANY(${playerIds}::uuid[])
+              OR m.winner_partner_id = ANY(${playerIds}::uuid[])
+              OR m.loser_partner_id = ANY(${playerIds}::uuid[])
+            )
+        ) sub
+        WHERE sub.player_id IS NOT NULL AND sub.rn <= ${limit}
+        ORDER BY sub.player_id, sub.rn DESC
+      `;
+
+      const result: Record<string, number[]> = {};
+      for (const row of rows) {
+        if (!result[row.player_id]) result[row.player_id] = [];
+        result[row.player_id].push(row.elo_after);
+      }
+      return result;
+    },
+
+    async getActivityHeatmap(
+      groupId: string,
+      playerId?: string,
+      daysBack: number = 365,
+    ): Promise<{ date: string; count: number }[]> {
+      if (playerId) {
+        return sql<{ date: string; count: number }[]>`
+          SELECT
+            TO_CHAR(played_at, 'YYYY-MM-DD') AS date,
+            COUNT(*)::int AS count
+          FROM matches
+          WHERE group_id = ${groupId}
+            AND played_at > NOW() - INTERVAL '1 day' * ${daysBack}
+            AND (winner_id = ${playerId} OR loser_id = ${playerId}
+                 OR winner_partner_id = ${playerId} OR loser_partner_id = ${playerId})
+          GROUP BY TO_CHAR(played_at, 'YYYY-MM-DD')
+          ORDER BY date ASC
+        `;
+      }
+      return sql<{ date: string; count: number }[]>`
+        SELECT
+          TO_CHAR(played_at, 'YYYY-MM-DD') AS date,
+          COUNT(*)::int AS count
+        FROM matches
+        WHERE group_id = ${groupId}
+          AND played_at > NOW() - INTERVAL '1 day' * ${daysBack}
+        GROUP BY TO_CHAR(played_at, 'YYYY-MM-DD')
+        ORDER BY date ASC
       `;
     },
 

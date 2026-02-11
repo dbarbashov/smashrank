@@ -169,5 +169,34 @@ export function groupQueries(sql: SqlLike) {
         WHERE settings->>'matchup_of_day' = 'on'
       `;
     },
+
+    async getAllGroupsWithDecay(): Promise<Group[]> {
+      return sql<Group[]>`
+        SELECT * FROM groups
+        WHERE settings->>'elo_decay' = 'on'
+      `;
+    },
+
+    async getInactiveMembers(
+      groupId: string,
+      inactiveDays: number = 14,
+    ): Promise<{ player_id: string; elo_rating: number; last_active: Date | null }[]> {
+      return sql<{ player_id: string; elo_rating: number; last_active: Date | null }[]>`
+        SELECT gm.player_id, gm.elo_rating, p.last_active
+        FROM group_members gm
+        JOIN players p ON p.id = gm.player_id
+        WHERE gm.group_id = ${groupId}
+          AND gm.games_played > 0
+          AND (p.last_active IS NULL OR p.last_active < NOW() - INTERVAL '1 day' * ${inactiveDays})
+      `;
+    },
+
+    async setEloRating(groupId: string, playerId: string, newElo: number): Promise<void> {
+      await sql`
+        UPDATE group_members
+        SET elo_rating = ${newElo}
+        WHERE group_id = ${groupId} AND player_id = ${playerId}
+      `;
+    },
   };
 }

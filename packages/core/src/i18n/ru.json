@@ -4,11 +4,11 @@
   "leaderboard.title": "Рейтинг офиса",
   "leaderboard.doubles_title": "Рейтинг парных",
   "leaderboard.empty": "Ещё ни одной игры. Начни с /game!",
-  "leaderboard.row": "{{rank}}. {{name}} — {{elo}} ({{wins}}В-{{losses}}П)",
+  "leaderboard.row": "{{rank}}. {{tier}} {{name}} — {{elo}} ({{wins}}В-{{losses}}П)",
   "stats.title": "Статистика {{name}}",
   "stats.singles_header": "Одиночные:",
   "stats.doubles_header": "Парные:",
-  "stats.elo": "ELO: {{elo}} (место #{{rank}})",
+  "stats.elo": "{{tier}} ELO: {{elo}} (место #{{rank}})",
   "stats.record": "Результат: {{wins}}В - {{losses}}П ({{winrate}}%)",
   "stats.streak": "Текущая серия: {{streak}}",
   "stats.best_streak": "Лучшая серия: {{bestStreak}}",
@@ -31,7 +31,7 @@
   "error.group_only": "Эта команда работает только в групповых чатах.",
   "season.new": "Сезон {{name}} начался! Рейтинги сброшены до 1000. Поехали!",
   "season.ended": "Сезон {{name}} завершён!",
-  "help.text": "SmashRank — Настольный теннис: ELO-рейтинг\n\nКоманды:\n/start — Регистрация\n/game @user 11-7 11-5 — Записать матч\n/game @user 2-0 — Только счёт по сетам\n/game @user won 2-1 — Явный победитель\n/newgame — Пошаговая запись матча\n/challenge @user — Вызвать на матч\n/undo — Отменить последний матч (в течение 5 мин)\n/leaderboard — Рейтинг группы\n/stats — Ваша статистика\n/stats @user — Статистика другого игрока\n/h2h @user — Личные встречи\n/matches — Последние матчи группы\n/achievements — Ваши достижения\n/achievements @user — Достижения другого игрока\n/listachievements — Все доступные достижения\n/doubles @partner vs @opp1 @opp2 счёт — Парная игра\n/newdoubles — Пошаговая запись парной игры\n/tournament — Управление турнирами\n/tgame @user счёт — Записать турнирный матч\n/settings — Настройки группы (админ)\n/web — Статистика группы онлайн\n/lang en|ru — Сменить язык\n/help — Это сообщение\n\nПравила счёта:\n• Победный счёт должен быть ≥11\n• Разница в 2 при дюсе (12-10, 14-12 и т.д.)",
+  "help.text": "SmashRank — Настольный теннис: ELO-рейтинг\n\nКоманды:\n/start — Регистрация\n/game @user 11-7 11-5 — Записать матч\n/game @user 2-0 — Только счёт по сетам\n/game @user won 2-1 — Явный победитель\n/newgame — Пошаговая запись матча\n/challenge @user — Вызвать на матч\n/undo — Отменить последний матч (в течение 5 мин)\n/leaderboard — Рейтинг группы\n/leaderboard doubles — Рейтинг парных игр\n/stats — Ваша статистика\n/stats @user — Статистика другого игрока\n/h2h @user — Личные встречи\n/matches — Последние матчи группы\n/achievements — Ваши достижения\n/achievements @user — Достижения другого игрока\n/listachievements — Все доступные достижения\n/doubles @partner vs @opp1 @opp2 счёт — Парная игра\n/newdoubles — Пошаговая запись парной игры\n/tournament — Управление турнирами\n/tgame @user счёт — Записать турнирный матч\n/settings — Просмотр/изменение настроек группы (админ)\n/web — Статистика группы онлайн\n/lang en|ru — Сменить язык\n/help — Это сообщение\n\nПравила счёта:\n• Победный счёт должен быть ≥11\n• Разница в 2 при дюсе (12-10, 14-12 и т.д.)",
   "lang.changed": "Язык изменён на русский.",
   "lang.invalid": "Неизвестный язык. Доступны: en, ru",
   "undo.success": "Последний матч отменён: {{winner}} vs {{loser}}. Рейтинги восстановлены.",
@@ -183,5 +183,8 @@
   "matchup.no_h2h": "Эти двое ещё ни разу не играли!",
   "matchup.no_candidates": "Сегодня нет подходящих пар.",
   "settings.current_with_matchup": "Текущие настройки:\n• Комментарии: {{commentary}}\n• Достижения: {{achievements}}\n• Дайджест: {{digest}}\n• Матч дня: {{matchup_of_day}}",
-  "settings.usage_with_matchup": "Использование: /settings <ключ> <значение>\n\nКлючи:\n• commentary on|off\n• achievements on|off\n• digest daily|weekly|off\n• matchup_of_day on|off"
+  "settings.usage_with_matchup": "Использование: /settings <ключ> <значение>\n\nКлючи:\n• commentary on|off\n• achievements on|off\n• digest daily|weekly|off\n• matchup_of_day on|off",
+  "settings.current_all": "Текущие настройки:\n• Комментарии: {{commentary}}\n• Достижения: {{achievements}}\n• Дайджест: {{digest}}\n• Матч дня: {{matchup_of_day}}\n• Затухание ELO: {{elo_decay}}",
+  "settings.usage_all": "Использование: /settings <ключ> <значение>\n\nКлючи:\n• commentary on|off\n• achievements on|off\n• digest daily|weekly|off\n• matchup_of_day on|off\n• elo_decay on|off",
+  "leaderboard.inactive": "(неактивен)"
 }

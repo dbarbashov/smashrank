@@ -65,6 +65,23 @@ describe("GET /api/g/:slug/leaderboard", () => {
     expect(body[0].final_elo).toBe(1300);
   });
 
+  it("includes last_active in leaderboard response", async () => {
+    const group = await createGroup({ slug: "test-lb-active" });
+    const p1 = await createPlayer({ display_name: "Alice" });
+    await addToGroup(group.id, p1.id, { elo_rating: 1100, games_played: 5, wins: 3, losses: 2 });
+
+    // Set last_active on the player
+    const sql = getSql();
+    await sql`UPDATE players SET last_active = NOW() WHERE id = ${p1.id}`;
+
+    const res = await get("/api/g/test-lb-active/leaderboard");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+    expect(body[0]).toHaveProperty("last_active");
+    expect(body[0].last_active).toBeTruthy();
+  });
+
   it("returns doubles leaderboard with ?type=doubles", async () => {
     const group = await createGroup({ slug: "test-lb-dbl" });
     const p1 = await createPlayer({ display_name: "Alice" });

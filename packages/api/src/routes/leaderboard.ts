@@ -27,10 +27,29 @@ leaderboardRoutes.get("/", async (c) => {
     return c.json(snapshots);
   }
 
+  const matchType = type === "doubles" ? "doubles" : undefined;
   const leaderboard = await matchQueries(sql).getLeaderboard(
     group.id,
     20,
-    type === "doubles" ? "doubles" : undefined,
+    matchType,
   );
   return c.json(leaderboard);
+});
+
+leaderboardRoutes.get("/sparklines", async (c) => {
+  const group = c.get("group");
+  const sql = getConnection();
+  const type = c.req.query("type");
+  const matchType = type === "doubles" ? "doubles" : undefined;
+
+  const leaderboard = await matchQueries(sql).getLeaderboard(group.id, 20, matchType);
+  const playerIds = leaderboard.map((p) => p.id);
+
+  const sparklines = await matchQueries(sql).getLeaderboardSparklines(
+    group.id,
+    playerIds,
+    20,
+    matchType,
+  );
+  return c.json(sparklines);
 });

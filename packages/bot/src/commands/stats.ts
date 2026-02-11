@@ -5,6 +5,7 @@ import {
   achievementQueries,
   groupQueries,
 } from "@smashrank/db";
+import { getTier } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 
 export async function statsCommand(ctx: SmashRankContext): Promise<void> {
@@ -61,9 +62,10 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
       rank = String(stats.rank);
     }
 
+    const tier = getTier(member.elo_rating);
     lines.push("");
     lines.push(ctx.t("stats.singles_header"));
-    lines.push(ctx.t("stats.elo", { elo: member.elo_rating, rank }));
+    lines.push(ctx.t("stats.elo", { elo: member.elo_rating, rank, tier: tier.emoji }));
     lines.push(ctx.t("stats.record", { wins: member.wins, losses: member.losses, winrate }));
     lines.push(ctx.t("stats.games", { games: member.games_played }));
     lines.push(ctx.t("stats.streak", { streak: member.current_streak }));
@@ -79,9 +81,10 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
       doublesRank = String(doublesStats.rank);
     }
 
+    const doublesTier = getTier(member.doubles_elo_rating);
     lines.push("");
     lines.push(ctx.t("stats.doubles_header"));
-    lines.push(ctx.t("stats.elo", { elo: member.doubles_elo_rating, rank: doublesRank }));
+    lines.push(ctx.t("stats.elo", { elo: member.doubles_elo_rating, rank: doublesRank, tier: doublesTier.emoji }));
     lines.push(ctx.t("stats.record", { wins: member.doubles_wins, losses: member.doubles_losses, winrate: doublesWinrate }));
     lines.push(ctx.t("stats.games", { games: member.doubles_games_played }));
     lines.push(ctx.t("stats.streak", { streak: member.doubles_current_streak }));

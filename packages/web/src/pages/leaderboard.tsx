@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useLeaderboard, useSeasons } from "../api/queries.js";
+import { useLeaderboard, useSeasons, useLeaderboardSparklines, useActivityHeatmap } from "../api/queries.js";
 import { SeasonSelector } from "../components/season-selector.js";
 import { PlayerLink } from "../components/player-link.js";
 import { EloBadge } from "../components/elo-badge.js";
 import { StreakBadge } from "../components/streak-badge.js";
+import { Sparkline } from "../components/sparkline.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
+import { ActivityHeatmap } from "../components/activity-heatmap.js";
 import type { LeaderboardEntry, SeasonSnapshot } from "../types.js";
+
+const INACTIVE_DAYS = 14;
+function isPlayerInactive(lastActive: string | null | undefined): boolean {
+  if (!lastActive) return true;
+  return Date.now() - new Date(lastActive).getTime() > INACTIVE_DAYS * 86400000;
+}
 
 export function Leaderboard() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,11 +25,14 @@ export function Leaderboard() {
   const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
 
   const { data: seasons } = useSeasons(slug!);
+  const typeParam = matchType === "doubles" ? "doubles" : undefined;
   const { data, isLoading, error } = useLeaderboard(
     slug!,
     seasonId || undefined,
-    matchType === "doubles" ? "doubles" : undefined,
+    typeParam,
   );
+  const { data: sparklines } = useLeaderboardSparklines(slug!, typeParam);
+  const { data: activity } = useActivityHeatmap(slug!);
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
@@ -72,6 +83,9 @@ export function Leaderboard() {
                   <th className="px-4 py-3">{t("leaderboard.rank")}</th>
                   <th className="px-4 py-3">{t("leaderboard.player")}</th>
                   <th className="px-4 py-3 text-right">{t("leaderboard.elo")}</th>
+                  {!isSeason && (
+                    <th className="w-24 px-2 py-3"></th>
+                  )}
                   <th className="px-4 py-3 text-right">{t("leaderboard.record")}</th>
                   <th className="px-4 py-3 text-right">
                     {t("leaderboard.winRate")}
@@ -103,11 +117,13 @@ export function Leaderboard() {
                   const gp = entry.games_played ?? wins + losses;
                   const winPct =
                     gp > 0 ? Math.round((wins / gp) * 100) : 0;
+                  const sparkData = sparklines?.[playerId];
+                  const inactive = !isSeason && isPlayerInactive((row as LeaderboardEntry).last_active);
 
                   return (
                     <tr
                       key={playerId}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 ${inactive ? "opacity-50" : ""}`}
                     >
                       <td className="px-4 py-3 font-medium text-slate-400 dark:text-slate-500">{rank}</td>
                       <td className="px-4 py-3">
@@ -116,6 +132,11 @@ export function Leaderboard() {
                       <td className="px-4 py-3 text-right">
                         <EloBadge elo={elo} />
                       </td>
+                      {!isSeason && (
+                        <td className="px-2 py-3">
+                          {sparkData && <Sparkline data={sparkData} />}
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                         {wins}-{losses}
                       </td>
@@ -187,6 +208,11 @@ export function Leaderboard() {
           </div>
         </>
       )}
+
+      {/* Activity Heatmap */}
+      <div className="mt-6">
+        <ActivityHeatmap data={activity} />
+      </div>
     </div>
   );
 }

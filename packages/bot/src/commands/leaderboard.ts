@@ -1,5 +1,8 @@
 import { getConnection, matchQueries } from "@smashrank/db";
+import { getTier } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
+
+const INACTIVE_DAYS = 14;
 
 export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
@@ -21,16 +24,25 @@ export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
     return;
   }
 
+  const now = Date.now();
+  const inactiveCutoff = INACTIVE_DAYS * 24 * 60 * 60 * 1000;
+
   const title = isDoubles ? ctx.t("leaderboard.doubles_title") : ctx.t("leaderboard.title");
-  const lines = rows.map((row, i) =>
-    ctx.t("leaderboard.row", {
+  const lines = rows.map((row, i) => {
+    const tier = getTier(row.elo_rating);
+    const isInactive = row.last_active
+      ? now - new Date(row.last_active).getTime() > inactiveCutoff
+      : true;
+    const inactiveTag = isInactive ? ` ${ctx.t("leaderboard.inactive")}` : "";
+    return ctx.t("leaderboard.row", {
       rank: i + 1,
-      name: row.display_name,
+      name: row.display_name + inactiveTag,
       elo: row.elo_rating,
       wins: row.wins,
       losses: row.losses,
-    }),
-  );
+      tier: tier.emoji,
+    });
+  });
 
   await ctx.reply(`\u{1F3D3} ${title}\n\n${lines.join("\n")}`);
 }

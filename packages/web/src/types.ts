@@ -14,6 +14,7 @@ export interface LeaderboardEntry {
   losses: number;
   current_streak: number;
   best_streak: number;
+  last_active?: string | null;
 }
 
 export interface PlayerProfile {

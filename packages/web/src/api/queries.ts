@@ -171,3 +171,33 @@ export function usePlayerOpponents(slug: string, playerId: string) {
       apiFetch<OpponentEntry[]>(`/${slug}/players/${playerId}/opponents`),
   });
 }
+
+export function useLeaderboardSparklines(slug: string, type?: string) {
+  return useQuery({
+    queryKey: ["leaderboard-sparklines", slug, type],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (type) params.set("type", type);
+      const qs = params.toString();
+      return apiFetch<Record<string, number[]>>(
+        `/${slug}/leaderboard/sparklines${qs ? `?${qs}` : ""}`,
+      );
+    },
+  });
+}
+
+export interface ActivityEntry {
+  date: string;
+  count: number;
+}
+
+export function useActivityHeatmap(slug: string, playerId?: string) {
+  return useQuery({
+    queryKey: ["activity-heatmap", slug, playerId],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (playerId) params.set("player", playerId);
+      return apiFetch<ActivityEntry[]>(`/${slug}/activity?${params}`);
+    },
+  });
+}

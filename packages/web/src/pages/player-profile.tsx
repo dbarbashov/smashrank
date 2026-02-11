@@ -15,6 +15,7 @@ import {
   usePlayerMatches,
   usePlayerAchievements,
   usePlayerOpponents,
+  useActivityHeatmap,
 } from "../api/queries.js";
 import { EloBadge } from "../components/elo-badge.js";
 import { StreakBadge } from "../components/streak-badge.js";
@@ -22,6 +23,7 @@ import { MatchCard } from "../components/match-card.js";
 import { Avatar } from "../components/avatar.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
+import { ActivityHeatmap } from "../components/activity-heatmap.js";
 
 export function PlayerProfile() {
   const { slug, id } = useParams<{ slug: string; id: string }>();
@@ -32,6 +34,7 @@ export function PlayerProfile() {
   const { data: matchPages } = usePlayerMatches(slug!, id!);
   const { data: achievements } = usePlayerAchievements(slug!, id!);
   const { data: opponents } = usePlayerOpponents(slug!, id!);
+  const { data: activity } = useActivityHeatmap(slug!, id!);
 
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
@@ -201,6 +204,11 @@ export function PlayerProfile() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Activity Heatmap */}
+      {activity && activity.length > 0 && (
+        <ActivityHeatmap data={activity} />
       )}
 
       {/* Recent Matches */}
