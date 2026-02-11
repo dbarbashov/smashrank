@@ -191,12 +191,13 @@ export interface ActivityEntry {
   count: number;
 }
 
-export function useActivityHeatmap(slug: string, playerId?: string) {
+export function useActivityHeatmap(slug: string, playerId?: string, days: number = 90) {
   return useQuery({
-    queryKey: ["activity-heatmap", slug, playerId],
+    queryKey: ["activity-heatmap", slug, playerId, days],
     queryFn: () => {
       const params = new URLSearchParams();
       if (playerId) params.set("player", playerId);
+      params.set("days", String(days));
       return apiFetch<ActivityEntry[]>(`/${slug}/activity?${params}`);
     },
   });

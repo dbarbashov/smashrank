@@ -20,7 +20,7 @@ function getTierInfo(elo: number): TierInfo {
     return {
       emoji: "\u{1F947}",
       style:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+        "bg-yellow-50 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700",
     };
   if (elo >= 900)
     return {
