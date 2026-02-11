@@ -1,0 +1,7 @@
+ALTER TABLE group_members
+  ADD COLUMN doubles_elo_rating REAL NOT NULL DEFAULT 1200,
+  ADD COLUMN doubles_games_played INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN doubles_wins INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN doubles_losses INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN doubles_current_streak INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN doubles_best_streak INTEGER NOT NULL DEFAULT 0;

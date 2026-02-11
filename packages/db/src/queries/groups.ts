@@ -99,6 +99,37 @@ export function groupQueries(sql: SqlLike) {
       }
     },
 
+    async updateGroupDoublesElo(
+      groupId: string,
+      playerId: string,
+      eloRating: number,
+      won: boolean,
+      currentStreak: number,
+      bestStreak: number,
+    ): Promise<void> {
+      if (won) {
+        await sql`
+          UPDATE group_members SET
+            doubles_elo_rating = ${eloRating},
+            doubles_games_played = doubles_games_played + 1,
+            doubles_wins = doubles_wins + 1,
+            doubles_current_streak = ${currentStreak},
+            doubles_best_streak = ${bestStreak}
+          WHERE group_id = ${groupId} AND player_id = ${playerId}
+        `;
+      } else {
+        await sql`
+          UPDATE group_members SET
+            doubles_elo_rating = ${eloRating},
+            doubles_games_played = doubles_games_played + 1,
+            doubles_losses = doubles_losses + 1,
+            doubles_current_streak = ${currentStreak},
+            doubles_best_streak = ${bestStreak}
+          WHERE group_id = ${groupId} AND player_id = ${playerId}
+        `;
+      }
+    },
+
     async updateGroupEloForDraw(
       groupId: string,
       playerId: string,

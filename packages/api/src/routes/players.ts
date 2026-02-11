@@ -32,6 +32,12 @@ playersRoutes.get("/:id", async (c) => {
     losses: member?.losses ?? 0,
     current_streak: member?.current_streak ?? 0,
     best_streak: member?.best_streak ?? 0,
+    doubles_elo_rating: member?.doubles_elo_rating ?? 1200,
+    doubles_games_played: member?.doubles_games_played ?? 0,
+    doubles_wins: member?.doubles_wins ?? 0,
+    doubles_losses: member?.doubles_losses ?? 0,
+    doubles_current_streak: member?.doubles_current_streak ?? 0,
+    doubles_best_streak: member?.doubles_best_streak ?? 0,
     rank: stats?.rank ?? null,
     total_in_group: stats?.total_in_group ?? 0,
     achievement_count: achievements.length,
@@ -72,8 +78,13 @@ playersRoutes.get("/:id/elo-history", async (c) => {
   const group = c.get("group");
   const sql = getConnection();
   const playerId = c.req.param("id");
+  const type = c.req.query("type");
 
-  const history = await matchQueries(sql).getEloHistory(playerId, group.id);
+  const history = await matchQueries(sql).getEloHistory(
+    playerId,
+    group.id,
+    type === "doubles" ? "doubles" : undefined,
+  );
   return c.json(history);
 });
 

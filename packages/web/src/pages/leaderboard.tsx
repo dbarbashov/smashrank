@@ -14,11 +14,13 @@ export function Leaderboard() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
   const [seasonId, setSeasonId] = useState("");
+  const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
 
   const { data: seasons } = useSeasons(slug!);
   const { data, isLoading, error } = useLeaderboard(
     slug!,
     seasonId || undefined,
+    matchType === "doubles" ? "doubles" : undefined,
   );
 
   if (isLoading) return <Loading />;
@@ -31,13 +33,31 @@ export function Leaderboard() {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t("leaderboard.title")}</h2>
-        {seasons && seasons.some((s) => !s.is_active) && (
-          <SeasonSelector
-            seasons={seasons}
-            value={seasonId}
-            onChange={setSeasonId}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {!isSeason && (
+            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
+              <button
+                className={`px-3 py-1 text-sm ${matchType === "singles" ? "bg-gray-200 font-medium dark:bg-gray-700" : ""}`}
+                onClick={() => setMatchType("singles")}
+              >
+                {t("leaderboard.singles")}
+              </button>
+              <button
+                className={`px-3 py-1 text-sm ${matchType === "doubles" ? "bg-gray-200 font-medium dark:bg-gray-700" : ""}`}
+                onClick={() => setMatchType("doubles")}
+              >
+                {t("leaderboard.doubles")}
+              </button>
+            </div>
+          )}
+          {seasons && seasons.some((s) => !s.is_active) && (
+            <SeasonSelector
+              seasons={seasons}
+              value={seasonId}
+              onChange={setSeasonId}
+            />
+          )}
+        </div>
       </div>
 
       {rows.length === 0 ? (

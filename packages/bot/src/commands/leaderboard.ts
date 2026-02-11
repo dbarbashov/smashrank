@@ -7,17 +7,21 @@ export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
     return;
   }
 
+  const text = ctx.message?.text ?? "";
+  const arg = text.replace(/^\/leaderboard\s*/, "").trim().toLowerCase();
+  const isDoubles = arg === "doubles";
+
   const sql = getConnection();
   const matches = matchQueries(sql);
 
-  const rows = await matches.getLeaderboard(ctx.group.id);
+  const rows = await matches.getLeaderboard(ctx.group.id, 20, isDoubles ? "doubles" : undefined);
 
   if (rows.length === 0) {
     await ctx.reply(ctx.t("leaderboard.empty"));
     return;
   }
 
-  const title = ctx.t("leaderboard.title");
+  const title = isDoubles ? ctx.t("leaderboard.doubles_title") : ctx.t("leaderboard.title");
   const lines = rows.map((row, i) =>
     ctx.t("leaderboard.row", {
       rank: i + 1,
@@ -28,5 +32,5 @@ export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
     }),
   );
 
-  await ctx.reply(`🏓 ${title}\n\n${lines.join("\n")}`);
+  await ctx.reply(`\u{1F3D3} ${title}\n\n${lines.join("\n")}`);
 }

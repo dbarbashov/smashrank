@@ -124,7 +124,26 @@ export function matchQueries(sql: SqlLike) {
     async getEloHistory(
       playerId: string,
       groupId: string,
+      matchType?: string,
     ): Promise<{ played_at: Date; elo_after: number; match_id: string }[]> {
+      if (matchType === "doubles") {
+        return sql<{ played_at: Date; elo_after: number; match_id: string }[]>`
+          SELECT
+            m.played_at,
+            m.id AS match_id,
+            CASE
+              WHEN m.winner_id = ${playerId} OR m.winner_partner_id = ${playerId}
+                THEN m.elo_before_winner + m.elo_change
+              ELSE m.elo_before_loser - m.elo_change
+            END AS elo_after
+          FROM matches m
+          WHERE m.group_id = ${groupId}
+            AND m.match_type = 'doubles'
+            AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId}
+                 OR m.winner_partner_id = ${playerId} OR m.loser_partner_id = ${playerId})
+          ORDER BY m.played_at ASC
+        `;
+      }
       return sql<{ played_at: Date; elo_after: number; match_id: string }[]>`
         SELECT
           m.played_at,
@@ -136,6 +155,7 @@ export function matchQueries(sql: SqlLike) {
           END AS elo_after
         FROM matches m
         WHERE m.group_id = ${groupId}
+          AND m.match_type != 'doubles'
           AND (m.winner_id = ${playerId} OR m.loser_id = ${playerId}
                OR m.winner_partner_id = ${playerId} OR m.loser_partner_id = ${playerId})
         ORDER BY m.played_at ASC
@@ -163,6 +183,7 @@ export function matchQueries(sql: SqlLike) {
     async getLeaderboard(
       groupId: string,
       limit: number = 20,
+      matchType?: string,
     ): Promise<
       {
         id: string;
@@ -175,6 +196,24 @@ export function matchQueries(sql: SqlLike) {
         best_streak: number;
       }[]
     > {
+      if (matchType === "doubles") {
+        return sql`
+          SELECT
+            p.id,
+            p.display_name,
+            gm.doubles_elo_rating AS elo_rating,
+            gm.doubles_games_played AS games_played,
+            gm.doubles_wins AS wins,
+            gm.doubles_losses AS losses,
+            gm.doubles_current_streak AS current_streak,
+            gm.doubles_best_streak AS best_streak
+          FROM group_members gm
+          JOIN players p ON p.id = gm.player_id
+          WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
+          ORDER BY gm.doubles_elo_rating DESC
+          LIMIT ${limit}
+        `;
+      }
       return sql`
         SELECT
           p.id,
@@ -196,10 +235,28 @@ export function matchQueries(sql: SqlLike) {
     async getPlayerStats(
       playerId: string,
       groupId: string,
+      matchType?: string,
     ): Promise<{
       rank: number;
       total_in_group: number;
     } | undefined> {
+      if (matchType === "doubles") {
+        const rows = await sql<{ rank: number; total_in_group: number }[]>`
+          SELECT
+            rank,
+            total_in_group
+          FROM (
+            SELECT
+              gm.player_id AS id,
+              ROW_NUMBER() OVER (ORDER BY gm.doubles_elo_rating DESC) AS rank,
+              COUNT(*) OVER () AS total_in_group
+            FROM group_members gm
+            WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
+          ) ranked
+          WHERE id = ${playerId}
+        `;
+        return rows[0];
+      }
       const rows = await sql<{ rank: number; total_in_group: number }[]>`
         SELECT
           rank,

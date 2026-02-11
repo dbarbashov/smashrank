@@ -15,7 +15,9 @@
     "winRate": "Побед%",
     "streak": "Серия",
     "empty": "Пока нет игроков. Начните играть!",
-    "seasonLabel": "Сезон"
+    "seasonLabel": "Сезон",
+    "singles": "Одиночные",
+    "doubles": "Парные"
   },
   "player": {
     "title": "Профиль игрока",
@@ -31,7 +33,10 @@
     "achievements": "Достижения",
     "noAchievements": "Пока нет достижений",
     "noMatches": "Пока нет матчей",
-    "frequentOpponents": "Частые соперники"
+    "frequentOpponents": "Частые соперники",
+    "doublesStats": "Парные",
+    "doublesElo": "ELO парных",
+    "doublesRecord": "Парные результаты"
   },
   "h2h": {
     "totalMatches": "{{count}} матчей",

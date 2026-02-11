@@ -12,12 +12,12 @@ export function achievementQueries(sql: SqlLike) {
     async listRecent(
       groupId: string,
       limit: number = 10,
-    ): Promise<(PlayerAchievement & { player_name: string; achievement_name: string; emoji: string })[]> {
-      return sql<(PlayerAchievement & { player_name: string; achievement_name: string; emoji: string })[]>`
+    ): Promise<(PlayerAchievement & { display_name: string; name: string; emoji: string })[]> {
+      return sql<(PlayerAchievement & { display_name: string; name: string; emoji: string })[]>`
         SELECT
           pa.*,
-          p.display_name AS player_name,
-          ad.name AS achievement_name,
+          p.display_name,
+          ad.name,
           ad.emoji
         FROM player_achievements pa
         JOIN players p ON p.id = pa.player_id

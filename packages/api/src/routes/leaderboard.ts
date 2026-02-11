@@ -8,12 +8,17 @@ leaderboardRoutes.get("/", async (c) => {
   const group = c.get("group");
   const sql = getConnection();
   const seasonId = c.req.query("season");
+  const type = c.req.query("type");
 
   if (seasonId) {
     const snapshots = await seasonQueries(sql).getSnapshots(seasonId);
     return c.json(snapshots);
   }
 
-  const leaderboard = await matchQueries(sql).getLeaderboard(group.id);
+  const leaderboard = await matchQueries(sql).getLeaderboard(
+    group.id,
+    20,
+    type === "doubles" ? "doubles" : undefined,
+  );
   return c.json(leaderboard);
 });

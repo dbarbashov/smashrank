@@ -48,8 +48,8 @@ describe("achievements routes", () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body).toHaveLength(1);
-      expect(body[0].player_name).toBe("Alice");
-      expect(body[0].achievement_name).toBeDefined();
+      expect(body[0].display_name).toBe("Alice");
+      expect(body[0].name).toBeDefined();
     });
 
     it("returns empty array when no achievements", async () => {

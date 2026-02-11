@@ -49,6 +49,7 @@ services:
         condition: service_completed_successfully
     environment:
       DATABASE_URL: postgres://smashrank:${POSTGRES_PASSWORD}@postgres:5432/smashrank
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN in .env}
       PORT: "3000"
       STATIC_DIR: ./packages/web/dist
     ports:

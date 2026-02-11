@@ -53,18 +53,28 @@ describe("/doubles", () => {
     const charlieM = await groups.getGroupMember(group!.id, charlie!.id);
     const daveM = await groups.getGroupMember(group!.id, dave!.id);
 
-    // Winners should gain ELO
-    expect(aliceM!.elo_rating).toBeGreaterThan(1200);
-    expect(bobM!.elo_rating).toBeGreaterThan(1200);
-    // Losers should lose ELO
-    expect(charlieM!.elo_rating).toBeLessThan(1200);
-    expect(daveM!.elo_rating).toBeLessThan(1200);
+    // Winners should gain doubles ELO
+    expect(aliceM!.doubles_elo_rating).toBeGreaterThan(1200);
+    expect(bobM!.doubles_elo_rating).toBeGreaterThan(1200);
+    // Losers should lose doubles ELO
+    expect(charlieM!.doubles_elo_rating).toBeLessThan(1200);
+    expect(daveM!.doubles_elo_rating).toBeLessThan(1200);
 
-    // All should have 1 game played
-    expect(aliceM!.games_played).toBe(1);
-    expect(bobM!.games_played).toBe(1);
-    expect(charlieM!.games_played).toBe(1);
-    expect(daveM!.games_played).toBe(1);
+    // Singles ELO should be unchanged
+    expect(aliceM!.elo_rating).toBe(1200);
+    expect(bobM!.elo_rating).toBe(1200);
+    expect(charlieM!.elo_rating).toBe(1200);
+    expect(daveM!.elo_rating).toBe(1200);
+
+    // All should have 1 doubles game played
+    expect(aliceM!.doubles_games_played).toBe(1);
+    expect(bobM!.doubles_games_played).toBe(1);
+    expect(charlieM!.doubles_games_played).toBe(1);
+    expect(daveM!.doubles_games_played).toBe(1);
+
+    // No singles games
+    expect(aliceM!.games_played).toBe(0);
+    expect(bobM!.games_played).toBe(0);
   });
 
   it("shows usage when format is wrong", async () => {

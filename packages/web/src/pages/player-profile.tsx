@@ -97,6 +97,38 @@ export function PlayerProfile() {
         </div>
       </div>
 
+      {/* Doubles Stats */}
+      {player.doubles_games_played > 0 && (
+        <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <h3 className="mb-2 font-semibold">{t("player.doublesStats")}</h3>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div>
+              <div className="text-xs text-gray-500">{t("leaderboard.elo")}</div>
+              <EloBadge elo={player.doubles_elo_rating} />
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">{t("leaderboard.record")}</div>
+              <span className="font-medium tabular-nums">
+                {t("player.record", {
+                  wins: player.doubles_wins,
+                  losses: player.doubles_losses,
+                })}
+              </span>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">{t("player.winRate")}</div>
+              <span className="font-medium">
+                {Math.round((player.doubles_wins / player.doubles_games_played) * 100)}%
+              </span>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">{t("player.streak")}</div>
+              <StreakBadge streak={player.doubles_current_streak} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ELO Chart */}
       {chartData.length > 1 && (
         <div>

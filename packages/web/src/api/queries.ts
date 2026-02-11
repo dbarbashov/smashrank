@@ -26,13 +26,16 @@ export function useGroupInfo(slug: string) {
   });
 }
 
-export function useLeaderboard(slug: string, seasonId?: string) {
+export function useLeaderboard(slug: string, seasonId?: string, type?: string) {
   return useQuery({
-    queryKey: ["leaderboard", slug, seasonId],
+    queryKey: ["leaderboard", slug, seasonId, type],
     queryFn: () => {
-      const params = seasonId ? `?season=${seasonId}` : "";
+      const params = new URLSearchParams();
+      if (seasonId) params.set("season", seasonId);
+      if (type) params.set("type", type);
+      const qs = params.toString();
       return apiFetch<LeaderboardEntry[] | SeasonSnapshot[]>(
-        `/${slug}/leaderboard${params}`,
+        `/${slug}/leaderboard${qs ? `?${qs}` : ""}`,
       );
     },
   });

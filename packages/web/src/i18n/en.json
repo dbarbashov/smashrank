@@ -15,7 +15,9 @@
     "winRate": "Win%",
     "streak": "Streak",
     "empty": "No players yet. Start playing!",
-    "seasonLabel": "Season"
+    "seasonLabel": "Season",
+    "singles": "Singles",
+    "doubles": "Doubles"
   },
   "player": {
     "title": "Player Profile",
@@ -31,7 +33,10 @@
     "achievements": "Achievements",
     "noAchievements": "No achievements earned yet",
     "noMatches": "No matches played yet",
-    "frequentOpponents": "Frequent Opponents"
+    "frequentOpponents": "Frequent Opponents",
+    "doublesStats": "Doubles",
+    "doublesElo": "Doubles ELO",
+    "doublesRecord": "Doubles Record"
   },
   "h2h": {
     "totalMatches": "{{count}} matches",

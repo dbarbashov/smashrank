@@ -41,32 +41,55 @@ export async function statsCommand(ctx: SmashRankContext): Promise<void> {
 
   // Get group member stats
   const member = await groups.getGroupMember(ctx.group.id, target.id);
-  if (!member || member.games_played === 0) {
+  if (!member || (member.games_played === 0 && member.doubles_games_played === 0)) {
     await ctx.reply(ctx.t("stats.no_games", { name: target.display_name }));
     return;
-  }
-
-  const winrate = Math.round((member.wins / member.games_played) * 100);
-
-  // Get rank
-  let rank = "?";
-  const stats = await matches.getPlayerStats(target.id, ctx.group.id);
-  if (stats) {
-    rank = String(stats.rank);
   }
 
   const playerAchievements = await achievements.getPlayerAchievementIds(target.id, ctx.group.id);
 
   const lines = [
     `\u{1F4CA} ${ctx.t("stats.title", { name: target.display_name })}`,
-    "",
-    ctx.t("stats.elo", { elo: member.elo_rating, rank }),
-    ctx.t("stats.record", { wins: member.wins, losses: member.losses, winrate }),
-    ctx.t("stats.games", { games: member.games_played }),
-    ctx.t("stats.streak", { streak: member.current_streak }),
-    ctx.t("stats.best_streak", { bestStreak: member.best_streak }),
-    ctx.t("stats.achievements", { count: playerAchievements.length }),
   ];
+
+  // Singles stats
+  if (member.games_played > 0) {
+    const winrate = Math.round((member.wins / member.games_played) * 100);
+    let rank = "?";
+    const stats = await matches.getPlayerStats(target.id, ctx.group.id);
+    if (stats) {
+      rank = String(stats.rank);
+    }
+
+    lines.push("");
+    lines.push(ctx.t("stats.singles_header"));
+    lines.push(ctx.t("stats.elo", { elo: member.elo_rating, rank }));
+    lines.push(ctx.t("stats.record", { wins: member.wins, losses: member.losses, winrate }));
+    lines.push(ctx.t("stats.games", { games: member.games_played }));
+    lines.push(ctx.t("stats.streak", { streak: member.current_streak }));
+    lines.push(ctx.t("stats.best_streak", { bestStreak: member.best_streak }));
+  }
+
+  // Doubles stats
+  if (member.doubles_games_played > 0) {
+    const doublesWinrate = Math.round((member.doubles_wins / member.doubles_games_played) * 100);
+    let doublesRank = "?";
+    const doublesStats = await matches.getPlayerStats(target.id, ctx.group.id, "doubles");
+    if (doublesStats) {
+      doublesRank = String(doublesStats.rank);
+    }
+
+    lines.push("");
+    lines.push(ctx.t("stats.doubles_header"));
+    lines.push(ctx.t("stats.elo", { elo: member.doubles_elo_rating, rank: doublesRank }));
+    lines.push(ctx.t("stats.record", { wins: member.doubles_wins, losses: member.doubles_losses, winrate: doublesWinrate }));
+    lines.push(ctx.t("stats.games", { games: member.doubles_games_played }));
+    lines.push(ctx.t("stats.streak", { streak: member.doubles_current_streak }));
+    lines.push(ctx.t("stats.best_streak", { bestStreak: member.doubles_best_streak }));
+  }
+
+  lines.push("");
+  lines.push(ctx.t("stats.achievements", { count: playerAchievements.length }));
 
   // Recent matches
   const recent = await matches.getPlayerRecentMatches(target.id, ctx.group.id);

@@ -214,20 +214,20 @@ export async function processNewdoublesScore(ctx: SmashRankContext): Promise<boo
   const season = await ensureActiveSeason(ctx.group.id);
 
   const eloResult = calculateDoublesElo({
-    winner1Rating: w1Member.elo_rating,
-    winner2Rating: w2Member.elo_rating,
-    loser1Rating: l1Member.elo_rating,
-    loser2Rating: l2Member.elo_rating,
-    winner1GamesPlayed: w1Member.games_played,
-    winner2GamesPlayed: w2Member.games_played,
-    loser1GamesPlayed: l1Member.games_played,
-    loser2GamesPlayed: l2Member.games_played,
+    winner1Rating: w1Member.doubles_elo_rating,
+    winner2Rating: w2Member.doubles_elo_rating,
+    loser1Rating: l1Member.doubles_elo_rating,
+    loser2Rating: l2Member.doubles_elo_rating,
+    winner1GamesPlayed: w1Member.doubles_games_played,
+    winner2GamesPlayed: w2Member.doubles_games_played,
+    loser1GamesPlayed: l1Member.doubles_games_played,
+    loser2GamesPlayed: l2Member.doubles_games_played,
   });
 
-  const w1Streak = updateStreak(w1Member.current_streak, w1Member.best_streak, true);
-  const w2Streak = updateStreak(w2Member.current_streak, w2Member.best_streak, true);
-  const l1Streak = updateStreak(l1Member.current_streak, l1Member.best_streak, false);
-  const l2Streak = updateStreak(l2Member.current_streak, l2Member.best_streak, false);
+  const w1Streak = updateStreak(w1Member.doubles_current_streak, w1Member.doubles_best_streak, true);
+  const w2Streak = updateStreak(w2Member.doubles_current_streak, w2Member.doubles_best_streak, true);
+  const l1Streak = updateStreak(l1Member.doubles_current_streak, l1Member.doubles_best_streak, false);
+  const l2Streak = updateStreak(l2Member.doubles_current_streak, l2Member.doubles_best_streak, false);
 
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
@@ -245,18 +245,18 @@ export async function processNewdoublesScore(ctx: SmashRankContext): Promise<boo
       winner_score: data.winnerSets,
       loser_score: data.loserSets,
       set_scores: orientedSetScores,
-      elo_before_winner: w1Member.elo_rating,
-      elo_before_loser: l1Member.elo_rating,
-      elo_before_winner_partner: w2Member.elo_rating,
-      elo_before_loser_partner: l2Member.elo_rating,
+      elo_before_winner: w1Member.doubles_elo_rating,
+      elo_before_loser: l1Member.doubles_elo_rating,
+      elo_before_winner_partner: w2Member.doubles_elo_rating,
+      elo_before_loser_partner: l2Member.doubles_elo_rating,
       elo_change: eloResult.change,
       reported_by: ctx.player.id,
     });
 
-    await txGroups.updateGroupElo(ctx.group!.id, winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak);
-    await txGroups.updateGroupElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak);
-    await txGroups.updateGroupElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak);
-    await txGroups.updateGroupElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak);
   });
 
   const setScoresStr = orientedSetScores

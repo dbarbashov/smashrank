@@ -20,7 +20,7 @@ export function Avatar({
   const [failed, setFailed] = useState(false);
 
   const sizeClass = SIZES[size];
-  const initial = name.charAt(0).toUpperCase();
+  const initial = (name || "?").charAt(0).toUpperCase();
 
   if (failed || !slug) {
     return (
