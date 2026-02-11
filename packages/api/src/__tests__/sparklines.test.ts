@@ -60,12 +60,16 @@ describe("GET /api/g/:slug/leaderboard/sparklines", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
 
-    // Both players should have sparkline data with at least 1 entry each
+    // Both players should have 2 data points each (one per match)
     expect(body[alice.id]).toBeDefined();
     expect(body[bob.id]).toBeDefined();
-    expect(body[alice.id].length).toBeGreaterThanOrEqual(1);
-    expect(body[bob.id].length).toBeGreaterThanOrEqual(1);
+    expect(body[alice.id].length).toBe(2);
+    expect(body[bob.id].length).toBe(2);
     // Values should be numeric ELO ratings
     expect(typeof body[alice.id][0]).toBe("number");
+    // Alice: won match 1 (1000+16=1016), lost match 2 (1016-18=998)
+    expect(body[alice.id]).toEqual([1016, 998]);
+    // Bob: lost match 1 (1000-16=984), won match 2 (984+18=1002)
+    expect(body[bob.id]).toEqual([984, 1002]);
   });
 });

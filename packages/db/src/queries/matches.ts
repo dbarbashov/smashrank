@@ -474,46 +474,44 @@ export function matchQueries(sql: SqlLike) {
     ): Promise<Record<string, number[]>> {
       if (playerIds.length === 0) return {};
       const isDoubles = matchType === "doubles";
+      const typeFilter = isDoubles ? sql`m.match_type = 'doubles'` : sql`m.match_type != 'doubles'`;
       const rows = await sql<{ player_id: string; elo_after: number }[]>`
         SELECT sub.player_id, sub.elo_after
         FROM (
-          SELECT
-            CASE
-              WHEN m.winner_id = ANY(${playerIds}::uuid[]) AND (m.winner_id = m.winner_id)
-                THEN m.winner_id
-              WHEN m.loser_id = ANY(${playerIds}::uuid[])
-                THEN m.loser_id
-              WHEN m.winner_partner_id = ANY(${playerIds}::uuid[])
-                THEN m.winner_partner_id
-              WHEN m.loser_partner_id = ANY(${playerIds}::uuid[])
-                THEN m.loser_partner_id
-            END AS player_id,
-            CASE
-              WHEN m.winner_id = ANY(${playerIds}::uuid[]) OR m.winner_partner_id = ANY(${playerIds}::uuid[])
-                THEN m.elo_before_winner + m.elo_change
-              ELSE m.elo_before_loser - m.elo_change
-            END AS elo_after,
-            ROW_NUMBER() OVER (
-              PARTITION BY
-                CASE
-                  WHEN m.winner_id = ANY(${playerIds}::uuid[]) THEN m.winner_id
-                  WHEN m.loser_id = ANY(${playerIds}::uuid[]) THEN m.loser_id
-                  WHEN m.winner_partner_id = ANY(${playerIds}::uuid[]) THEN m.winner_partner_id
-                  WHEN m.loser_partner_id = ANY(${playerIds}::uuid[]) THEN m.loser_partner_id
-                END
-              ORDER BY m.played_at DESC
-            ) AS rn
-          FROM matches m
-          WHERE m.group_id = ${groupId}
-            AND ${isDoubles ? sql`m.match_type = 'doubles'` : sql`m.match_type != 'doubles'`}
-            AND (
-              m.winner_id = ANY(${playerIds}::uuid[])
-              OR m.loser_id = ANY(${playerIds}::uuid[])
-              OR m.winner_partner_id = ANY(${playerIds}::uuid[])
-              OR m.loser_partner_id = ANY(${playerIds}::uuid[])
-            )
+          SELECT player_id, elo_after, ROW_NUMBER() OVER (
+            PARTITION BY player_id ORDER BY played_at DESC
+          ) AS rn
+          FROM (
+            SELECT m.winner_id AS player_id,
+                   m.elo_before_winner + m.elo_change AS elo_after,
+                   m.played_at
+            FROM matches m
+            WHERE m.group_id = ${groupId} AND ${typeFilter}
+              AND m.winner_id = ANY(${playerIds}::uuid[])
+            UNION ALL
+            SELECT m.loser_id AS player_id,
+                   m.elo_before_loser - m.elo_change AS elo_after,
+                   m.played_at
+            FROM matches m
+            WHERE m.group_id = ${groupId} AND ${typeFilter}
+              AND m.loser_id = ANY(${playerIds}::uuid[])
+            UNION ALL
+            SELECT m.winner_partner_id AS player_id,
+                   COALESCE(m.elo_before_winner_partner, m.elo_before_winner) + m.elo_change AS elo_after,
+                   m.played_at
+            FROM matches m
+            WHERE m.group_id = ${groupId} AND ${typeFilter}
+              AND m.winner_partner_id = ANY(${playerIds}::uuid[])
+            UNION ALL
+            SELECT m.loser_partner_id AS player_id,
+                   COALESCE(m.elo_before_loser_partner, m.elo_before_loser) - m.elo_change AS elo_after,
+                   m.played_at
+            FROM matches m
+            WHERE m.group_id = ${groupId} AND ${typeFilter}
+              AND m.loser_partner_id = ANY(${playerIds}::uuid[])
+          ) all_matches
         ) sub
-        WHERE sub.player_id IS NOT NULL AND sub.rn <= ${limit}
+        WHERE sub.rn <= ${limit}
         ORDER BY sub.player_id, sub.rn DESC
       `;
 
