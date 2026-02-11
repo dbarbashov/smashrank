@@ -191,7 +191,7 @@ export interface ActivityEntry {
   count: number;
 }
 
-export function useActivityHeatmap(slug: string, playerId?: string, days: number = 90) {
+export function useActivityHeatmap(slug: string, playerId?: string, days: number = 365) {
   return useQuery({
     queryKey: ["activity-heatmap", slug, playerId, days],
     queryFn: () => {

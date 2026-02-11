@@ -5,7 +5,7 @@ import type { ActivityEntry } from "../api/queries.js";
 const CELL = 12;
 const GAP = 2;
 const SIZE = CELL + GAP;
-const WEEKS = 12;
+const WEEKS = 52;
 const DAYS = 7;
 
 const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""];
