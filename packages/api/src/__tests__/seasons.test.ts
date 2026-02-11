@@ -62,5 +62,76 @@ describe("seasons routes", () => {
       const body = await res.json();
       expect(body.error).toBe("Season not found");
     });
+
+    it("returns doubles standings for active season with ?type=doubles", async () => {
+      const season = await createSeason({ group_id: group.id, name: "Active S", is_active: true });
+      const alice = await createPlayer({ display_name: "Alice" });
+      const bob = await createPlayer({ display_name: "Bob" });
+      await addToGroup(group.id, alice.id, {
+        elo_rating: 1100, games_played: 5, wins: 3, losses: 2,
+        doubles_elo_rating: 1300, doubles_games_played: 4, doubles_wins: 3, doubles_losses: 1,
+      });
+      await addToGroup(group.id, bob.id, {
+        elo_rating: 1200, games_played: 5, wins: 4, losses: 1,
+        doubles_elo_rating: 1150, doubles_games_played: 4, doubles_wins: 1, doubles_losses: 3,
+      });
+
+      const res = await get(`/api/g/test-seasons/seasons/${season.id}?type=doubles`);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.name).toBe("Active S");
+      expect(body.standings).toHaveLength(2);
+      // Alice has higher doubles ELO
+      expect(body.standings[0].final_elo).toBe(1300);
+      expect(body.standings[0].display_name).toBe("Alice");
+      expect(body.standings[0].wins).toBe(3);
+      expect(body.standings[1].final_elo).toBe(1150);
+      expect(body.standings[1].display_name).toBe("Bob");
+    });
+
+    it("returns doubles standings for ended season with ?type=doubles", async () => {
+      const season = await createSeason({ group_id: group.id, name: "Ended S" });
+      const alice = await createPlayer({ display_name: "Alice" });
+      const bob = await createPlayer({ display_name: "Bob" });
+      await addToGroup(group.id, alice.id);
+      await addToGroup(group.id, bob.id);
+
+      const sql = getSql();
+      await sql`
+        INSERT INTO season_snapshots (season_id, player_id, final_elo, final_rank, games_played, wins, losses,
+          doubles_final_elo, doubles_final_rank, doubles_games_played, doubles_wins, doubles_losses)
+        VALUES
+          (${season.id}, ${alice.id}, 1200, 1, 10, 7, 3, 1350, 1, 6, 5, 1),
+          (${season.id}, ${bob.id}, 1100, 2, 10, 5, 5, 1250, 2, 6, 3, 3)
+      `;
+
+      const res = await get(`/api/g/test-seasons/seasons/${season.id}?type=doubles`);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.standings).toHaveLength(2);
+      expect(body.standings[0].final_elo).toBe(1350);
+      expect(body.standings[0].wins).toBe(5);
+      expect(body.standings[0].final_rank).toBe(1);
+      expect(body.standings[1].final_elo).toBe(1250);
+      expect(body.standings[1].final_rank).toBe(2);
+    });
+
+    it("returns empty standings when no doubles games in season", async () => {
+      const season = await createSeason({ group_id: group.id, name: "Singles Only" });
+      const alice = await createPlayer({ display_name: "Alice" });
+      await addToGroup(group.id, alice.id);
+
+      const sql = getSql();
+      await sql`
+        INSERT INTO season_snapshots (season_id, player_id, final_elo, final_rank, games_played, wins, losses,
+          doubles_final_elo, doubles_games_played, doubles_wins, doubles_losses)
+        VALUES (${season.id}, ${alice.id}, 1200, 1, 10, 7, 3, 1200, 0, 0, 0)
+      `;
+
+      const res = await get(`/api/g/test-seasons/seasons/${season.id}?type=doubles`);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.standings).toHaveLength(0);
+    });
   });
 });

@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import {
   usePlayer,
@@ -55,27 +56,29 @@ export function PlayerProfile() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-        <div className="flex items-center gap-3">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">
+        <div className="flex items-center gap-4">
           <Avatar playerId={player.id} name={player.display_name} size="lg" />
-          <h2 className="text-xl font-bold">{player.display_name}</h2>
-        </div>
-        {player.rank && (
-          <p className="text-sm text-gray-500">
-            {t("player.rank", { rank: player.rank })} {t("common.of")}{" "}
-            {player.total_in_group}
-          </p>
-        )}
-        <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
-            <div className="text-xs text-gray-500">{t("leaderboard.elo")}</div>
-            <EloBadge elo={player.elo_rating} />
+            <h2 className="text-xl font-bold">{player.display_name}</h2>
+            {player.rank && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t("player.rank", { rank: player.rank })} {t("common.of")}{" "}
+                {player.total_in_group}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t("leaderboard.elo")}</div>
+            <div className="mt-1"><EloBadge elo={player.elo_rating} /></div>
           </div>
           <div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t("leaderboard.record")}
             </div>
-            <span className="font-medium tabular-nums">
+            <span className="mt-1 font-medium tabular-nums">
               {t("player.record", {
                 wins: player.wins,
                 losses: player.losses,
@@ -83,32 +86,32 @@ export function PlayerProfile() {
             </span>
           </div>
           <div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t("player.winRate")}
             </div>
-            <span className="font-medium">{winPct}%</span>
+            <span className="mt-1 font-medium">{winPct}%</span>
           </div>
           <div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t("player.streak")}
             </div>
-            <StreakBadge streak={player.current_streak} />
+            <div className="mt-1"><StreakBadge streak={player.current_streak} /></div>
           </div>
         </div>
       </div>
 
       {/* Doubles Stats */}
       {player.doubles_games_played > 0 && (
-        <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-          <h3 className="mb-2 font-semibold">{t("player.doublesStats")}</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">
+          <h3 className="mb-3 font-semibold">{t("player.doublesStats")}</h3>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
-              <div className="text-xs text-gray-500">{t("leaderboard.elo")}</div>
-              <EloBadge elo={player.doubles_elo_rating} />
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t("leaderboard.elo")}</div>
+              <div className="mt-1"><EloBadge elo={player.doubles_elo_rating} /></div>
             </div>
             <div>
-              <div className="text-xs text-gray-500">{t("leaderboard.record")}</div>
-              <span className="font-medium tabular-nums">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t("leaderboard.record")}</div>
+              <span className="mt-1 font-medium tabular-nums">
                 {t("player.record", {
                   wins: player.doubles_wins,
                   losses: player.doubles_losses,
@@ -116,14 +119,14 @@ export function PlayerProfile() {
               </span>
             </div>
             <div>
-              <div className="text-xs text-gray-500">{t("player.winRate")}</div>
-              <span className="font-medium">
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t("player.winRate")}</div>
+              <span className="mt-1 font-medium">
                 {Math.round((player.doubles_wins / player.doubles_games_played) * 100)}%
               </span>
             </div>
             <div>
-              <div className="text-xs text-gray-500">{t("player.streak")}</div>
-              <StreakBadge streak={player.doubles_current_streak} />
+              <div className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{t("player.streak")}</div>
+              <div className="mt-1"><StreakBadge streak={player.doubles_current_streak} /></div>
             </div>
           </div>
         </div>
@@ -131,19 +134,27 @@ export function PlayerProfile() {
 
       {/* ELO Chart */}
       {chartData.length > 1 && (
-        <div>
-          <h3 className="mb-2 font-semibold">{t("player.eloHistory")}</h3>
-          <ResponsiveContainer width="100%" height={200}>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">
+          <h3 className="mb-3 font-semibold">{t("player.eloHistory")}</h3>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "0.75rem",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="elo"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -153,13 +164,13 @@ export function PlayerProfile() {
       {/* Achievements */}
       {achievements && achievements.length > 0 && (
         <div>
-          <h3 className="mb-2 font-semibold">{t("player.achievements")}</h3>
+          <h3 className="mb-3 font-semibold">{t("player.achievements")}</h3>
           <div className="flex flex-wrap gap-2">
             {achievements.map((a) => (
               <span
                 key={a.id}
                 title={t(`achievementDefs.${a.achievement_id}.desc`, a.description)}
-                className="rounded-full border border-gray-200 px-3 py-1 text-sm dark:border-gray-700"
+                className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium dark:bg-slate-800"
               >
                 {a.emoji} {t(`achievementDefs.${a.achievement_id}.name`, a.name)}
               </span>
@@ -171,19 +182,19 @@ export function PlayerProfile() {
       {/* Frequent Opponents */}
       {opponents && opponents.length > 0 && (
         <div>
-          <h3 className="mb-2 font-semibold">{t("player.frequentOpponents")}</h3>
-          <div className="flex flex-col gap-1">
+          <h3 className="mb-3 font-semibold">{t("player.frequentOpponents")}</h3>
+          <div className="flex flex-col gap-1.5">
             {opponents.map((opp) => (
               <Link
                 key={opp.id}
                 to={`/g/${slug}/player/${id}/h2h/${opp.id}`}
-                className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60"
               >
                 <div className="flex items-center gap-2">
                   <Avatar playerId={opp.id} name={opp.display_name} size="sm" />
                   <span className="font-medium">{opp.display_name}</span>
                 </div>
-                <span className="text-sm text-gray-500 tabular-nums">
+                <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
                   {opp.wins}W-{opp.losses}L ({opp.match_count})
                 </span>
               </Link>
@@ -194,9 +205,9 @@ export function PlayerProfile() {
 
       {/* Recent Matches */}
       <div>
-        <h3 className="mb-2 font-semibold">{t("player.recentMatches")}</h3>
+        <h3 className="mb-3 font-semibold">{t("player.recentMatches")}</h3>
         {matches.length === 0 ? (
-          <p className="text-gray-500">{t("player.noMatches")}</p>
+          <p className="text-slate-500 dark:text-slate-400">{t("player.noMatches")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {matches.slice(0, 10).map((m) => (

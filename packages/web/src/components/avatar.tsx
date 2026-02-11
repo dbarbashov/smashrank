@@ -25,7 +25,7 @@ export function Avatar({
   if (failed || !slug) {
     return (
       <span
-        className={`inline-flex items-center justify-center rounded-full bg-gray-200 font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300 ${sizeClass}`}
+        className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-gray-200 to-gray-300 font-medium text-gray-600 ring-2 ring-white dark:from-gray-700 dark:to-gray-600 dark:text-gray-300 dark:ring-gray-800 ${sizeClass}`}
       >
         {initial}
       </span>
@@ -36,7 +36,7 @@ export function Avatar({
     <img
       src={`/api/g/${slug}/players/${playerId}/avatar`}
       alt={name}
-      className={`rounded-full object-cover ${sizeClass}`}
+      className={`rounded-full object-cover ring-2 ring-white dark:ring-gray-800 ${sizeClass}`}
       onError={() => setFailed(true)}
     />
   );

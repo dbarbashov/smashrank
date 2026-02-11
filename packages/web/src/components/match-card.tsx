@@ -21,13 +21,21 @@ export function MatchCard({ match, perspectivePlayerId }: { match: Match; perspe
     ? rawSets.map((s: { w: number; l: number }) => `${s.w}-${s.l}`).join(", ")
     : null;
 
+  const isLoser = perspectivePlayerId && (match.loser_id === perspectivePlayerId || match.loser_partner_id === perspectivePlayerId);
+  const displayChange = isLoser ? -match.elo_change : match.elo_change;
+  const accentColor = !perspectivePlayerId
+    ? "border-l-gray-300 dark:border-l-gray-600"
+    : isLoser
+      ? "border-l-red-400 dark:border-l-red-500"
+      : "border-l-green-400 dark:border-l-green-500";
+
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+    <div className={`flex flex-col gap-1 rounded-xl border border-gray-200 border-l-4 bg-white p-3 shadow-sm dark:border-gray-700/60 dark:bg-gray-800/40 ${accentColor}`}>
       <div className="flex items-center gap-2 text-sm">
-        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
           {t(`matches.${match.match_type}`)}
         </span>
-        <span className="text-gray-400">{date}</span>
+        <span className="text-gray-400 dark:text-gray-500">{date}</span>
       </div>
       <div className="flex flex-wrap items-center gap-1">
         <PlayerLink id={match.winner_id} name={match.winner_name} />
@@ -40,7 +48,7 @@ export function MatchCard({ match, perspectivePlayerId }: { match: Match; perspe
             />
           </>
         )}
-        <span className="text-gray-500">{match.winner_partner_name ? t("matches.beat_doubles") : t("matches.beat")}</span>
+        <span className="text-gray-500 dark:text-gray-400">{match.winner_partner_name ? t("matches.beat_doubles") : t("matches.beat")}</span>
         <PlayerLink id={match.loser_id} name={match.loser_name} />
         {match.loser_partner_name && (
           <>
@@ -52,20 +60,14 @@ export function MatchCard({ match, perspectivePlayerId }: { match: Match; perspe
           </>
         )}
       </div>
-      <div className="flex items-center gap-3 text-sm text-gray-500">
-        {score && <span className="font-mono">{score}</span>}
+      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+        {score && <span className="font-mono font-medium">{score}</span>}
         {sets && (
-          <span className="text-xs text-gray-400">({sets})</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">({sets})</span>
         )}
-        {(() => {
-          const isLoser = perspectivePlayerId && (match.loser_id === perspectivePlayerId || match.loser_partner_id === perspectivePlayerId);
-          const displayChange = isLoser ? -match.elo_change : match.elo_change;
-          return (
-            <span className={displayChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-              {displayChange >= 0 ? "+" : ""}{displayChange}
-            </span>
-          );
-        })()}
+        <span className={`font-semibold ${displayChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+          {displayChange >= 0 ? "+" : ""}{displayChange}
+        </span>
       </div>
     </div>
   );

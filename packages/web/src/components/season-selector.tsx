@@ -16,7 +16,7 @@ export function SeasonSelector({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
     >
       <option value="">{t("seasons.current")}</option>
       {seasons.filter((s) => !s.is_active).map((s) => (

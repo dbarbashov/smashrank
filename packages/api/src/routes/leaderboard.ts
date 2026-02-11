@@ -11,7 +11,19 @@ leaderboardRoutes.get("/", async (c) => {
   const type = c.req.query("type");
 
   if (seasonId) {
-    const snapshots = await seasonQueries(sql).getSnapshots(seasonId);
+    const matchType = type === "doubles" ? "doubles" : undefined;
+    const snapshots = await seasonQueries(sql).getSnapshots(seasonId, matchType);
+    if (matchType === "doubles") {
+      return c.json(snapshots.map((s, i) => ({
+        player_id: s.player_id,
+        display_name: s.display_name,
+        final_elo: s.doubles_final_elo,
+        final_rank: i + 1,
+        games_played: s.doubles_games_played,
+        wins: s.doubles_wins,
+        losses: s.doubles_losses,
+      })));
+    }
     return c.json(snapshots);
   }
 

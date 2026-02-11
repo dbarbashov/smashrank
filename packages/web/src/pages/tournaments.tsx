@@ -14,14 +14,14 @@ export function Tournaments() {
 
   if (!tournaments || tournaments.length === 0) {
     return (
-      <p className="py-8 text-center text-gray-500">{t("tournaments.empty")}</p>
+      <p className="py-12 text-center text-slate-500 dark:text-slate-400">{t("tournaments.empty")}</p>
     );
   }
 
   const statusColors: Record<string, string> = {
-    open: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    active: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-    completed: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    open: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+    completed: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
   };
 
   return (
@@ -32,18 +32,18 @@ export function Tournaments() {
           <Link
             key={tournament.id}
             to={`/g/${slug}/tournaments/${tournament.id}`}
-            className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:bg-slate-50 dark:border-slate-700/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60"
           >
             <div>
               <div className="font-medium">{tournament.name}</div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
                 {new Date(tournament.created_at).toLocaleDateString()}
                 {" — "}
                 {t("tournaments.players", { count: tournament.participant_count })}
               </div>
             </div>
             <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 statusColors[tournament.status] ?? statusColors.completed
               }`}
             >

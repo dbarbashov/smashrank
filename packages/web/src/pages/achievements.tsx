@@ -23,21 +23,21 @@ export function Achievements() {
   if (error) return <ErrorMessage message={error.message} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="mb-3 text-lg font-semibold">
+        <h2 className="mb-4 text-lg font-semibold">
           {t("achievements.definitions")}
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {definitions?.map((d) => (
             <div
               key={d.id}
-              className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+              className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40"
             >
-              <span className="text-2xl">{d.emoji}</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-2xl dark:bg-slate-800">{d.emoji}</span>
               <div>
                 <div className="font-medium">{t(`achievementDefs.${d.id}.name`, d.name)}</div>
-                <div className="text-sm text-gray-500">{t(`achievementDefs.${d.id}.desc`, d.description)}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{t(`achievementDefs.${d.id}.desc`, d.description)}</div>
               </div>
             </div>
           ))}
@@ -45,24 +45,24 @@ export function Achievements() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-lg font-semibold">
+        <h3 className="mb-4 text-lg font-semibold">
           {t("achievements.recent")}
         </h3>
         {!recent || recent.length === 0 ? (
-          <p className="text-gray-500">{t("achievements.noRecent")}</p>
+          <p className="text-slate-500 dark:text-slate-400">{t("achievements.noRecent")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {recent.map((a) => (
               <div
                 key={a.id}
-                className="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700"
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40"
               >
                 <span className="text-xl">{a.emoji}</span>
                 <div>
                   <span className="font-medium">{t(`achievementDefs.${a.achievement_id}.name`, a.name)}</span>
-                  <span className="mx-1 text-gray-400">-</span>
+                  <span className="mx-1.5 text-slate-300 dark:text-slate-600">|</span>
                   <PlayerLink id={a.player_id} name={a.display_name} />
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {new Date(a.unlocked_at).toLocaleDateString()}
                   </div>
                 </div>

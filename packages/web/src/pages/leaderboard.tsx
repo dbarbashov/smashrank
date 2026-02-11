@@ -34,22 +34,20 @@ export function Leaderboard() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t("leaderboard.title")}</h2>
         <div className="flex items-center gap-2">
-          {!isSeason && (
-            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700">
-              <button
-                className={`px-3 py-1 text-sm ${matchType === "singles" ? "bg-gray-200 font-medium dark:bg-gray-700" : ""}`}
-                onClick={() => setMatchType("singles")}
-              >
-                {t("leaderboard.singles")}
-              </button>
-              <button
-                className={`px-3 py-1 text-sm ${matchType === "doubles" ? "bg-gray-200 font-medium dark:bg-gray-700" : ""}`}
-                onClick={() => setMatchType("doubles")}
-              >
-                {t("leaderboard.doubles")}
-              </button>
-            </div>
-          )}
+          <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
+            <button
+              className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "singles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+              onClick={() => setMatchType("singles")}
+            >
+              {t("leaderboard.singles")}
+            </button>
+            <button
+              className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "doubles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+              onClick={() => setMatchType("doubles")}
+            >
+              {t("leaderboard.doubles")}
+            </button>
+          </div>
           {seasons && seasons.some((s) => !s.is_active) && (
             <SeasonSelector
               seasons={seasons}
@@ -61,31 +59,31 @@ export function Leaderboard() {
       </div>
 
       {rows.length === 0 ? (
-        <p className="py-8 text-center text-gray-500">
+        <p className="py-12 text-center text-slate-500 dark:text-slate-400">
           {t("leaderboard.empty")}
         </p>
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden sm:block">
+          <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:block dark:border-slate-700/60 dark:bg-slate-800/40">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700">
-                  <th className="py-2 pr-2">{t("leaderboard.rank")}</th>
-                  <th className="py-2">{t("leaderboard.player")}</th>
-                  <th className="py-2 text-right">{t("leaderboard.elo")}</th>
-                  <th className="py-2 text-right">{t("leaderboard.record")}</th>
-                  <th className="py-2 text-right">
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
+                  <th className="px-4 py-3">{t("leaderboard.rank")}</th>
+                  <th className="px-4 py-3">{t("leaderboard.player")}</th>
+                  <th className="px-4 py-3 text-right">{t("leaderboard.elo")}</th>
+                  <th className="px-4 py-3 text-right">{t("leaderboard.record")}</th>
+                  <th className="px-4 py-3 text-right">
                     {t("leaderboard.winRate")}
                   </th>
                   {!isSeason && (
-                    <th className="py-2 text-right">
+                    <th className="px-4 py-3 text-right">
                       {t("leaderboard.streak")}
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {rows.map((row, i) => {
                   const entry = isSeason
                     ? (row as SeasonSnapshot)
@@ -109,23 +107,23 @@ export function Leaderboard() {
                   return (
                     <tr
                       key={playerId}
-                      className="border-b border-gray-100 dark:border-gray-800"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
-                      <td className="py-2 pr-2 text-gray-500">{rank}</td>
-                      <td className="py-2">
+                      <td className="px-4 py-3 font-medium text-slate-400 dark:text-slate-500">{rank}</td>
+                      <td className="px-4 py-3">
                         <PlayerLink id={playerId} name={name} />
                       </td>
-                      <td className="py-2 text-right">
+                      <td className="px-4 py-3 text-right">
                         <EloBadge elo={elo} />
                       </td>
-                      <td className="py-2 text-right tabular-nums">
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                         {wins}-{losses}
                       </td>
-                      <td className="py-2 text-right tabular-nums">
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                         {winPct}%
                       </td>
                       {!isSeason && (
-                        <td className="py-2 text-right">
+                        <td className="px-4 py-3 text-right">
                           <StreakBadge
                             streak={
                               (row as LeaderboardEntry).current_streak ?? 0
@@ -160,15 +158,15 @@ export function Leaderboard() {
               return (
                 <div
                   key={playerId}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-700"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-6 text-center text-sm text-gray-500">
+                    <span className="w-6 text-center text-sm font-medium text-slate-400 dark:text-slate-500">
                       {rank}
                     </span>
                     <div>
                       <PlayerLink id={playerId} name={name} />
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
                         {entry.wins}-{entry.losses}
                       </div>
                     </div>

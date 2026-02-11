@@ -84,6 +84,11 @@ export interface SeasonSnapshot {
   games_played: number;
   wins: number;
   losses: number;
+  doubles_final_elo: number;
+  doubles_final_rank: number | null;
+  doubles_games_played: number;
+  doubles_wins: number;
+  doubles_losses: number;
 }
 
 export interface AchievementDefinition {

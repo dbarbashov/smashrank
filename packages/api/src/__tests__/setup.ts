@@ -88,9 +88,16 @@ export async function addToGroup(groupId: string, playerId: string, stats?: {
   losses?: number;
   current_streak?: number;
   best_streak?: number;
+  doubles_elo_rating?: number;
+  doubles_games_played?: number;
+  doubles_wins?: number;
+  doubles_losses?: number;
 }): Promise<void> {
   await sql`
-    INSERT INTO group_members (group_id, player_id, elo_rating, games_played, wins, losses, current_streak, best_streak)
+    INSERT INTO group_members (
+      group_id, player_id, elo_rating, games_played, wins, losses, current_streak, best_streak,
+      doubles_elo_rating, doubles_games_played, doubles_wins, doubles_losses
+    )
     VALUES (
       ${groupId}, ${playerId},
       ${stats?.elo_rating ?? 1200},
@@ -98,7 +105,11 @@ export async function addToGroup(groupId: string, playerId: string, stats?: {
       ${stats?.wins ?? 0},
       ${stats?.losses ?? 0},
       ${stats?.current_streak ?? 0},
-      ${stats?.best_streak ?? 0}
+      ${stats?.best_streak ?? 0},
+      ${stats?.doubles_elo_rating ?? 1200},
+      ${stats?.doubles_games_played ?? 0},
+      ${stats?.doubles_wins ?? 0},
+      ${stats?.doubles_losses ?? 0}
     )
     ON CONFLICT DO NOTHING
   `;

@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  CartesianGrid,
 } from "recharts";
 import { useH2H } from "../api/queries.js";
 import { Avatar } from "../components/avatar.js";
@@ -71,14 +72,14 @@ export function H2HPage() {
   return (
     <div className="space-y-6">
       {/* Header with avatars */}
-      <div className="flex items-center justify-center gap-6">
-        <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center justify-center gap-8 py-2">
+        <div className="flex flex-col items-center gap-1.5">
           {playerA && <Avatar playerId={playerA.id} name={nameA} size="lg" />}
           <span className="font-semibold">{nameA}</span>
           {playerA && <EloBadge elo={playerA.elo_rating} />}
         </div>
-        <span className="text-2xl font-bold text-gray-400">vs</span>
-        <div className="flex flex-col items-center gap-1">
+        <span className="text-3xl font-bold text-slate-300 dark:text-slate-600">vs</span>
+        <div className="flex flex-col items-center gap-1.5">
           {playerB && <Avatar playerId={playerB.id} name={nameB} size="lg" />}
           <span className="font-semibold">{nameB}</span>
           {playerB && <EloBadge elo={playerB.elo_rating} />}
@@ -86,15 +87,15 @@ export function H2HPage() {
       </div>
 
       {/* Record summary */}
-      <div className="rounded-lg border border-gray-200 p-4 text-center dark:border-gray-700">
-        <div className="text-lg font-bold tabular-nums">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">
+        <div className="text-2xl font-bold tabular-nums">
           {winsA} - {winsB}
         </div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
           {t("h2h.totalMatches", { count: totalMatches })}
         </div>
         {currentStreak && currentStreak.count > 1 && (
-          <div className="mt-1 text-sm text-gray-500">
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {t("h2h.currentStreak", {
               name: currentStreak.playerId === id ? nameA : nameB,
               count: currentStreak.count,
@@ -110,13 +111,20 @@ export function H2HPage() {
 
       {/* Dual ELO chart */}
       {chartData.length > 1 && (
-        <div>
-          <h3 className="mb-2 font-semibold">{t("h2h.eloComparison")}</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">
+          <h3 className="mb-3 font-semibold">{t("h2h.eloComparison")}</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "0.75rem",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                }}
+              />
               <Legend />
               <Line
                 type="monotone"
@@ -124,6 +132,7 @@ export function H2HPage() {
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
@@ -131,6 +140,7 @@ export function H2HPage() {
                 stroke="#ef4444"
                 strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -140,7 +150,7 @@ export function H2HPage() {
       {/* Recent matches */}
       {recent.length > 0 && (
         <div>
-          <h3 className="mb-2 font-semibold">{t("h2h.recentMatches")}</h3>
+          <h3 className="mb-3 font-semibold">{t("h2h.recentMatches")}</h3>
           <div className="flex flex-col gap-2">
             {recent.map((m) => (
               <MatchCard key={m.id} match={m} perspectivePlayerId={id} />

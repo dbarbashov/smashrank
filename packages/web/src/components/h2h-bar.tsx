@@ -16,27 +16,31 @@ export function H2HBar({
   const pctB = 100 - pctA;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="font-medium text-blue-600 dark:text-blue-400">
+        <span className="font-semibold text-blue-600 dark:text-blue-400">
           {nameA}: {winsA}
         </span>
-        <span className="font-medium text-red-600 dark:text-red-400">
+        <span className="font-semibold text-red-600 dark:text-red-400">
           {nameB}: {winsB}
         </span>
       </div>
-      <div className="flex h-4 overflow-hidden rounded-full">
+      <div className="flex h-5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
         {pctA > 0 && (
           <div
-            className="bg-blue-500 transition-all"
+            className="flex items-center justify-center bg-gradient-to-r from-blue-500 to-blue-400 text-xs font-medium text-white transition-all"
             style={{ width: `${pctA}%` }}
-          />
+          >
+            {pctA >= 20 && `${pctA}%`}
+          </div>
         )}
         {pctB > 0 && (
           <div
-            className="bg-red-500 transition-all"
+            className="flex items-center justify-center bg-gradient-to-r from-red-400 to-red-500 text-xs font-medium text-white transition-all"
             style={{ width: `${pctB}%` }}
-          />
+          >
+            {pctB >= 20 && `${pctB}%`}
+          </div>
         )}
       </div>
     </div>

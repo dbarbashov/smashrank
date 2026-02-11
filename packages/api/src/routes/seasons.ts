@@ -16,6 +16,8 @@ seasonsRoutes.get("/:id", async (c) => {
   const group = c.get("group");
   const sql = getConnection();
   const seasonId = c.req.param("id");
+  const type = c.req.query("type");
+  const matchType = type === "doubles" ? "doubles" : undefined;
 
   const season = await seasonQueries(sql).findById(seasonId);
   if (!season) {
@@ -24,7 +26,7 @@ seasonsRoutes.get("/:id", async (c) => {
 
   if (season.is_active) {
     // Live standings from group_members
-    const leaderboard = await matchQueries(sql).getLeaderboard(group.id);
+    const leaderboard = await matchQueries(sql).getLeaderboard(group.id, 20, matchType);
     const standings = leaderboard.map((entry, i) => ({
       player_id: entry.id,
       display_name: entry.display_name,
@@ -37,6 +39,17 @@ seasonsRoutes.get("/:id", async (c) => {
     return c.json({ ...season, standings });
   }
 
-  const snapshots = await seasonQueries(sql).getSnapshots(seasonId);
-  return c.json({ ...season, standings: snapshots });
+  const snapshots = await seasonQueries(sql).getSnapshots(seasonId, matchType);
+  const standings = matchType === "doubles"
+    ? snapshots.map((s, i) => ({
+        player_id: s.player_id,
+        display_name: s.display_name,
+        final_elo: s.doubles_final_elo,
+        final_rank: i + 1,
+        games_played: s.doubles_games_played,
+        wins: s.doubles_wins,
+        losses: s.doubles_losses,
+      }))
+    : snapshots;
+  return c.json({ ...season, standings });
 });

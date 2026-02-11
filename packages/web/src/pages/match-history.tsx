@@ -37,7 +37,7 @@ export function MatchHistory() {
         <select
           value={playerFilter}
           onChange={(e) => setPlayerFilter(e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <option value="">{t("matches.filterPlayer")}</option>
           {players.map((p) => (
@@ -50,7 +50,7 @@ export function MatchHistory() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <option value="">{t("matches.filterType")}</option>
           <option value="singles">{t("matches.singles")}</option>
@@ -63,7 +63,7 @@ export function MatchHistory() {
       ) : error ? (
         <ErrorMessage message={error.message} />
       ) : matches.length === 0 ? (
-        <p className="py-8 text-center text-gray-500">
+        <p className="py-12 text-center text-slate-500 dark:text-slate-400">
           {t("matches.noMatches")}
         </p>
       ) : (
@@ -76,7 +76,7 @@ export function MatchHistory() {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="mt-2 rounded-md bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              className="mt-2 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               {isFetchingNextPage
                 ? t("common.loading")

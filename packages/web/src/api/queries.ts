@@ -123,10 +123,13 @@ export function useSeasons(slug: string) {
   });
 }
 
-export function useSeasonDetail(slug: string, seasonId: string) {
+export function useSeasonDetail(slug: string, seasonId: string, type?: string) {
   return useQuery({
-    queryKey: ["season", slug, seasonId],
-    queryFn: () => apiFetch<SeasonDetail>(`/${slug}/seasons/${seasonId}`),
+    queryKey: ["season", slug, seasonId, type],
+    queryFn: () => {
+      const qs = type ? `?type=${type}` : "";
+      return apiFetch<SeasonDetail>(`/${slug}/seasons/${seasonId}${qs}`);
+    },
   });
 }
 

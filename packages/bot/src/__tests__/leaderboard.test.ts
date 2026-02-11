@@ -49,4 +49,46 @@ describe("/leaderboard", () => {
     expect(reply).toContain("2.");
     expect(reply).toContain("Bob");
   });
+
+  it("shows doubles leaderboard after doubles games", async () => {
+    await registerPlayer(100, "alice", "Alice");
+    await registerPlayer(200, "bob", "Bob");
+    await registerPlayer(300, "charlie", "Charlie");
+    await registerPlayer(400, "dave", "Dave");
+
+    // Alice+Bob beat Charlie+Dave
+    await sendMessage(bot, {
+      text: "/doubles @bob vs @charlie @dave 11-5 11-3",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    calls.length = 0;
+
+    await sendMessage(bot, { text: "/leaderboard doubles", userId: 100, username: "alice", displayName: "Alice" });
+    const reply = lastReply(calls);
+
+    expect(reply).toContain("Doubles Rankings");
+    expect(reply).toContain("Alice");
+    expect(reply).toContain("Bob");
+  });
+
+  it("shows empty message for /leaderboard doubles when no doubles played", async () => {
+    await registerPlayer(100, "alice", "Alice");
+    await registerPlayer(200, "bob", "Bob");
+
+    // Play only a singles game
+    await sendMessage(bot, {
+      text: "/game @bob 11-5 11-3",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    calls.length = 0;
+
+    await sendMessage(bot, { text: "/leaderboard doubles", userId: 100, username: "alice", displayName: "Alice" });
+    const reply = lastReply(calls);
+
+    expect(reply).toContain("No matches");
+  });
 });

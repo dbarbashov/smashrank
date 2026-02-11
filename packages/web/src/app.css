@@ -1,3 +1,57 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Base styles */
+html {
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html.dark {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+/* Recharts overrides for dark mode */
+.dark .recharts-cartesian-axis-tick-value {
+  fill: #94a3b8 !important;
+}
+
+.dark .recharts-cartesian-grid line {
+  stroke: #1e293b !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .recharts-legend-item-text {
+  color: #cbd5e1 !important;
+}
+
+/* Custom scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
