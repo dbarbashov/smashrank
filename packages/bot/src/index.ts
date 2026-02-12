@@ -23,6 +23,9 @@ import { webCommand } from "./commands/web.js";
 import { tournamentCommand } from "./commands/tournament.js";
 import { tgameCommand } from "./commands/tgame.js";
 import { challengeCommand, challengeCallbackHandler, processChallengeScore } from "./commands/challenge.js";
+import { rematchCallbackHandler } from "./helpers/rematch.js";
+import { matchConfirmCallbackHandler } from "./helpers/match-confirmation.js";
+import { recordsCommand } from "./commands/records.js";
 import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
@@ -75,6 +78,7 @@ async function main(): Promise<void> {
   bot.command("tournament", tournamentCommand);
   bot.command("tgame", tgameCommand);
   bot.command("challenge", challengeCommand);
+  bot.command("records", recordsCommand);
 
   // Callback query handler for inline keyboards
   bot.on("callback_query:data", async (ctx) => {
@@ -85,6 +89,10 @@ async function main(): Promise<void> {
       await newdoublesCallbackHandler(ctx as SmashRankContext);
     } else if (data.startsWith("ch:")) {
       await challengeCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("rm:")) {
+      await rematchCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("mc:")) {
+      await matchConfirmCallbackHandler(ctx as SmashRankContext);
     }
   });
 

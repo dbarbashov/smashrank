@@ -18,6 +18,9 @@ import { newdoublesCommand, newdoublesCallbackHandler, processNewdoublesScore } 
 import { tournamentCommand } from "../commands/tournament.js";
 import { tgameCommand } from "../commands/tgame.js";
 import { challengeCommand, challengeCallbackHandler, processChallengeScore } from "../commands/challenge.js";
+import { rematchCallbackHandler } from "../helpers/rematch.js";
+import { matchConfirmCallbackHandler } from "../helpers/match-confirmation.js";
+import { recordsCommand } from "../commands/records.js";
 import { matchesCommand } from "../commands/matches.js";
 import { listAchievementsCommand } from "../commands/list-achievements.js";
 import { webCommand } from "../commands/web.js";
@@ -140,6 +143,7 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
   bot.command("tournament", tournamentCommand);
   bot.command("tgame", tgameCommand);
   bot.command("challenge", challengeCommand);
+  bot.command("records", recordsCommand);
   bot.command("matches", matchesCommand);
   bot.command("listachievements", listAchievementsCommand);
   bot.command("web", webCommand);
@@ -152,6 +156,10 @@ export function createTestBot(): { bot: Bot<SmashRankContext>; calls: CapturedCa
       await newdoublesCallbackHandler(ctx as SmashRankContext);
     } else if (data.startsWith("ch:")) {
       await challengeCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("rm:")) {
+      await rematchCallbackHandler(ctx as SmashRankContext);
+    } else if (data.startsWith("mc:")) {
+      await matchConfirmCallbackHandler(ctx as SmashRankContext);
     }
   });
 

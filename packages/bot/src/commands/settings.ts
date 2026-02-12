@@ -10,6 +10,8 @@ const VALID_KEYS: Record<string, string[]> = {
   digest: ["daily", "weekly", "off"],
   matchup_of_day: ["on", "off"],
   elo_decay: ["on", "off"],
+  rematch_prompt: ["on", "off"],
+  match_confirmation: ["on", "off"],
 };
 
 export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
@@ -46,6 +48,8 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
         digest: (settings.digest as string) ?? "off",
         matchup_of_day: (settings.matchup_of_day as string) === "on" ? "on" : "off",
         elo_decay: (settings.elo_decay as string) === "on" ? "on" : "off",
+        rematch_prompt: (settings.rematch_prompt as string) === "off" ? "off" : "on",
+        match_confirmation: (settings.match_confirmation as string) === "on" ? "on" : "off",
       }));
       return;
     }
@@ -65,7 +69,7 @@ export async function settingsCommand(ctx: SmashRankContext): Promise<void> {
   const groups = groupQueries(sql);
 
   let settingValue: unknown;
-  if (key === "digest" || key === "matchup_of_day" || key === "elo_decay") {
+  if (key === "digest" || key === "matchup_of_day" || key === "elo_decay" || key === "rematch_prompt" || key === "match_confirmation") {
     settingValue = value;
   } else {
     settingValue = value === "on";

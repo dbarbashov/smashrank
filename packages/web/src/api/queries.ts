@@ -17,6 +17,7 @@ import type {
   TournamentDetail,
   H2HData,
   OpponentEntry,
+  GroupRecords,
 } from "../types.js";
 
 export function useGroupInfo(slug: string) {
@@ -189,6 +190,13 @@ export function useLeaderboardSparklines(slug: string, type?: string) {
 export interface ActivityEntry {
   date: string;
   count: number;
+}
+
+export function useRecords(slug: string) {
+  return useQuery({
+    queryKey: ["records", slug],
+    queryFn: () => apiFetch<GroupRecords>(`/${slug}/records`),
+  });
 }
 
 export function useActivityHeatmap(slug: string, playerId?: string, days: number = 365) {

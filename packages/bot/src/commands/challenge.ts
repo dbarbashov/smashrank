@@ -14,10 +14,11 @@ import type { MatchCommentaryContext } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { recordMatch } from "../helpers/record-match.js";
 import { formatAchievementUnlocks } from "../helpers/format-achievements.js";
+import { buildRematchKeyboard } from "../helpers/rematch.js";
 
-type ChallengeState = "pending" | "who_won" | "score_entry";
+export type ChallengeState = "pending" | "who_won" | "score_entry";
 
-interface ChallengeSession {
+export interface ChallengeSession {
   challengerId: string;
   challengerTelegramId: number;
   challengerName: string;
@@ -32,19 +33,19 @@ interface ChallengeSession {
 }
 
 // Key: "groupId:challengerId:challengedId"
-const challengeSessions = new Map<string, ChallengeSession>();
+export const challengeSessions = new Map<string, ChallengeSession>();
 
-function challengeKey(groupId: string, id1: string, id2: string): string {
+export function challengeKey(groupId: string, id1: string, id2: string): string {
   const [a, b] = [id1, id2].sort();
   return `${groupId}:${a}:${b}`;
 }
 
-function scoreKey(chatId: number, telegramId: number): string {
+export function scoreKey(chatId: number, telegramId: number): string {
   return `ch_score:${chatId}:${telegramId}`;
 }
 
 // Map for tracking score-entry sessions by chat+telegram user
-const pendingScores = new Map<string, string>(); // scoreKey → challengeKey
+export const pendingScores = new Map<string, string>(); // scoreKey → challengeKey
 
 export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
@@ -344,7 +345,8 @@ export async function processChallengeScore(ctx: SmashRankContext): Promise<bool
     message += "\n\n" + achievementText;
   }
 
-  await ctx.reply(message);
+  const rematchKb = buildRematchKeyboard(ctx.group.id, winner.id, loser.id, ctx);
+  await ctx.reply(message, rematchKb ? { reply_markup: rematchKb } : undefined);
   return true;
 }
 

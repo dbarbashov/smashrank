@@ -194,3 +194,21 @@ export interface OpponentEntry {
   wins: number;
   losses: number;
 }
+
+export interface RecordEntry {
+  playerId: string;
+  playerName: string;
+  value: number;
+  detail: string | null;
+  matchId: string | null;
+  date: string | null;
+}
+
+export interface GroupRecords {
+  highestElo: RecordEntry | null;
+  longestStreak: RecordEntry | null;
+  biggestUpset: RecordEntry | null;
+  mostMatchesInDay: RecordEntry | null;
+  highestEloGain: RecordEntry | null;
+  mostGamesPlayed: RecordEntry | null;
+}

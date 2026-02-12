@@ -12,6 +12,7 @@ import { seasonsRoutes } from "./routes/seasons.js";
 import { statsRoutes } from "./routes/stats.js";
 import { tournamentsRoutes } from "./routes/tournaments.js";
 import { activityRoutes } from "./routes/activity.js";
+import { recordsRoutes } from "./routes/records.js";
 
 export type AppEnv = {
   Variables: {
@@ -50,6 +51,7 @@ export function createApp(): Hono {
   api.route("/stats", statsRoutes);
   api.route("/tournaments", tournamentsRoutes);
   api.route("/activity", activityRoutes);
+  api.route("/records", recordsRoutes);
 
   app.route("/api/g/:slug", api);
 

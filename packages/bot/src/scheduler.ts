@@ -16,6 +16,7 @@ import type { DigestData } from "@smashrank/core";
 import type { SmashRankContext } from "./context.js";
 import { forceCompleteTournament } from "./helpers/force-complete-tournament.js";
 import { cleanupExpiredChallenges } from "./commands/challenge.js";
+import { cleanupExpiredConfirmations } from "./helpers/match-confirmation.js";
 
 const DIGEST_INTERVAL_MS = 60_000; // Check every 60 seconds
 const lastDigestSent = new Map<string, number>(); // groupId → timestamp
@@ -231,6 +232,9 @@ export function startScheduler(bot: Bot<SmashRankContext>): void {
       console.error("Matchup scheduler error:", err),
     );
     cleanupExpiredChallenges();
+    cleanupExpiredConfirmations(bot).catch((err) =>
+      console.error("Match confirmation cleanup error:", err),
+    );
     checkEloDecay().catch((err) =>
       console.error("ELO decay scheduler error:", err),
     );

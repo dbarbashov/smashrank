@@ -9,6 +9,7 @@ import { SeasonDetailPage } from "./pages/season-detail.js";
 import { Tournaments } from "./pages/tournaments.js";
 import { TournamentDetailPage } from "./pages/tournament-detail.js";
 import { H2HPage } from "./pages/h2h.js";
+import { RecordsPage } from "./pages/records.js";
 import { NotFound } from "./pages/not-found.js";
 
 const router = createBrowserRouter([
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { path: "seasons/:seasonId", element: <SeasonDetailPage /> },
       { path: "tournaments", element: <Tournaments /> },
       { path: "tournaments/:tournamentId", element: <TournamentDetailPage /> },
+      { path: "records", element: <RecordsPage /> },
     ],
   },
   { path: "*", element: <NotFound /> },

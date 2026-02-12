@@ -11,6 +11,8 @@ import type { MatchCommentaryContext } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { recordMatch } from "../helpers/record-match.js";
 import { formatAchievementUnlocks } from "../helpers/format-achievements.js";
+import { buildRematchKeyboard } from "../helpers/rematch.js";
+import { addPendingMatch, buildConfirmationKeyboard } from "../helpers/match-confirmation.js";
 
 export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
@@ -64,6 +66,55 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
       })
     : null;
 
+  const setScoresStr = orientedSetScores
+    ? orientedSetScores.map((s) => `${s.w}-${s.l}`).join(", ")
+    : null;
+
+  const commentaryEnabled = ctx.group.settings?.commentary !== false;
+  const language = ctx.group?.language ?? "en";
+
+  // Match confirmation check
+  if (ctx.group.settings?.match_confirmation === "on") {
+    const score = setScoresStr ?? `${data.winnerSets}-${data.loserSets}`;
+    const pm = addPendingMatch({
+      matchInput: {
+        group: ctx.group,
+        winner,
+        loser,
+        winnerSets: data.winnerSets,
+        loserSets: data.loserSets,
+        setScores: orientedSetScores,
+        reportedBy: ctx.player.id,
+      },
+      reporterTelegramId: ctx.from!.id,
+      opponentTelegramId: Number(opponent.telegram_id),
+      winnerName: winner.display_name,
+      loserName: loser.display_name,
+      winnerId: winner.id,
+      loserId: loser.id,
+      score,
+      chatId: ctx.chat!.id,
+      groupLanguage: language,
+      commentaryEnabled,
+      setScoresStr,
+      winnerSets: data.winnerSets,
+      loserSets: data.loserSets,
+    });
+
+    const confirmKb = buildConfirmationKeyboard(pm.id, ctx);
+    await ctx.reply(
+      ctx.t("confirmation.pending", {
+        reporter: ctx.player.display_name,
+        winner: winner.display_name,
+        loser: loser.display_name,
+        score,
+        opponent: opponent.display_name,
+      }),
+      { reply_markup: confirmKb },
+    );
+    return;
+  }
+
   const { eloResult, winnerStreak, newAchievements, winnerMember, loserMember } = await recordMatch({
     group: ctx.group,
     winner,
@@ -75,10 +126,6 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   });
 
   // Build response — try LLM commentary first, fall back to template
-  const setScoresStr = orientedSetScores
-    ? orientedSetScores.map((s) => `${s.w}-${s.l}`).join(", ")
-    : null;
-
   const commentaryContext: MatchCommentaryContext = {
     winner: {
       name: winner.display_name,
@@ -98,8 +145,6 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
     achievements: newAchievements.map((a) => a.achievementId),
   };
 
-  const commentaryEnabled = ctx.group.settings?.commentary !== false;
-  const language = ctx.group?.language ?? "en";
   const llmMessage = commentaryEnabled
     ? await generateMatchCommentary(commentaryContext, language)
     : null;
@@ -128,5 +173,6 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
     message += "\n\n" + achievementText;
   }
 
-  await ctx.reply(message);
+  const rematchKb = buildRematchKeyboard(ctx.group.id, winner.id, loser.id, ctx);
+  await ctx.reply(message, rematchKb ? { reply_markup: rematchKb } : undefined);
 }

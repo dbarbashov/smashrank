@@ -9,6 +9,8 @@ export type { WeeklyStats } from "./queries/digest.js";
 export { tournamentQueries } from "./queries/tournaments.js";
 export { matchupQueries } from "./queries/matchup.js";
 export type { MatchupCandidate } from "./queries/matchup.js";
+export { recordQueries } from "./queries/records.js";
+export type { RecordEntry, GroupRecords } from "./queries/records.js";
 export type {
   Player,
   Group,
