@@ -27,10 +27,13 @@ export async function recordsCommand(ctx: SmashRankContext): Promise<void> {
   }
 
   if (records.biggestUpset) {
+    const upsetDetail = records.biggestUpset.detail
+      ? ` (${ctx.t("records.upset_detail", { loser: records.biggestUpset.detail })})`
+      : "";
     entries.push(ctx.t("records.biggest_upset") + "\n" + ctx.t("records.holder", {
       name: records.biggestUpset.playerName,
-      value: `+${records.biggestUpset.value}`,
-    }) + (records.biggestUpset.detail ? ` (${records.biggestUpset.detail})` : ""));
+      value: records.biggestUpset.value,
+    }) + upsetDetail);
   }
 
   if (records.mostMatchesInDay) {

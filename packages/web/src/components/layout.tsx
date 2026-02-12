@@ -20,6 +20,7 @@ export function Layout() {
     { to: `/g/${slug}/achievements`, label: t("nav.achievements") },
     { to: `/g/${slug}/seasons`, label: t("nav.seasons") },
     { to: `/g/${slug}/tournaments`, label: t("nav.tournaments") },
+    { to: `/g/${slug}/records`, label: t("nav.records") },
   ];
 
   return (

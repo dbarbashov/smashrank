@@ -181,5 +181,6 @@
   "records.most_matches_day": "\u26a1 Most Matches in a Day",
   "records.highest_elo_gain": "\ud83d\udcc8 Highest ELO Gain",
   "records.most_games": "\ud83c\udfbe Most Games Played",
-  "records.holder": "{{name}} \u2014 {{value}}"
+  "records.holder": "{{name}} \u2014 {{value}}",
+  "records.upset_detail": "beat {{loser}}"
 }

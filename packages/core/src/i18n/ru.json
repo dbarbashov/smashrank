@@ -205,5 +205,6 @@
   "records.most_matches_day": "\u26a1 Больше всего матчей за день",
   "records.highest_elo_gain": "\ud83d\udcc8 Наибольший прирост ELO",
   "records.most_games": "\ud83c\udfbe Больше всего игр",
-  "records.holder": "{{name}} — {{value}}"
+  "records.holder": "{{name}} — {{value}}",
+  "records.upset_detail": "победил {{loser}}"
 }

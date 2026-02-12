@@ -182,6 +182,6 @@ describe("GET /api/g/:slug/records", () => {
     expect(body.biggestUpset).not.toBeNull();
     expect(body.biggestUpset.playerName).toBe("Bob");
     expect(body.biggestUpset.value).toBe(300); // 1200 - 900
-    expect(body.biggestUpset.detail).toBe("beat Alice");
+    expect(body.biggestUpset.detail).toBe("Alice");
   });
 });

@@ -4,7 +4,8 @@
     "matches": "Матчи",
     "achievements": "Достижения",
     "seasons": "Сезоны",
-    "tournaments": "Турниры"
+    "tournaments": "Турниры",
+    "records": "Рекорды"
   },
   "leaderboard": {
     "title": "Таблица лидеров",
@@ -132,6 +133,22 @@
     "title": "Активность",
     "match": "матч",
     "matches": "матчей"
+  },
+  "records": {
+    "title": "Рекорды",
+    "empty": "Пока нет рекордов. Сыграйте несколько матчей!",
+    "highest_elo": "Наивысший ELO",
+    "longest_streak": "Самая длинная серия побед",
+    "biggest_upset": "Самая крупная сенсация",
+    "most_matches_day": "Больше всего матчей за день",
+    "highest_elo_gain": "Наибольший прирост ELO",
+    "most_games": "Больше всего игр",
+    "upset_detail": "победил {{loser}}",
+    "suffix_wins": " побед",
+    "suffix_elo_gap": " разница ELO",
+    "suffix_matches": " матчей",
+    "suffix_pts": " очков",
+    "suffix_games": " игр"
   },
   "common": {
     "loading": "Загрузка...",

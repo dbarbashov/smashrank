@@ -175,7 +175,7 @@ export function recordQueries(sql: postgres.Sql) {
       return {
         highestElo: toEntry(highestEloRows),
         longestStreak: toEntry(longestStreakRows),
-        biggestUpset: toEntry(biggestUpsetRows, (r) => `beat ${r.loser_name}`),
+        biggestUpset: toEntry(biggestUpsetRows, (r) => r.loser_name),
         mostMatchesInDay: toEntry(mostMatchesDayRows),
         highestEloGain: toEntry(highestEloGainRows),
         mostGamesPlayed: toEntry(mostGamesRows),

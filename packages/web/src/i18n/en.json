@@ -4,7 +4,8 @@
     "matches": "Matches",
     "achievements": "Achievements",
     "seasons": "Seasons",
-    "tournaments": "Tournaments"
+    "tournaments": "Tournaments",
+    "records": "Records"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -132,6 +133,22 @@
     "title": "Activity",
     "match": "match",
     "matches": "matches"
+  },
+  "records": {
+    "title": "Records",
+    "empty": "No records yet. Play some matches to set records!",
+    "highest_elo": "Highest ELO Ever",
+    "longest_streak": "Longest Win Streak",
+    "biggest_upset": "Biggest Upset",
+    "most_matches_day": "Most Matches in a Day",
+    "highest_elo_gain": "Highest ELO Gain",
+    "most_games": "Most Games Played",
+    "upset_detail": "beat {{loser}}",
+    "suffix_wins": " wins",
+    "suffix_elo_gap": " ELO gap",
+    "suffix_matches": " matches",
+    "suffix_pts": " pts",
+    "suffix_games": " games"
   },
   "common": {
     "loading": "Loading...",
