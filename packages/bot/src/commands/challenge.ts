@@ -47,6 +47,14 @@ export function scoreKey(chatId: number, telegramId: number): string {
 // Map for tracking score-entry sessions by chat+telegram user
 export const pendingScores = new Map<string, string>(); // scoreKey → challengeKey
 
+// Short callback ID system to stay under Telegram's 64-byte limit
+let _callbackCounter = 0;
+export function nextCallbackId(): string {
+  return String(++_callbackCounter);
+}
+// Maps short callback ID → challenge key
+export const callbackIdMap = new Map<string, string>();
+
 export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
     await ctx.reply(ctx.t("error.group_only"));
@@ -137,9 +145,15 @@ export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
         challenged: opponent.display_name,
       });
 
+  // Use short callback IDs to stay under 64-byte limit
+  const acceptId = nextCallbackId();
+  const declineId = nextCallbackId();
+  callbackIdMap.set(acceptId, key);
+  callbackIdMap.set(declineId, key);
+
   const keyboard = new InlineKeyboard()
-    .text(ctx.t("challenge.accept"), `ch:accept:${key}`)
-    .text(ctx.t("challenge.decline"), `ch:decline:${key}`);
+    .text(ctx.t("challenge.accept"), `ch:accept:${acceptId}`)
+    .text(ctx.t("challenge.decline"), `ch:decline:${declineId}`);
 
   await ctx.reply(messageText, { reply_markup: keyboard });
 }
@@ -150,17 +164,25 @@ export async function challengeCallbackHandler(ctx: SmashRankContext): Promise<v
 
   const parts = data.split(":");
   const action = parts[1];
-  // Key is parts[2]:parts[3]:parts[4] (groupId:playerId1:playerId2)
-  const key = `${parts[2]}:${parts[3]}:${parts[4]}`;
+  const cbId = parts[2];
+
+  // Look up challenge key from short callback ID
+  const key = callbackIdMap.get(cbId);
+  if (!key) {
+    await ctx.answerCallbackQuery({ text: "Session expired." });
+    return;
+  }
 
   const session = challengeSessions.get(key);
   if (!session) {
+    callbackIdMap.delete(cbId);
     await ctx.answerCallbackQuery({ text: "Session expired." });
     return;
   }
 
   if (Date.now() > session.expiresAt) {
     challengeSessions.delete(key);
+    callbackIdMap.delete(cbId);
     await ctx.answerCallbackQuery({ text: "Challenge expired." });
     return;
   }
@@ -174,10 +196,17 @@ export async function challengeCallbackHandler(ctx: SmashRankContext): Promise<v
     }
 
     session.state = "who_won";
+    callbackIdMap.delete(cbId);
+
+    // Generate new short IDs for who-won buttons
+    const wonId1 = nextCallbackId();
+    const wonId2 = nextCallbackId();
+    callbackIdMap.set(wonId1, key);
+    callbackIdMap.set(wonId2, key);
 
     const keyboard = new InlineKeyboard()
-      .text(ctx.t("challenge.i_won"), `ch:won:${key}:challenged`)
-      .text(ctx.t("challenge.they_won"), `ch:won:${key}:challenger`);
+      .text(ctx.t("challenge.i_won"), `ch:won:${wonId1}:challenged`)
+      .text(ctx.t("challenge.they_won"), `ch:won:${wonId2}:challenger`);
 
     await ctx.editMessageText(
       ctx.t("challenge.accepted", {
@@ -194,6 +223,7 @@ export async function challengeCallbackHandler(ctx: SmashRankContext): Promise<v
     }
 
     challengeSessions.delete(key);
+    callbackIdMap.delete(cbId);
     await ctx.editMessageText(
       ctx.t("challenge.declined", {
         challenger: session.challengerName,
@@ -202,10 +232,10 @@ export async function challengeCallbackHandler(ctx: SmashRankContext): Promise<v
     );
     await ctx.answerCallbackQuery();
   } else if (action === "won") {
-    // parts[5] = "challenger" or "challenged"
-    const winnerSide = parts[5] as "challenger" | "challenged";
+    // parts[3] = "challenger" or "challenged"
+    const winnerSide = parts[3] as "challenger" | "challenged";
 
-    // Only accept/decline user or challenger can pick winner
+    // Only participants can pick winner
     if (fromId !== session.challengedTelegramId && fromId !== session.challengerTelegramId) {
       await ctx.answerCallbackQuery({ text: "Only match participants can respond." });
       return;
@@ -213,6 +243,7 @@ export async function challengeCallbackHandler(ctx: SmashRankContext): Promise<v
 
     session.winnerSide = winnerSide;
     session.state = "score_entry";
+    callbackIdMap.delete(cbId);
 
     // Track which user should enter the score (the one who clicked)
     const chatId = ctx.chat?.id ?? session.chatId;

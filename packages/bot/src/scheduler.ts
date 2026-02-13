@@ -49,9 +49,12 @@ async function checkAndSendDigests(bot: Bot<SmashRankContext>): Promise<void> {
       const interval = getDigestIntervalMs(digestSetting);
       if (interval === 0) continue;
 
-      const lastSent = lastDigestSent.get(group.id) ?? 0;
       const now = Date.now();
-
+      if (!lastDigestSent.has(group.id)) {
+        lastDigestSent.set(group.id, now);
+        continue;
+      }
+      const lastSent = lastDigestSent.get(group.id)!;
       if (now - lastSent < interval) continue;
 
       // Time to send a digest
@@ -132,9 +135,12 @@ async function checkAndSendMatchups(bot: Bot<SmashRankContext>): Promise<void> {
     const eligibleGroups = await groups.getAllGroupsWithMatchup();
 
     for (const group of eligibleGroups) {
-      const lastSent = lastMatchupSent.get(group.id) ?? 0;
       const now = Date.now();
-
+      if (!lastMatchupSent.has(group.id)) {
+        lastMatchupSent.set(group.id, now);
+        continue;
+      }
+      const lastSent = lastMatchupSent.get(group.id)!;
       if (now - lastSent < MATCHUP_INTERVAL_MS) continue;
 
       const candidates = await matchup.getMatchupCandidates(group.id);
@@ -200,9 +206,12 @@ async function checkEloDecay(): Promise<void> {
     const eligibleGroups = await groups.getAllGroupsWithDecay();
 
     for (const group of eligibleGroups) {
-      const lastApplied = lastDecayApplied.get(group.id) ?? 0;
       const now = Date.now();
-
+      if (!lastDecayApplied.has(group.id)) {
+        lastDecayApplied.set(group.id, now);
+        continue;
+      }
+      const lastApplied = lastDecayApplied.get(group.id)!;
       if (now - lastApplied < DECAY_INTERVAL_MS) continue;
 
       const inactive = await groups.getInactiveMembers(group.id, DECAY_INACTIVE_DAYS);

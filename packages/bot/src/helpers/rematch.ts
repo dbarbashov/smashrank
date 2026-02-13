@@ -5,8 +5,19 @@ import {
   challengeKey,
   pendingScores,
   scoreKey,
+  nextCallbackId,
+  callbackIdMap,
 } from "../commands/challenge.js";
 import type { ChallengeSession } from "../commands/challenge.js";
+
+interface RematchInfo {
+  groupId: string;
+  winnerId: string;
+  loserId: string;
+}
+
+const rematchMap = new Map<string, RematchInfo>();
+let rematchCounter = 0;
 
 /**
  * Build a "Rematch?" inline keyboard after a singles match.
@@ -20,8 +31,11 @@ export function buildRematchKeyboard(
 ): InlineKeyboard | null {
   if (ctx.group?.settings?.rematch_prompt === "off") return null;
 
+  const id = String(++rematchCounter);
+  rematchMap.set(id, { groupId, winnerId, loserId });
+
   return new InlineKeyboard()
-    .text(ctx.t("rematch.prompt"), `rm:${groupId}:${winnerId}:${loserId}`);
+    .text(ctx.t("rematch.prompt"), `rm:${id}`);
 }
 
 /**
@@ -31,11 +45,15 @@ export async function rematchCallbackHandler(ctx: SmashRankContext): Promise<voi
   const data = ctx.callbackQuery?.data;
   if (!data?.startsWith("rm:")) return;
 
-  const parts = data.split(":");
-  // rm:groupId:winnerId:loserId
-  const groupId = parts[1];
-  const winnerId = parts[2];
-  const loserId = parts[3];
+  const id = data.slice(3); // after "rm:"
+  const info = rematchMap.get(id);
+  if (!info) {
+    await ctx.answerCallbackQuery({ text: "Session expired." });
+    return;
+  }
+  rematchMap.delete(id);
+
+  const { groupId, winnerId, loserId } = info;
 
   if (!ctx.group) {
     await ctx.answerCallbackQuery({ text: "Session expired." });
@@ -101,10 +119,16 @@ export async function rematchCallbackHandler(ctx: SmashRankContext): Promise<voi
   };
   challengeSessions.set(key, session);
 
-  // Show who-won buttons using existing ch: prefix
+  // Generate short callback IDs for who-won buttons
+  const cbId1 = nextCallbackId();
+  const cbId2 = nextCallbackId();
+  callbackIdMap.set(cbId1, key);
+  callbackIdMap.set(cbId2, key);
+
+  // Show who-won buttons using existing ch: prefix with short IDs
   const keyboard = new InlineKeyboard()
-    .text(challengerName, `ch:won:${key}:challenger`)
-    .text(challengedName, `ch:won:${key}:challenged`);
+    .text(challengerName, `ch:won:${cbId1}:challenger`)
+    .text(challengedName, `ch:won:${cbId2}:challenged`);
 
   await ctx.editMessageText(
     ctx.t("rematch.accepted", {
