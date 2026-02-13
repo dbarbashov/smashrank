@@ -75,6 +75,7 @@ export function groupQueries(sql: SqlLike) {
       won: boolean,
       currentStreak: number,
       bestStreak: number,
+      setsInMatch: number = 0,
     ): Promise<void> {
       if (won) {
         await sql`
@@ -83,7 +84,8 @@ export function groupQueries(sql: SqlLike) {
             games_played = games_played + 1,
             wins = wins + 1,
             current_streak = ${currentStreak},
-            best_streak = ${bestStreak}
+            best_streak = ${bestStreak},
+            sets_played = sets_played + ${setsInMatch}
           WHERE group_id = ${groupId} AND player_id = ${playerId}
         `;
       } else {
@@ -93,7 +95,8 @@ export function groupQueries(sql: SqlLike) {
             games_played = games_played + 1,
             losses = losses + 1,
             current_streak = ${currentStreak},
-            best_streak = ${bestStreak}
+            best_streak = ${bestStreak},
+            sets_played = sets_played + ${setsInMatch}
           WHERE group_id = ${groupId} AND player_id = ${playerId}
         `;
       }
@@ -106,6 +109,7 @@ export function groupQueries(sql: SqlLike) {
       won: boolean,
       currentStreak: number,
       bestStreak: number,
+      setsInMatch: number = 0,
     ): Promise<void> {
       if (won) {
         await sql`
@@ -114,7 +118,8 @@ export function groupQueries(sql: SqlLike) {
             doubles_games_played = doubles_games_played + 1,
             doubles_wins = doubles_wins + 1,
             doubles_current_streak = ${currentStreak},
-            doubles_best_streak = ${bestStreak}
+            doubles_best_streak = ${bestStreak},
+            sets_played = sets_played + ${setsInMatch}
           WHERE group_id = ${groupId} AND player_id = ${playerId}
         `;
       } else {
@@ -124,7 +129,8 @@ export function groupQueries(sql: SqlLike) {
             doubles_games_played = doubles_games_played + 1,
             doubles_losses = doubles_losses + 1,
             doubles_current_streak = ${currentStreak},
-            doubles_best_streak = ${bestStreak}
+            doubles_best_streak = ${bestStreak},
+            sets_played = sets_played + ${setsInMatch}
           WHERE group_id = ${groupId} AND player_id = ${playerId}
         `;
       }
@@ -134,12 +140,14 @@ export function groupQueries(sql: SqlLike) {
       groupId: string,
       playerId: string,
       eloRating: number,
+      setsInMatch: number = 0,
     ): Promise<void> {
       await sql`
         UPDATE group_members SET
           elo_rating = ${eloRating},
           games_played = games_played + 1,
-          current_streak = 0
+          current_streak = 0,
+          sets_played = sets_played + ${setsInMatch}
         WHERE group_id = ${groupId} AND player_id = ${playerId}
       `;
     },
@@ -189,6 +197,16 @@ export function groupQueries(sql: SqlLike) {
           AND gm.games_played > 0
           AND (p.last_active IS NULL OR p.last_active < NOW() - INTERVAL '1 day' * ${inactiveDays})
       `;
+    },
+
+    async getTopSetsPlayer(groupId: string): Promise<{ player_id: string } | null> {
+      const rows = await sql<{ player_id: string }[]>`
+        SELECT player_id FROM group_members
+        WHERE group_id = ${groupId} AND sets_played > 0
+        ORDER BY sets_played DESC
+        LIMIT 1
+      `;
+      return rows[0] ?? null;
     },
 
     async setEloRating(groupId: string, playerId: string, newElo: number): Promise<void> {

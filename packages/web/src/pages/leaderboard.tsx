@@ -87,6 +87,7 @@ export function Leaderboard() {
                     <th className="w-24 px-2 py-3"></th>
                   )}
                   <th className="px-4 py-3 text-right">{t("leaderboard.record")}</th>
+                  <th className="px-4 py-3 text-right">{t("leaderboard.games")}</th>
                   <th className="px-4 py-3 text-right">
                     {t("leaderboard.winRate")}
                   </th>
@@ -141,6 +142,9 @@ export function Leaderboard() {
                         {wins}-{losses}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                        {(entry as LeaderboardEntry).sets_played ?? 0}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                         {winPct}%
                       </td>
                       {!isSeason && (
@@ -188,7 +192,7 @@ export function Leaderboard() {
                     <div>
                       <PlayerLink id={playerId} name={name} />
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {entry.wins}-{entry.losses}
+                        {entry.wins}-{entry.losses} · {(entry as LeaderboardEntry).sets_played ?? 0}G
                       </div>
                     </div>
                   </div>

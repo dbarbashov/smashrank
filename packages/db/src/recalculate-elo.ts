@@ -39,6 +39,8 @@ interface PlayerState {
   doublesLosses: number;
   doublesCurrentStreak: number;
   doublesBestStreak: number;
+  // Sets (across all match types)
+  setsPlayed: number;
 }
 
 function defaultState(): PlayerState {
@@ -55,6 +57,7 @@ function defaultState(): PlayerState {
     doublesLosses: 0,
     doublesCurrentStreak: 0,
     doublesBestStreak: 0,
+    setsPlayed: 0,
   };
 }
 
@@ -133,6 +136,8 @@ async function recalculate(): Promise<void> {
     for (const match of matches) {
       const isDraw = match.winner_score === match.loser_score;
 
+      const setsInMatch = (match.winner_score || 0) + (match.loser_score || 0);
+
       if (match.match_type === "doubles") {
         // Doubles match — use doubles ratings
         const w1 = getState(match.winner_id);
@@ -197,6 +202,12 @@ async function recalculate(): Promise<void> {
           l2.doublesBestStreak = l2s.bestStreak;
         }
 
+        // Track sets played for all participants
+        w1.setsPlayed += setsInMatch;
+        l1.setsPlayed += setsInMatch;
+        if (w2) w2.setsPlayed += setsInMatch;
+        if (l2) l2.setsPlayed += setsInMatch;
+
         matchUpdates.push({ id: match.id, eloBW, eloBL, eloBWP, eloBLP, eloChange: winnerChange });
       } else if (isDraw) {
         // Draw (tournament) — singles
@@ -220,10 +231,12 @@ async function recalculate(): Promise<void> {
         pA.elo = pANew;
         pA.gamesPlayed++;
         pA.currentStreak = 0;
+        pA.setsPlayed += setsInMatch;
 
         pB.elo = pBNew;
         pB.gamesPlayed++;
         pB.currentStreak = 0;
+        pB.setsPlayed += setsInMatch;
 
         matchUpdates.push({ id: match.id, eloBW, eloBL, eloBWP: null, eloBLP: null, eloChange: change });
       } else {
@@ -248,6 +261,7 @@ async function recalculate(): Promise<void> {
         winner.elo = winnerNew;
         winner.gamesPlayed++;
         winner.wins++;
+        winner.setsPlayed += setsInMatch;
         const ws = updateStreak(winner.currentStreak, winner.bestStreak, true);
         winner.currentStreak = ws.currentStreak;
         winner.bestStreak = ws.bestStreak;
@@ -255,6 +269,7 @@ async function recalculate(): Promise<void> {
         loser.elo = loserNew;
         loser.gamesPlayed++;
         loser.losses++;
+        loser.setsPlayed += setsInMatch;
         const ls = updateStreak(loser.currentStreak, loser.bestStreak, false);
         loser.currentStreak = ls.currentStreak;
         loser.bestStreak = ls.bestStreak;
@@ -267,7 +282,7 @@ async function recalculate(): Promise<void> {
       console.log(`  Would update ${playerStates.size} player records and ${matchUpdates.length} match records`);
       for (const [playerId, state] of playerStates) {
         if (state.gamesPlayed > 0 || state.doublesGamesPlayed > 0) {
-          console.log(`    ${playerId}: singles=${state.elo} (${state.wins}W-${state.losses}L), doubles=${state.doublesElo} (${state.doublesWins}W-${state.doublesLosses}L)`);
+          console.log(`    ${playerId}: singles=${state.elo} (${state.wins}W-${state.losses}L), doubles=${state.doublesElo} (${state.doublesWins}W-${state.doublesLosses}L), sets=${state.setsPlayed}`);
         }
       }
       continue;
@@ -296,7 +311,8 @@ async function recalculate(): Promise<void> {
           doubles_wins = 0,
           doubles_losses = 0,
           doubles_current_streak = 0,
-          doubles_best_streak = 0
+          doubles_best_streak = 0,
+          sets_played = 0
         WHERE group_id = ${group.id}
       `;
 
@@ -318,7 +334,8 @@ async function recalculate(): Promise<void> {
             doubles_wins = ${state.doublesWins},
             doubles_losses = ${state.doublesLosses},
             doubles_current_streak = ${state.doublesCurrentStreak},
-            doubles_best_streak = ${state.doublesBestStreak}
+            doubles_best_streak = ${state.doublesBestStreak},
+            sets_played = ${state.setsPlayed}
           WHERE group_id = ${group.id} AND player_id = ${member.player_id}
         `;
       }

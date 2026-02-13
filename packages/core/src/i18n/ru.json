@@ -4,7 +4,7 @@
   "leaderboard.title": "Рейтинг офиса",
   "leaderboard.doubles_title": "Рейтинг парных",
   "leaderboard.empty": "Ещё ни одной игры. Начни с /game!",
-  "leaderboard.row": "{{rank}}. {{tier}} {{name}} — {{elo}} ({{wins}}В-{{losses}}П)",
+  "leaderboard.row": "{{rank}}. {{tier}} {{name}} — {{elo}} ({{wins}}В-{{losses}}П, {{sets}}И)",
   "stats.title": "Статистика {{name}}",
   "stats.singles_header": "Одиночные:",
   "stats.doubles_header": "Парные:",
@@ -206,5 +206,7 @@
   "records.highest_elo_gain": "\ud83d\udcc8 Наибольший прирост ELO",
   "records.most_games": "\ud83c\udfbe Больше всего игр",
   "records.holder": "{{name}} — {{value}}",
-  "records.upset_detail": "победил {{loser}}"
+  "records.upset_detail": "победил {{loser}}",
+  "achievement.party_worker": "Партийный работник",
+  "achievement.desc.party_worker": "Быть №1 по количеству партий в конце сезона"
 }

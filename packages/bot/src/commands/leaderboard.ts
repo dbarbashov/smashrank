@@ -40,6 +40,7 @@ export async function leaderboardCommand(ctx: SmashRankContext): Promise<void> {
       elo: row.elo_rating,
       wins: row.wins,
       losses: row.losses,
+      sets: row.sets_played,
       tier: tier.emoji,
     });
   });

@@ -4,7 +4,7 @@
   "leaderboard.title": "Office Rankings",
   "leaderboard.doubles_title": "Doubles Rankings",
   "leaderboard.empty": "No matches played yet. Start with /game!",
-  "leaderboard.row": "{{rank}}. {{tier}} {{name}} \u2014 {{elo}} ({{wins}}W-{{losses}}L)",
+  "leaderboard.row": "{{rank}}. {{tier}} {{name}} \u2014 {{elo}} ({{wins}}W-{{losses}}L, {{sets}}G)",
   "stats.title": "Stats for {{name}}",
   "stats.singles_header": "Singles:",
   "stats.doubles_header": "Doubles:",
@@ -182,5 +182,7 @@
   "records.highest_elo_gain": "\ud83d\udcc8 Highest ELO Gain",
   "records.most_games": "\ud83c\udfbe Most Games Played",
   "records.holder": "{{name}} \u2014 {{value}}",
-  "records.upset_detail": "beat {{loser}}"
+  "records.upset_detail": "beat {{loser}}",
+  "achievement.party_worker": "Party Worker",
+  "achievement.desc.party_worker": "Be #1 in games played at end of season"
 }

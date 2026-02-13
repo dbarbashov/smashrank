@@ -182,10 +182,11 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
       reported_by: ctx.player.id,
     });
 
-    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak);
-    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak);
-    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak);
-    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak);
+    const setsInMatch = data.winnerSets + data.loserSets;
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner1.id, eloResult.winner1NewRating, true, w1Streak.currentStreak, w1Streak.bestStreak, setsInMatch);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak, setsInMatch);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak, setsInMatch);
+    await txGroups.updateGroupDoublesElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak, setsInMatch);
   });
 
   const setScoresStr = orientedSetScores

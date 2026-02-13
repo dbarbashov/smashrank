@@ -15,6 +15,7 @@ const MIGRATION_FILES = [
   "008_player_avatars.sql",
   "009_doubles_rating.sql",
   "010_doubles_season_snapshots.sql",
+  "011_sets_played.sql",
 ];
 
 export async function setup(): Promise<void> {

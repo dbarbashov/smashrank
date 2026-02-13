@@ -93,6 +93,8 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       reported_by: input.reportedBy,
     });
 
+    const setsInMatch = input.winnerSets + input.loserSets;
+
     await txGroups.updateGroupElo(
       input.group.id,
       input.winner.id,
@@ -100,6 +102,7 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       true,
       winnerStreak.currentStreak,
       winnerStreak.bestStreak,
+      setsInMatch,
     );
 
     await txGroups.updateGroupElo(
@@ -109,6 +112,7 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
       false,
       loserStreak.currentStreak,
       loserStreak.bestStreak,
+      setsInMatch,
     );
 
     // Evaluate and persist achievements

@@ -115,7 +115,8 @@ export function seasonQueries(sql: SqlLike) {
           doubles_wins = 0,
           doubles_losses = 0,
           doubles_current_streak = 0,
-          doubles_best_streak = 0
+          doubles_best_streak = 0,
+          sets_played = 0
         WHERE group_id = ${groupId}
       `;
     },

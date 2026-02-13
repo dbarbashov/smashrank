@@ -195,6 +195,7 @@ export function matchQueries(sql: SqlLike) {
         current_streak: number;
         best_streak: number;
         last_active: Date | null;
+        sets_played: number;
       }[]
     > {
       if (matchType === "doubles") {
@@ -208,7 +209,8 @@ export function matchQueries(sql: SqlLike) {
             gm.doubles_losses AS losses,
             gm.doubles_current_streak AS current_streak,
             gm.doubles_best_streak AS best_streak,
-            p.last_active
+            p.last_active,
+            gm.sets_played
           FROM group_members gm
           JOIN players p ON p.id = gm.player_id
           WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
@@ -226,7 +228,8 @@ export function matchQueries(sql: SqlLike) {
           gm.losses,
           gm.current_streak,
           gm.best_streak,
-          p.last_active
+          p.last_active,
+          gm.sets_played
         FROM group_members gm
         JOIN players p ON p.id = gm.player_id
         WHERE gm.group_id = ${groupId} AND gm.games_played > 0

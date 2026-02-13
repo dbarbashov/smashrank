@@ -18,7 +18,8 @@
     "empty": "No players yet. Start playing!",
     "seasonLabel": "Season",
     "singles": "Singles",
-    "doubles": "Doubles"
+    "doubles": "Doubles",
+    "games": "Games"
   },
   "player": {
     "title": "Player Profile",
@@ -89,7 +90,8 @@
     "humbled": { "name": "Humbled", "desc": "Lose a set 0-11" },
     "bottled_it": { "name": "Bottled It", "desc": "Lose a 3-set match after winning the first set" },
     "glass_cannon": { "name": "Glass Cannon", "desc": "Win a set 11-0 but lose the match" },
-    "doormat": { "name": "Doormat", "desc": "Lose to the same opponent 5 times in a row" }
+    "doormat": { "name": "Doormat", "desc": "Lose to the same opponent 5 times in a row" },
+    "party_worker": { "name": "Party Worker", "desc": "Be #1 in games played at end of season" }
   },
   "seasons": {
     "title": "Seasons",

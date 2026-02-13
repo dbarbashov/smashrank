@@ -36,6 +36,7 @@ export interface GroupMember {
   doubles_losses: number;
   doubles_current_streak: number;
   doubles_best_streak: number;
+  sets_played: number;
 }
 
 export interface GroupMemberWithPlayer extends GroupMember {

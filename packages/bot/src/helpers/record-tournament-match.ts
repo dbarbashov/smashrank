@@ -97,8 +97,9 @@ export async function recordTournamentMatch(
         tournament_id: input.tournament.id,
       });
 
-      await txGroups.updateGroupEloForDraw(input.group.id, input.reporter.id, reporterNewElo);
-      await txGroups.updateGroupEloForDraw(input.group.id, input.opponent.id, opponentNewElo);
+      const setsInMatch = input.reporterSets + input.opponentSets;
+      await txGroups.updateGroupEloForDraw(input.group.id, input.reporter.id, reporterNewElo, setsInMatch);
+      await txGroups.updateGroupEloForDraw(input.group.id, input.opponent.id, opponentNewElo, setsInMatch);
 
       // Update standings
       await txTournaments.updateStanding(
@@ -158,15 +159,18 @@ export async function recordTournamentMatch(
         tournament_id: input.tournament.id,
       });
 
+      const setsInMatch = winnerSets + loserSets;
       await txGroups.updateGroupElo(
         input.group.id, winnerId, eloResult.winnerNewRating, true,
         winnerMember.current_streak > 0 ? winnerMember.current_streak + 1 : 1,
         Math.max(winnerMember.best_streak, winnerMember.current_streak > 0 ? winnerMember.current_streak + 1 : 1),
+        setsInMatch,
       );
       await txGroups.updateGroupElo(
         input.group.id, loserId, eloResult.loserNewRating, false,
         loserMember.current_streak < 0 ? loserMember.current_streak - 1 : -1,
         loserMember.best_streak,
+        setsInMatch,
       );
 
       // Update standings
