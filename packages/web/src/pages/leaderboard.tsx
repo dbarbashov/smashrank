@@ -76,7 +76,7 @@ export function Leaderboard() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:block dark:border-slate-700/60 dark:bg-slate-800/40">
+          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm sm:block dark:border-slate-700/60 dark:bg-slate-800/40">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
@@ -127,7 +127,7 @@ export function Leaderboard() {
                       className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 ${inactive ? "opacity-50" : ""}`}
                     >
                       <td className="px-4 py-3 font-medium text-slate-400 dark:text-slate-500">{rank}</td>
-                      <td className="whitespace-nowrap px-4 py-3">
+                      <td className="px-4 py-3">
                         <PlayerLink id={playerId} name={name} />
                       </td>
                       <td className="px-4 py-3 text-right">
