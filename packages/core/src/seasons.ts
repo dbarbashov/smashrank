@@ -78,7 +78,8 @@ export function getSeasonForDate(date: Date): SeasonInfo {
   return { name: label, startDate: startStr, endDate: endStr };
 }
 
-export function isSeasonExpired(endDate: string, now: Date = new Date()): boolean {
-  const end = new Date(endDate + "T23:59:59.999Z");
+export function isSeasonExpired(endDate: string | Date, now: Date = new Date()): boolean {
+  const dateStr = typeof endDate === "string" ? endDate : endDate.toISOString().slice(0, 10);
+  const end = new Date(dateStr + "T23:59:59.999Z");
   return now > end;
 }

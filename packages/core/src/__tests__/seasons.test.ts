@@ -81,4 +81,10 @@ describe("isSeasonExpired", () => {
   it("returns true after the season ends", () => {
     expect(isSeasonExpired("2026-02-28", new Date("2026-03-01T00:00:00Z"))).toBe(true);
   });
+
+  it("handles Date objects from postgres (not just strings)", () => {
+    const endDate = new Date("2026-02-28T00:00:00.000Z");
+    expect(isSeasonExpired(endDate, new Date("2026-02-28T12:00:00Z"))).toBe(false);
+    expect(isSeasonExpired(endDate, new Date("2026-03-01T00:00:00Z"))).toBe(true);
+  });
 });
