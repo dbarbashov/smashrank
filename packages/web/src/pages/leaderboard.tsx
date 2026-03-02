@@ -127,7 +127,7 @@ export function Leaderboard() {
                       className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 ${inactive ? "opacity-50" : ""}`}
                     >
                       <td className="px-4 py-3 font-medium text-slate-400 dark:text-slate-500">{rank}</td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <PlayerLink id={playerId} name={name} />
                       </td>
                       <td className="px-4 py-3 text-right">
