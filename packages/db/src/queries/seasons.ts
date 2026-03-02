@@ -1,8 +1,40 @@
 import type { SqlLike } from "../sql-type.js";
 import type { Season, SeasonSnapshot } from "../types.js";
 
+export interface ExpiredActiveSeason {
+  season: Season;
+  chat_id: string;
+  group_name: string | null;
+  language: string | null;
+}
+
 export function seasonQueries(sql: SqlLike) {
   return {
+    async findAllExpiredActive(): Promise<ExpiredActiveSeason[]> {
+      const rows = await sql<
+        (Season & { chat_id: string; group_name: string | null; language: string | null })[]
+      >`
+        SELECT s.*, g.chat_id, g.name as group_name, g.language
+        FROM seasons s
+        JOIN groups g ON g.id = s.group_id
+        WHERE s.is_active = true AND s.end_date < CURRENT_DATE
+      `;
+      return rows.map((row) => ({
+        season: {
+          id: row.id,
+          group_id: row.group_id,
+          name: row.name,
+          start_date: row.start_date,
+          end_date: row.end_date,
+          is_active: row.is_active,
+          created_at: row.created_at,
+        },
+        chat_id: row.chat_id,
+        group_name: row.group_name,
+        language: row.language,
+      }));
+    },
+
     async findById(seasonId: string): Promise<Season | undefined> {
       const rows = await sql<Season[]>`
         SELECT * FROM seasons WHERE id = ${seasonId} LIMIT 1

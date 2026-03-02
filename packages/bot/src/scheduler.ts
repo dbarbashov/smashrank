@@ -5,6 +5,7 @@ import {
   digestQueries,
   tournamentQueries,
   matchupQueries,
+  seasonQueries,
 } from "@smashrank/db";
 import {
   getT,
@@ -17,7 +18,9 @@ import type { SmashRankContext } from "./context.js";
 import { forceCompleteTournament } from "./helpers/force-complete-tournament.js";
 import { cleanupExpiredChallenges } from "./commands/challenge.js";
 import { cleanupExpiredConfirmations } from "./helpers/match-confirmation.js";
+import { ensureActiveSeason } from "./helpers/ensure-season.js";
 
+const SEASON_CHECK_INTERVAL_MS = 900_000; // Check every 15 minutes
 const DIGEST_INTERVAL_MS = 60_000; // Check every 60 seconds
 const lastDigestSent = new Map<string, number>(); // groupId → timestamp
 const lastMatchupSent = new Map<string, number>(); // groupId → timestamp
@@ -229,6 +232,35 @@ async function checkEloDecay(): Promise<void> {
   }
 }
 
+async function checkSeasonTransitions(bot: Bot<SmashRankContext>): Promise<void> {
+  try {
+    const sql = getConnection();
+    const seasons = seasonQueries(sql);
+
+    const expired = await seasons.findAllExpiredActive();
+
+    for (const { season, chat_id, language } of expired) {
+      const newSeason = await ensureActiveSeason(season.group_id);
+
+      const lang = language ?? "en";
+      const t = getT(lang);
+
+      const message =
+        t("season.ended", { name: season.name }) +
+        "\n" +
+        t("season.new", { name: newSeason.name });
+
+      try {
+        await bot.api.sendMessage(chat_id, message);
+      } catch {
+        // Group might have kicked the bot
+      }
+    }
+  } catch (err) {
+    console.error("Season transition scheduler error:", err);
+  }
+}
+
 export function startScheduler(bot: Bot<SmashRankContext>): void {
   setInterval(() => {
     checkAndSendDigests(bot).catch((err) =>
@@ -248,5 +280,12 @@ export function startScheduler(bot: Bot<SmashRankContext>): void {
       console.error("ELO decay scheduler error:", err),
     );
   }, DIGEST_INTERVAL_MS);
+
+  setInterval(() => {
+    checkSeasonTransitions(bot).catch((err) =>
+      console.error("Season transition scheduler error:", err),
+    );
+  }, SEASON_CHECK_INTERVAL_MS);
+
   console.log("Scheduler started.");
 }
