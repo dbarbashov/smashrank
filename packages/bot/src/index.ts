@@ -26,6 +26,7 @@ import { challengeCommand, challengeCallbackHandler, processChallengeScore } fro
 import { rematchCallbackHandler } from "./helpers/rematch.js";
 import { matchConfirmCallbackHandler } from "./helpers/match-confirmation.js";
 import { recordsCommand } from "./commands/records.js";
+import { optoutCommand, optinCommand } from "./commands/optout.js";
 import { startScheduler } from "./scheduler.js";
 
 async function main(): Promise<void> {
@@ -79,6 +80,8 @@ async function main(): Promise<void> {
   bot.command("tgame", tgameCommand);
   bot.command("challenge", challengeCommand);
   bot.command("records", recordsCommand);
+  bot.command("optout", optoutCommand);
+  bot.command("optin", optinCommand);
 
   // Callback query handler for inline keyboards
   bot.on("callback_query:data", async (ctx) => {

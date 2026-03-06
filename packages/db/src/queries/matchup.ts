@@ -23,6 +23,7 @@ export function matchupQueries(sql: SqlLike) {
           JOIN players p ON p.id = gm.player_id
           WHERE gm.group_id = ${groupId}
             AND gm.games_played >= 3
+            AND gm.opted_out = FALSE
         ),
         pairs AS (
           SELECT

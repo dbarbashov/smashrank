@@ -14,6 +14,7 @@ import { recordMatch } from "../helpers/record-match.js";
 import { formatAchievementUnlocks } from "../helpers/format-achievements.js";
 import { buildRematchKeyboard } from "../helpers/rematch.js";
 import { addPendingMatch, buildConfirmationKeyboard } from "../helpers/match-confirmation.js";
+import { checkOptOut } from "../helpers/check-opt-out.js";
 
 // In-memory pending sessions: "chatId:userId" → { opponentId, winnerSide, expiresAt }
 interface PendingScore {
@@ -33,6 +34,9 @@ export async function newgameCommand(ctx: SmashRankContext): Promise<void> {
     await ctx.reply(ctx.t("error.group_only"));
     return;
   }
+
+  // Check reporter opt-out status
+  if (await checkOptOut(ctx, ctx.group.id, ctx.player.id, ctx.player.display_name, true)) return;
 
   const sql = getConnection();
   const matches = matchQueries(sql);

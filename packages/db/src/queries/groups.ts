@@ -196,6 +196,7 @@ export function groupQueries(sql: SqlLike) {
         WHERE gm.group_id = ${groupId}
           AND gm.games_played > 0
           AND (p.last_active IS NULL OR p.last_active < NOW() - INTERVAL '1 day' * ${inactiveDays})
+          AND gm.opted_out = FALSE
       `;
     },
 
@@ -215,6 +216,23 @@ export function groupQueries(sql: SqlLike) {
         SET elo_rating = ${newElo}
         WHERE group_id = ${groupId} AND player_id = ${playerId}
       `;
+    },
+
+    async setOptedOut(groupId: string, playerId: string, optedOut: boolean): Promise<void> {
+      await sql`
+        UPDATE group_members
+        SET opted_out = ${optedOut}
+        WHERE group_id = ${groupId} AND player_id = ${playerId}
+      `;
+    },
+
+    async isOptedOut(groupId: string, playerId: string): Promise<boolean> {
+      const rows = await sql<{ opted_out: boolean }[]>`
+        SELECT opted_out FROM group_members
+        WHERE group_id = ${groupId} AND player_id = ${playerId}
+        LIMIT 1
+      `;
+      return rows[0]?.opted_out ?? false;
     },
   };
 }

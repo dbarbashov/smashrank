@@ -208,5 +208,11 @@
   "records.holder": "{{name}} — {{value}}",
   "records.upset_detail": "победил {{loser}}",
   "achievement.party_worker": "Партийный работник",
-  "achievement.desc.party_worker": "Быть №1 по количеству партий в конце сезона"
+  "achievement.desc.party_worker": "Быть №1 по количеству партий в конце сезона",
+  "optout.success": "Вы отказались от участия. Вы не будете отображаться в рейтинге и вас нельзя выбрать соперником.",
+  "optout.already": "Вы уже отказались от участия в этой группе.",
+  "optin.success": "С возвращением! Вы снова в рейтинге.",
+  "optin.already": "Вы не отказывались от участия.",
+  "error.player_opted_out": "{{name}} отказался от участия и сейчас не может играть.",
+  "error.self_opted_out": "Вы отказались от участия. Используйте /optin чтобы вернуться."
 }

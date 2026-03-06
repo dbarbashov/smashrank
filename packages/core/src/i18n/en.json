@@ -184,5 +184,11 @@
   "records.holder": "{{name}} \u2014 {{value}}",
   "records.upset_detail": "beat {{loser}}",
   "achievement.party_worker": "Party Worker",
-  "achievement.desc.party_worker": "Be #1 in games played at end of season"
+  "achievement.desc.party_worker": "Be #1 in games played at end of season",
+  "optout.success": "You've opted out. You won't appear on the leaderboard and can't be selected for matches.",
+  "optout.already": "You're already opted out in this group.",
+  "optin.success": "Welcome back! You're back on the leaderboard.",
+  "optin.already": "You're not opted out.",
+  "error.player_opted_out": "{{name}} has opted out and can't play right now.",
+  "error.self_opted_out": "You've opted out. Use /optin to rejoin first."
 }

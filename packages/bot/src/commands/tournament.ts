@@ -8,6 +8,7 @@ import { sortStandings } from "@smashrank/core";
 import type { Standing } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { forceCompleteTournament } from "../helpers/force-complete-tournament.js";
+import { checkOptOut } from "../helpers/check-opt-out.js";
 
 const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 12;
@@ -83,6 +84,9 @@ export async function tournamentCommand(ctx: SmashRankContext): Promise<void> {
         await ctx.reply(ctx.t("tournament.full"));
         return;
       }
+
+      // Check opt-out status
+      if (await checkOptOut(ctx, ctx.group.id, ctx.player.id, ctx.player.display_name, true)) return;
 
       const isAlready = await tournaments.isParticipant(tournament.id, ctx.player.id);
       if (isAlready) {

@@ -13,6 +13,7 @@ import { recordMatch } from "../helpers/record-match.js";
 import { formatAchievementUnlocks } from "../helpers/format-achievements.js";
 import { buildRematchKeyboard } from "../helpers/rematch.js";
 import { addPendingMatch, buildConfirmationKeyboard } from "../helpers/match-confirmation.js";
+import { checkOptOut } from "../helpers/check-opt-out.js";
 
 export async function gameCommand(ctx: SmashRankContext): Promise<void> {
   if (!ctx.group) {
@@ -50,6 +51,10 @@ export async function gameCommand(ctx: SmashRankContext): Promise<void> {
     await ctx.reply(ctx.t("game.not_group_member", { username: data.opponentUsername }));
     return;
   }
+
+  // Check opt-out status
+  if (await checkOptOut(ctx, ctx.group.id, ctx.player.id, ctx.player.display_name, true)) return;
+  if (await checkOptOut(ctx, ctx.group.id, opponent.id, opponent.display_name, false)) return;
 
   // Determine winner and loser
   const winner = data.winner === "reporter" ? ctx.player : opponent;

@@ -12,6 +12,7 @@ import {
 } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { ensureActiveSeason } from "../helpers/ensure-season.js";
+import { checkOptOut } from "../helpers/check-opt-out.js";
 
 // Format: /doubles @partner vs @opp1 @opp2 11-7 11-5
 export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
@@ -112,6 +113,12 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
     await ctx.reply(ctx.t("game.not_group_member", { username: opp2Username }));
     return;
   }
+
+  // Check opt-out status for all 4 players
+  if (await checkOptOut(ctx, ctx.group.id, ctx.player.id, ctx.player.display_name, true)) return;
+  if (await checkOptOut(ctx, ctx.group.id, partner.id, partner.display_name, false)) return;
+  if (await checkOptOut(ctx, ctx.group.id, opp1.id, opp1.display_name, false)) return;
+  if (await checkOptOut(ctx, ctx.group.id, opp2.id, opp2.display_name, false)) return;
 
   const { data } = parseResult;
 

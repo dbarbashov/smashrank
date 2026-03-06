@@ -213,7 +213,7 @@ export function matchQueries(sql: SqlLike) {
             gm.sets_played
           FROM group_members gm
           JOIN players p ON p.id = gm.player_id
-          WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
+          WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0 AND gm.opted_out = FALSE
           ORDER BY gm.doubles_elo_rating DESC
           LIMIT ${limit}
         `;
@@ -232,7 +232,7 @@ export function matchQueries(sql: SqlLike) {
           gm.sets_played
         FROM group_members gm
         JOIN players p ON p.id = gm.player_id
-        WHERE gm.group_id = ${groupId} AND gm.games_played > 0
+        WHERE gm.group_id = ${groupId} AND gm.games_played > 0 AND gm.opted_out = FALSE
         ORDER BY gm.elo_rating DESC
         LIMIT ${limit}
       `;
@@ -573,6 +573,8 @@ export function matchQueries(sql: SqlLike) {
             AND (winner_id = ${playerId} OR loser_id = ${playerId})
         ) sub
         JOIN players p ON p.id = sub.opponent_id
+        JOIN group_members gm ON gm.player_id = sub.opponent_id AND gm.group_id = ${groupId}
+        WHERE gm.opted_out = FALSE
         ORDER BY opponent_id, sub.played_at DESC
         LIMIT ${limit}
       `;

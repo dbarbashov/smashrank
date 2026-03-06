@@ -15,6 +15,7 @@ import type { SmashRankContext } from "../context.js";
 import { recordMatch } from "../helpers/record-match.js";
 import { formatAchievementUnlocks } from "../helpers/format-achievements.js";
 import { buildRematchKeyboard } from "../helpers/rematch.js";
+import { checkOptOut } from "../helpers/check-opt-out.js";
 
 export type ChallengeState = "pending" | "who_won" | "score_entry";
 
@@ -89,6 +90,10 @@ export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
     await ctx.reply(ctx.t("game.not_group_member", { username }));
     return;
   }
+
+  // Check opt-out status
+  if (await checkOptOut(ctx, ctx.group.id, ctx.player.id, ctx.player.display_name, true)) return;
+  if (await checkOptOut(ctx, ctx.group.id, opponent.id, opponent.display_name, false)) return;
 
   const key = challengeKey(ctx.group.id, ctx.player.id, opponent.id);
   const existing = challengeSessions.get(key);
