@@ -28,6 +28,7 @@ import { matchConfirmCallbackHandler } from "./helpers/match-confirmation.js";
 import { recordsCommand } from "./commands/records.js";
 import { optoutCommand, optinCommand } from "./commands/optout.js";
 import { startScheduler } from "./scheduler.js";
+import { installProxyFetch } from "./proxy.js";
 
 async function main(): Promise<void> {
   // Initialize i18n
@@ -41,8 +42,20 @@ async function main(): Promise<void> {
   await sql`SELECT 1`;
   console.log("Database connected.");
 
+  const proxyAgent = config.outboundProxyUrl
+    ? installProxyFetch(config.outboundProxyUrl)
+    : undefined;
+  if (proxyAgent) {
+    console.log("Bot outbound proxy enabled.");
+  }
+
   // Create bot
-  const bot = new Bot<SmashRankContext>(config.botToken);
+  const bot = new Bot<SmashRankContext>(
+    config.botToken,
+    proxyAgent
+      ? { client: { baseFetchConfig: { agent: proxyAgent } } }
+      : undefined,
+  );
 
   // Middleware
   bot.use(autoRegister);

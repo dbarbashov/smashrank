@@ -34,6 +34,8 @@ services:
     environment:
       DATABASE_URL: postgres://smashrank:${POSTGRES_PASSWORD}@postgres:5432/smashrank
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?Set TELEGRAM_BOT_TOKEN in .env}
+      OUTBOUND_PROXY_URL: ${OUTBOUND_PROXY_URL:-}
+      TELEGRAM_PROXY_URL: ${TELEGRAM_PROXY_URL:-}
       DEFAULT_LANG: ${DEFAULT_LANG:-en}
       WEB_URL: ${WEB_URL:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
