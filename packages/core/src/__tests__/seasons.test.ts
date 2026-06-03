@@ -2,69 +2,71 @@ import { describe, it, expect } from "vitest";
 import { getSeasonForDate, isSeasonExpired } from "../seasons.js";
 
 describe("getSeasonForDate", () => {
-  // S1: Dec 1 – Feb 28/29
+  // S3: Sep 1 – Feb 28/29
 
-  it("returns S1 for December", () => {
+  it("returns S3 for December", () => {
     const result = getSeasonForDate(new Date("2025-12-15"));
-    expect(result.name).toContain("S1");
-    expect(result.name).toContain("2026");
-    expect(result.startDate).toBe("2025-12-01");
+    expect(result.name).toBe("S3 2025 (Sep–Feb)");
+    expect(result.startDate).toBe("2025-09-01");
     expect(result.endDate).toBe("2026-02-28");
   });
 
-  it("returns S1 for January", () => {
+  it("returns S3 for January", () => {
     const result = getSeasonForDate(new Date("2026-01-15"));
-    expect(result.name).toContain("S1");
-    expect(result.name).toContain("2026");
-    expect(result.startDate).toBe("2025-12-01");
+    expect(result.name).toBe("S3 2025 (Sep–Feb)");
+    expect(result.startDate).toBe("2025-09-01");
     expect(result.endDate).toBe("2026-02-28");
   });
 
-  it("returns S1 for February", () => {
+  it("returns S3 for February", () => {
     const result = getSeasonForDate(new Date("2026-02-10"));
-    expect(result.name).toContain("S1");
+    expect(result.name).toBe("S3 2025 (Sep–Feb)");
   });
 
-  // S2: Mar 1 – May 31
+  // S2: Mar 1 – Aug 31
 
   it("returns S2 for March", () => {
     const result = getSeasonForDate(new Date("2026-03-01"));
-    expect(result.name).toContain("S2");
+    expect(result.name).toBe("S2 2026 (Mar–Aug)");
     expect(result.startDate).toBe("2026-03-01");
-    expect(result.endDate).toBe("2026-05-31");
+    expect(result.endDate).toBe("2026-08-31");
   });
 
   it("returns S2 for May", () => {
     const result = getSeasonForDate(new Date("2026-05-31"));
-    expect(result.name).toContain("S2");
+    expect(result.name).toBe("S2 2026 (Mar–Aug)");
   });
 
-  // S3: Jun 1 – Aug 31
-
-  it("returns S3 for June", () => {
+  it("returns S2 for June", () => {
     const result = getSeasonForDate(new Date("2026-06-15"));
-    expect(result.name).toContain("S3");
-    expect(result.startDate).toBe("2026-06-01");
+    expect(result.name).toBe("S2 2026 (Mar–Aug)");
+    expect(result.startDate).toBe("2026-03-01");
     expect(result.endDate).toBe("2026-08-31");
   });
 
-  // S4: Sep 1 – Nov 30
+  it("returns S2 for August", () => {
+    const result = getSeasonForDate(new Date("2026-08-31"));
+    expect(result.name).toBe("S2 2026 (Mar–Aug)");
+    expect(result.endDate).toBe("2026-08-31");
+  });
 
-  it("returns S4 for September", () => {
+  // S3: Sep 1 – Feb 28/29
+
+  it("returns S3 for September", () => {
     const result = getSeasonForDate(new Date("2026-09-01"));
-    expect(result.name).toContain("S4");
+    expect(result.name).toBe("S3 2026 (Sep–Feb)");
     expect(result.startDate).toBe("2026-09-01");
-    expect(result.endDate).toBe("2026-11-30");
+    expect(result.endDate).toBe("2027-02-28");
   });
 
-  it("returns S4 for November", () => {
+  it("returns S3 for November", () => {
     const result = getSeasonForDate(new Date("2026-11-30"));
-    expect(result.name).toContain("S4");
+    expect(result.name).toBe("S3 2026 (Sep–Feb)");
   });
 
-  it("handles leap year for S1", () => {
+  it("handles leap year for S3", () => {
     const result = getSeasonForDate(new Date("2028-02-15"));
-    expect(result.name).toContain("S1");
+    expect(result.name).toBe("S3 2027 (Sep–Feb)");
     expect(result.endDate).toBe("2028-02-29");
   });
 });

@@ -20,10 +20,8 @@ function lastDay(year: number, month: number): number {
 
 /**
  * Seasons:
- *   S1: Dec 1 – Feb 28/29  (crosses year boundary)
- *   S2: Mar 1 – May 31
- *   S3: Jun 1 – Aug 31
- *   S4: Sep 1 – Nov 30
+ *   S2: Mar 1 – Aug 31
+ *   S3: Sep 1 – Feb 28/29  (crosses year boundary)
  */
 export function getSeasonForDate(date: Date): SeasonInfo {
   const year = date.getFullYear();
@@ -35,45 +33,31 @@ export function getSeasonForDate(date: Date): SeasonInfo {
   let endYear: number;
   let endMonth: number;
 
-  if (month >= 12) {
-    // December → S1 starts this year, ends next Feb
-    sNum = 1;
-    startYear = year;
-    startMonth = 12;
-    endYear = year + 1;
-    endMonth = 2;
-  } else if (month <= 2) {
-    // Jan–Feb → S1 that started last Dec
-    sNum = 1;
-    startYear = year - 1;
-    startMonth = 12;
-    endYear = year;
-    endMonth = 2;
-  } else if (month <= 5) {
+  if (month >= 3 && month <= 8) {
     sNum = 2;
     startYear = year;
     startMonth = 3;
     endYear = year;
-    endMonth = 5;
-  } else if (month <= 8) {
+    endMonth = 8;
+  } else if (month >= 9) {
     sNum = 3;
     startYear = year;
-    startMonth = 6;
-    endYear = year;
-    endMonth = 8;
+    startMonth = 9;
+    endYear = year + 1;
+    endMonth = 2;
   } else {
-    sNum = 4;
-    startYear = year;
+    sNum = 3;
+    startYear = year - 1;
     startMonth = 9;
     endYear = year;
-    endMonth = 11;
+    endMonth = 2;
   }
 
   const startStr = `${startYear}-${pad(startMonth)}-01`;
   const endStr = `${endYear}-${pad(endMonth)}-${pad(lastDay(endYear, endMonth))}`;
 
-  // Label year = the year the season ends in
-  const label = `S${sNum} ${endYear} (${MONTH_NAMES[startMonth]}\u2013${MONTH_NAMES[endMonth]})`;
+  // Label year = the year the season starts in.
+  const label = `S${sNum} ${startYear} (${MONTH_NAMES[startMonth]}\u2013${MONTH_NAMES[endMonth]})`;
 
   return { name: label, startDate: startStr, endDate: endStr };
 }

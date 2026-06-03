@@ -511,14 +511,12 @@ async function evaluateAchievements(match: Match): Promise<Achievement[]> {
 
 ### 8.1 Schedule
 
-Seasons follow a fixed schedule, resetting every ~3 months:
+Seasons follow a fixed schedule, resetting every ~6 months:
 
 | Season | Start | End |
 |---|---|---|
-| S1 | January 1 | February 28/29 |
-| S2 | March 1 | May 31 |
-| S3 | June 1 | August 31 |
-| S4 | September 1 | December 31 |
+| S2 | March 1 | August 31 |
+| S3 | September 1 | February 28/29 |
 
 ### 8.2 Season Transition
 
