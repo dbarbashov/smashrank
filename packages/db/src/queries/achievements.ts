@@ -43,6 +43,7 @@ export function achievementQueries(sql: SqlLike) {
     async listRecent(
       groupId: string,
       limit: number = 10,
+      matchType?: string,
     ): Promise<(PlayerAchievement & { display_name: string; name: string; emoji: string })[]> {
       return sql<(PlayerAchievement & { display_name: string; name: string; emoji: string })[]>`
         SELECT
@@ -53,7 +54,13 @@ export function achievementQueries(sql: SqlLike) {
         FROM player_achievements pa
         JOIN players p ON p.id = pa.player_id
         JOIN achievement_definitions ad ON ad.id = pa.achievement_id
+        LEFT JOIN matches m ON m.id = pa.match_id
         WHERE pa.group_id = ${groupId}
+          AND (
+            ${matchType ?? null}::text IS NULL
+            OR pa.match_id IS NULL
+            OR m.match_type = ${matchType ?? null}
+          )
         ORDER BY pa.unlocked_at DESC
         LIMIT ${limit}
       `;

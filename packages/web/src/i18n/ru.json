@@ -19,7 +19,21 @@
     "seasonLabel": "Сезон",
     "singles": "Одиночные",
     "doubles": "Парные",
-    "games": "Партии"
+    "games": "Партии",
+    "winningStreak": "Серия побед: {{count}}",
+    "losingStreak": "Серия поражений: {{count}}"
+  },
+  "broadcast": {
+    "title": "Эфир лиги",
+    "live": "Эфир",
+    "previous": "Предыдущее событие лиги",
+    "next": "Следующее событие лиги",
+    "upset": "Сенсация в офисе: {{winner}} валит фаворита {{loser}} · +{{change}} ELO",
+    "achievement": "{{player}} забирает ачивку «{{achievement}}»",
+    "streak": "{{player}} включает режим босса: {{count}} побед подряд",
+    "gainer": "{{player}} рвётся наверх: +{{change}} ELO за неделю",
+    "match": "{{winner}} забирает матч у {{loser}}{{score}} · +{{change}} ELO",
+    "chase": "{{player}} дышит лидеру в спину — разрыв {{gap}} ELO"
   },
   "player": {
     "title": "Профиль игрока",

@@ -12,6 +12,7 @@
     "recalculate": "tsx --env-file=../../.env src/recalculate-elo.ts"
   },
   "dependencies": {
+    "@smashrank/core": "workspace:*",
     "postgres": "^3.4.5"
   },
   "devDependencies": {

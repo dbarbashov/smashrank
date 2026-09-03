@@ -7,10 +7,15 @@ export const statsRoutes = new Hono<AppEnv>();
 statsRoutes.get("/weekly", async (c) => {
   const group = c.get("group");
   const sql = getConnection();
+  const matchType = c.req.query("type");
 
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
-  const stats = await digestQueries(sql).getWeeklyStats(group.id, since);
+  const stats = await digestQueries(sql).getWeeklyStats(
+    group.id,
+    since,
+    matchType,
+  );
   return c.json(stats);
 });

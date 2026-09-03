@@ -19,8 +19,13 @@ achievementsRoutes.get("/recent", async (c) => {
   const group = c.get("group");
   const sql = getConnection();
   const limit = parseInt(c.req.query("limit") ?? "10", 10);
+  const matchType = c.req.query("type");
 
-  const recent = await achievementQueries(sql).listRecent(group.id, limit);
+  const recent = await achievementQueries(sql).listRecent(
+    group.id,
+    limit,
+    matchType,
+  );
   return c.json(recent);
 });
 

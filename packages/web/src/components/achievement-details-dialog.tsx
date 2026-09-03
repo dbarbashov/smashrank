@@ -136,10 +136,10 @@ export function AchievementDetailsDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) closeDialog();
       }}
-      className="m-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:max-h-[78vh] sm:max-w-lg sm:rounded-2xl"
+      className="m-0 mt-auto h-[min(48rem,88dvh)] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:h-[min(48rem,94dvh)] sm:max-w-lg sm:rounded-2xl"
     >
       <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
-      <div className="flex max-h-[calc(88dvh-0.75rem)] flex-col sm:max-h-[78vh]">
+      <div className="flex h-[calc(100%-0.75rem)] flex-col">
         <header className="flex items-start gap-3 border-b border-slate-100 px-5 pb-4 pt-5 dark:border-slate-800 sm:px-6">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-3xl dark:bg-slate-800">
             {achievement?.emoji}
@@ -166,7 +166,7 @@ export function AchievementDetailsDialog({
           </button>
         </header>
 
-        <div className="min-h-[16.5rem] max-h-[calc(88dvh-7.5rem)] overflow-y-auto px-5 py-4 sm:max-h-[calc(78vh-6.5rem)] sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
           {isLoading ? (
             <div className="space-y-3" aria-label={t("common.loading")}>
               <div className="h-9 w-36 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800" />

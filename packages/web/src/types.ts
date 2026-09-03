@@ -4,6 +4,8 @@ export interface GroupInfo {
   language: string;
 }
 
+export type MatchType = "singles" | "doubles";
+
 export interface LeaderboardEntry {
   id: string;
   display_name: string;
@@ -148,12 +150,7 @@ export interface SeasonDetail extends Season {
   standings: SeasonSnapshot[];
 }
 
-export interface WeeklyStats {
-  total_matches: number;
-  active_players: number;
-  biggest_upset: Match | null;
-  top_winner: { display_name: string; wins: number } | null;
-}
+export type { WeeklyStats } from "@smashrank/core";
 
 export interface TournamentSummary {
   id: string;

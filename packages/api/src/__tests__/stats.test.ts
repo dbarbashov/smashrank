@@ -40,6 +40,36 @@ describe("stats routes", () => {
       const body = await res.json();
       expect(body.matchCount).toBe(2);
       expect(body.mostActive).not.toBeNull();
+      expect(body.biggestGainer).toMatchObject({ playerId: alice.id });
+    });
+
+    it("scopes stats to the requested match type", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      const bob = await createPlayer({ display_name: "Bob" });
+      await addToGroup(group.id, alice.id);
+      await addToGroup(group.id, bob.id);
+      const season = await createSeason({ group_id: group.id, name: "S1", is_active: true });
+
+      await createMatch({
+        group_id: group.id,
+        season_id: season.id,
+        winner_id: alice.id,
+        loser_id: bob.id,
+        match_type: "singles",
+      });
+      await createMatch({
+        group_id: group.id,
+        season_id: season.id,
+        winner_id: alice.id,
+        loser_id: bob.id,
+        match_type: "doubles",
+      });
+
+      const singles = await get("/api/g/test-stats/stats/weekly?type=singles");
+      const doubles = await get("/api/g/test-stats/stats/weekly?type=doubles");
+
+      expect((await singles.json()).matchCount).toBe(1);
+      expect((await doubles.json()).matchCount).toBe(1);
     });
   });
 });

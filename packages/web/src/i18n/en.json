@@ -19,7 +19,21 @@
     "seasonLabel": "Season",
     "singles": "Singles",
     "doubles": "Doubles",
-    "games": "Games"
+    "games": "Games",
+    "winningStreak": "{{count}}-game winning streak",
+    "losingStreak": "{{count}}-game losing streak"
+  },
+  "broadcast": {
+    "title": "League live",
+    "live": "Live",
+    "previous": "Previous league update",
+    "next": "Next league update",
+    "upset": "Office upset: {{winner}} takes down favorite {{loser}} · +{{change}} ELO",
+    "achievement": "{{player}} claims the “{{achievement}}” badge",
+    "streak": "{{player}} is in boss mode: {{count}} wins and counting",
+    "gainer": "{{player}} is charging upward: +{{change}} ELO this week",
+    "match": "{{winner}} takes the match from {{loser}}{{score}} · +{{change}} ELO",
+    "chase": "{{player}} is breathing down the leader’s neck — {{gap}} ELO back"
   },
   "player": {
     "title": "Player Profile",

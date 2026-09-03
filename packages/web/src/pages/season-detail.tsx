@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { AnimatedSegmentedControl } from "../components/animated-segmented-control.js";
+import { getMatchTypeOptions } from "../components/match-type-options.js";
 import { useSeasonDetail, useMatches } from "../api/queries.js";
 import { PlayerLink } from "../components/player-link.js";
 import { EloBadge } from "../components/elo-badge.js";
 import { MatchCard } from "../components/match-card.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
+import type { MatchType } from "../types.js";
 
 export function SeasonDetailPage() {
   const { slug, seasonId } = useParams<{ slug: string; seasonId: string }>();
   const { t } = useTranslation();
-  const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
+  const [matchType, setMatchType] = useState<MatchType>("singles");
   const { data, isLoading, error } = useSeasonDetail(
     slug!,
     seasonId!,
@@ -47,20 +50,12 @@ export function SeasonDetailPage() {
             )}
           </p>
         </div>
-        <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
-          <button
-            className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "singles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-            onClick={() => setMatchType("singles")}
-          >
-            {t("leaderboard.singles")}
-          </button>
-          <button
-            className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "doubles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-            onClick={() => setMatchType("doubles")}
-          >
-            {t("leaderboard.doubles")}
-          </button>
-        </div>
+        <AnimatedSegmentedControl
+          ariaLabel="Season match type"
+          options={getMatchTypeOptions(t)}
+          value={matchType}
+          onChange={setMatchType}
+        />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40">

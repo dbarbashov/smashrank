@@ -18,6 +18,112 @@ html.dark {
   color: #e2e8f0;
 }
 
+/* iOS-style shared active tab that glides between navigation items. */
+.ios-nav {
+  scrollbar-width: none;
+}
+
+.ios-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.ios-nav-track {
+  position: relative;
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 0.25rem;
+}
+
+.ios-nav-indicator {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  will-change: left, top, width, height;
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.08),
+    0 4px 10px rgb(15 23 42 / 0.08);
+  transition:
+    left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.dark .ios-nav-indicator {
+  background: #334155;
+  box-shadow:
+    0 1px 2px rgb(2 6 23 / 0.24),
+    0 4px 10px rgb(2 6 23 / 0.2);
+}
+
+.ios-nav-link {
+  position: relative;
+  z-index: 1;
+  transition: color 180ms ease;
+}
+
+.route-content-shell {
+  position: relative;
+}
+
+.route-content {
+  transform-origin: center top;
+  animation: ios-route-content-in-forward 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+
+.route-content[data-direction="back"] {
+  animation-name: ios-route-content-in-back;
+}
+
+@keyframes ios-route-content-in-forward {
+  0% {
+    opacity: 0;
+    transform: translate3d(1rem, 0, 0) scale(0.99);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate3d(-0.1rem, 0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes ios-route-content-in-back {
+  0% {
+    opacity: 0;
+    transform: translate3d(-1rem, 0, 0) scale(0.99);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate3d(0.1rem, 0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-nav-indicator,
+  .ios-nav-link,
+  .route-content {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}
+
 /* Recharts overrides for dark mode */
 .dark .recharts-cartesian-axis-tick-value {
   fill: #94a3b8 !important;
