@@ -146,6 +146,7 @@ export async function recordMatch(input: RecordMatchInput): Promise<RecordMatchR
 
       if (newAchievements.length > 0) {
         await txAchievements.unlockMany(
+          input.group.id,
           newAchievements.map((a) => ({
             playerId: a.playerId,
             achievementId: a.achievementId,

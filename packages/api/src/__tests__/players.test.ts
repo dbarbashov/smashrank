@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createApp } from "../app.js";
-import { cleanDb, createGroup, createPlayer, addToGroup, createSeason, createMatch } from "./setup.js";
+import {
+  cleanDb,
+  createGroup,
+  createPlayer,
+  addToGroup,
+  createSeason,
+  createMatch,
+  getSql,
+} from "./setup.js";
 
 const app = createApp();
 
@@ -60,6 +68,28 @@ describe("players routes", () => {
       expect(body).toHaveLength(1);
       expect(body[0].elo_after).toBe(1016);
       expect(body[0].match_id).toBeDefined();
+    });
+  });
+
+  describe("GET /api/g/:slug/players/:id/achievements", () => {
+    it("only returns achievements earned in the current group", async () => {
+      const otherGroup = await createGroup({ slug: "other-players" });
+      await addToGroup(otherGroup.id, alice.id);
+      const sql = getSql();
+      await sql`
+        INSERT INTO player_achievements (group_id, player_id, achievement_id)
+        VALUES (${otherGroup.id}, ${alice.id}, 'first_blood')
+      `;
+
+      const currentResponse = await get(
+        `/api/g/test-players/players/${alice.id}/achievements`,
+      );
+      const otherResponse = await get(
+        `/api/g/other-players/players/${alice.id}/achievements`,
+      );
+
+      expect(await currentResponse.json()).toEqual([]);
+      expect(await otherResponse.json()).toHaveLength(1);
     });
   });
 

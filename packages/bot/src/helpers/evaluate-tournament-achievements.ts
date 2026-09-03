@@ -26,8 +26,14 @@ export async function evaluateAndPersistTournamentAchievements(
   const tournaments = tournamentQueries(sql);
   const achievements = achievementQueries(sql);
 
-  const participants = await tournaments.getParticipants(tournamentId);
-  const standings = await tournaments.getStandings(tournamentId);
+  const [tournament, participants, standings] = await Promise.all([
+    tournaments.findById(tournamentId),
+    tournaments.getParticipants(tournamentId),
+    tournaments.getStandings(tournamentId),
+  ]);
+  if (!tournament) {
+    throw new Error(`Tournament ${tournamentId} not found`);
+  }
   const participantIds = participants.map((p) => p.player_id);
 
   // Build standings map
@@ -84,7 +90,7 @@ export async function evaluateAndPersistTournamentAchievements(
   // Existing achievements
   const existingAchievements = new Map<string, string[]>();
   for (const playerId of participantIds) {
-    const existing = await achievements.getPlayerAchievementIds(playerId);
+    const existing = await achievements.getPlayerAchievementIds(playerId, tournament.group_id);
     existingAchievements.set(playerId, existing);
   }
 
@@ -103,9 +109,9 @@ export async function evaluateAndPersistTournamentAchievements(
   // Persist
   for (const a of unlocks) {
     await sql`
-      INSERT INTO player_achievements (player_id, achievement_id)
-      VALUES (${a.playerId}, ${a.achievementId})
-      ON CONFLICT (player_id, achievement_id) DO NOTHING
+      INSERT INTO player_achievements (group_id, player_id, achievement_id, tournament_id)
+      VALUES (${tournament.group_id}, ${a.playerId}, ${a.achievementId}, ${tournamentId})
+      ON CONFLICT (group_id, player_id, achievement_id) WHERE group_id IS NOT NULL DO NOTHING
     `;
   }
 

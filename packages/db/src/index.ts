@@ -21,6 +21,8 @@ export type {
   Match,
   SeasonSnapshot,
   AchievementDefinition,
+  AchievementDefinitionWithCount,
+  AchievementHolderRow,
   PlayerAchievement,
   Tournament,
   TournamentParticipant,

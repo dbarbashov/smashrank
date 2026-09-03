@@ -27,9 +27,9 @@ export async function ensureActiveSeason(groupId: string): Promise<Season> {
       const existingIds = await achievements.getPlayerAchievementIds(topSetsPlayer.player_id, groupId);
       if (!existingIds.includes("party_worker")) {
         await sql`
-          INSERT INTO player_achievements (player_id, achievement_id, match_id)
-          VALUES (${topSetsPlayer.player_id}, 'party_worker', NULL)
-          ON CONFLICT (player_id, achievement_id) DO NOTHING
+          INSERT INTO player_achievements (group_id, player_id, achievement_id, season_id)
+          VALUES (${groupId}, ${topSetsPlayer.player_id}, 'party_worker', ${existing.id})
+          ON CONFLICT (group_id, player_id, achievement_id) WHERE group_id IS NOT NULL DO NOTHING
         `;
       }
     }

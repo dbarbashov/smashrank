@@ -5,7 +5,8 @@
     "build": "tsc --build && mkdir -p packages/core/dist/i18n && cp packages/core/src/i18n/*.json packages/core/dist/i18n/",
     "test": "pnpm --filter '@smashrank/*' --workspace-concurrency=1 run test",
     "dev": "pnpm --filter @smashrank/bot run dev",
-    "migrate": "pnpm --filter @smashrank/db run migrate"
+    "migrate": "pnpm --filter @smashrank/db run migrate",
+    "seed": "pnpm --filter @smashrank/db run seed"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

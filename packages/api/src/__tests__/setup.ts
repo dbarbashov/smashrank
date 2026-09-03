@@ -30,6 +30,12 @@ export async function cleanDb(): Promise<void> {
   await sql`DELETE FROM achievement_definitions WHERE true`;
   const seed = readFileSync(join(MIGRATIONS_DIR, "002_seed_achievements.sql"), "utf-8");
   await sql.unsafe(seed);
+  await sql`
+    INSERT INTO achievement_definitions (id, name, description, emoji) VALUES
+      ('tournament_champion', 'Tournament Champion', 'Win a tournament', '🏆'),
+      ('party_worker', 'Party Worker', 'Be #1 in total games played at end of season', '🏭')
+    ON CONFLICT (id) DO NOTHING
+  `;
 }
 
 export function getSql(): postgres.Sql {

@@ -103,10 +103,11 @@ playersRoutes.get("/:id/matches", async (c) => {
 });
 
 playersRoutes.get("/:id/achievements", async (c) => {
+  const group = c.get("group");
   const sql = getConnection();
   const playerId = c.req.param("id");
 
-  const achievements = await achievementQueries(sql).getPlayerAchievements(playerId);
+  const achievements = await achievementQueries(sql).getPlayerAchievements(playerId, group.id);
   return c.json(achievements);
 });
 

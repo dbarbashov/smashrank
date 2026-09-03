@@ -72,6 +72,34 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   emoji: string;
+  holder_count: number;
+}
+
+export type AchievementSource =
+  | {
+      type: "match";
+      id: string;
+      match_type: string | null;
+      opponent_id: string;
+      opponent_name: string | null;
+      player_score: number;
+      opponent_score: number;
+      set_scores: { w: number; l: number }[] | null;
+    }
+  | { type: "tournament"; id: string; name: string | null }
+  | { type: "season"; id: string; name: string | null };
+
+export interface AchievementHolder {
+  id: string;
+  player_id: string;
+  display_name: string;
+  unlocked_at: string;
+  source: AchievementSource | null;
+}
+
+export interface AchievementDetails extends AchievementDefinition {
+  total_players: number;
+  holders: AchievementHolder[];
 }
 
 export interface PlayerAchievement {

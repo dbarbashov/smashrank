@@ -98,6 +98,14 @@ OPENROUTER_MODEL=google/gemini-2.0-flash-001
 pnpm run migrate
 ```
 
+### Seed demo data
+
+```bash
+pnpm run seed
+```
+
+The seed creates a separate `smashrank-demo` group with five demo players and assigns every available achievement to each of them. It is safe to run more than once.
+
 ### Start
 
 ```bash

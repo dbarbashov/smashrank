@@ -100,12 +100,33 @@ export interface AchievementDefinition {
   emoji: string;
 }
 
+export interface AchievementDefinitionWithCount extends AchievementDefinition {
+  holder_count: number;
+}
+
 export interface PlayerAchievement {
   id: string;
   player_id: string;
   achievement_id: string;
+  group_id: string | null;
   match_id: string | null;
+  tournament_id: string | null;
+  season_id: string | null;
   unlocked_at: Date;
+}
+
+export interface AchievementHolderRow extends PlayerAchievement {
+  display_name: string;
+  match_type: string | null;
+  match_winner_id: string | null;
+  match_loser_id: string | null;
+  match_winner_score: number | null;
+  match_loser_score: number | null;
+  match_set_scores: { w: number; l: number }[] | null;
+  winner_name: string | null;
+  loser_name: string | null;
+  tournament_name: string | null;
+  season_name: string | null;
 }
 
 export interface Tournament {

@@ -7,6 +7,7 @@ import type {
   EloHistoryEntry,
   Match,
   AchievementDefinition,
+  AchievementDetails,
   PlayerAchievement,
   RecentAchievement,
   Season,
@@ -106,6 +107,17 @@ export function useAchievementDefinitions(slug: string) {
   return useQuery({
     queryKey: ["achievement-defs", slug],
     queryFn: () => apiFetch<AchievementDefinition[]>(`/${slug}/achievements`),
+  });
+}
+
+export function useAchievementDetails(slug: string, achievementId: string | null) {
+  return useQuery({
+    queryKey: ["achievement-details", slug, achievementId],
+    queryFn: () =>
+      apiFetch<AchievementDetails>(
+        `/${slug}/achievements/${encodeURIComponent(achievementId!)}`,
+      ),
+    enabled: !!slug && !!achievementId,
   });
 }
 
