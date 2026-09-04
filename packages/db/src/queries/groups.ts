@@ -185,6 +185,13 @@ export function groupQueries(sql: SqlLike) {
       `;
     },
 
+    async getAllGroupsWithAchievements(): Promise<Group[]> {
+      return sql<Group[]>`
+        SELECT * FROM groups
+        WHERE COALESCE((settings->>'achievements')::boolean, TRUE) = TRUE
+      `;
+    },
+
     async getInactiveMembers(
       groupId: string,
       inactiveDays: number = 14,
@@ -233,6 +240,33 @@ export function groupQueries(sql: SqlLike) {
         LIMIT 1
       `;
       return rows[0]?.opted_out ?? false;
+    },
+
+    async getActivePlayerIds(
+      groupId: string,
+      matchType: "singles" | "doubles" = "singles",
+      now: Date = new Date(),
+    ): Promise<string[]> {
+      const rows = await sql<{ player_id: string }[]>`
+        SELECT gm.player_id
+        FROM group_members gm
+        WHERE gm.group_id = ${groupId}
+          AND gm.opted_out = FALSE
+          AND EXISTS (
+            SELECT 1
+            FROM matches m
+            WHERE m.group_id = gm.group_id
+              AND m.played_at >= ${now} - INTERVAL '60 days'
+              AND (
+                (${matchType} = 'singles' AND m.match_type != 'doubles'
+                  AND gm.player_id IN (m.winner_id, m.loser_id))
+                OR
+                (${matchType} = 'doubles' AND m.match_type = 'doubles'
+                  AND gm.player_id IN (m.winner_id, m.loser_id, m.winner_partner_id, m.loser_partner_id))
+              )
+          )
+      `;
+      return rows.map((row) => row.player_id);
     },
   };
 }

@@ -5,7 +5,6 @@ import { useMatches, useLeaderboard } from "../api/queries.js";
 import { MatchCard } from "../components/match-card.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
-import type { LeaderboardEntry } from "../types.js";
 
 export function MatchHistory() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,7 +26,7 @@ export function MatchHistory() {
   });
 
   const matches = data?.pages.flat() ?? [];
-  const players = (leaderboard as LeaderboardEntry[]) ?? [];
+  const players = leaderboard?.kind === "current" ? leaderboard.rows : [];
 
   return (
     <div>

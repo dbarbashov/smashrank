@@ -21,6 +21,13 @@ export function matchQueries(sql: SqlLike) {
       elo_before_winner_partner?: number;
       elo_before_loser_partner?: number;
       tournament_id?: string;
+      winner_rank_before?: number | null;
+      loser_rank_before?: number | null;
+      winner_rank_after?: number | null;
+      loser_rank_after?: number | null;
+      challenge_type?: string | null;
+      challenge_initiator_id?: string | null;
+      challenge_target_rank?: number | null;
     }): Promise<Match> {
       const rows = await sql<Match[]>`
         INSERT INTO matches (
@@ -31,7 +38,10 @@ export function matchQueries(sql: SqlLike) {
           reported_by,
           winner_partner_id, loser_partner_id,
           elo_before_winner_partner, elo_before_loser_partner,
-          tournament_id
+          tournament_id,
+          winner_rank_before, loser_rank_before,
+          winner_rank_after, loser_rank_after,
+          challenge_type, challenge_initiator_id, challenge_target_rank
         ) VALUES (
           ${data.match_type}, ${data.season_id}, ${data.group_id},
           ${data.winner_id}, ${data.loser_id},
@@ -40,7 +50,11 @@ export function matchQueries(sql: SqlLike) {
           ${data.reported_by},
           ${data.winner_partner_id ?? null}, ${data.loser_partner_id ?? null},
           ${data.elo_before_winner_partner ?? null}, ${data.elo_before_loser_partner ?? null},
-          ${data.tournament_id ?? null}
+          ${data.tournament_id ?? null},
+          ${data.winner_rank_before ?? null}, ${data.loser_rank_before ?? null},
+          ${data.winner_rank_after ?? null}, ${data.loser_rank_after ?? null},
+          ${data.challenge_type ?? null}, ${data.challenge_initiator_id ?? null},
+          ${data.challenge_target_rank ?? null}
         )
         RETURNING *
       `;
@@ -257,7 +271,9 @@ export function matchQueries(sql: SqlLike) {
               ROW_NUMBER() OVER (ORDER BY gm.doubles_elo_rating DESC) AS rank,
               COUNT(*) OVER () AS total_in_group
             FROM group_members gm
-            WHERE gm.group_id = ${groupId} AND gm.doubles_games_played > 0
+            WHERE gm.group_id = ${groupId}
+              AND gm.doubles_games_played > 0
+              AND gm.opted_out = FALSE
           ) ranked
           WHERE id = ${playerId}
         `;
@@ -273,7 +289,9 @@ export function matchQueries(sql: SqlLike) {
             ROW_NUMBER() OVER (ORDER BY gm.elo_rating DESC) AS rank,
             COUNT(*) OVER () AS total_in_group
           FROM group_members gm
-          WHERE gm.group_id = ${groupId} AND gm.games_played > 0
+          WHERE gm.group_id = ${groupId}
+            AND gm.games_played > 0
+            AND gm.opted_out = FALSE
         ) ranked
         WHERE id = ${playerId}
       `;
@@ -329,9 +347,10 @@ export function matchQueries(sql: SqlLike) {
       playerId: string,
       groupId: string,
     ): Promise<{ currentStreak: number; bestStreak: number }> {
-      const rows = await sql<{ winner_id: string }[]>`
-        SELECT winner_id FROM matches
+      const rows = await sql<{ winner_id: string; is_draw: boolean }[]>`
+        SELECT winner_id, winner_score = loser_score AS is_draw FROM matches
         WHERE group_id = ${groupId}
+          AND match_type != 'doubles'
           AND (winner_id = ${playerId} OR loser_id = ${playerId})
         ORDER BY played_at ASC
       `;
@@ -340,6 +359,10 @@ export function matchQueries(sql: SqlLike) {
       let bestStreak = 0;
 
       for (const row of rows) {
+        if (row.is_draw) {
+          currentStreak = 0;
+          continue;
+        }
         const won = row.winner_id === playerId;
         if (won) {
           currentStreak = currentStreak > 0 ? currentStreak + 1 : 1;
@@ -349,6 +372,29 @@ export function matchQueries(sql: SqlLike) {
         bestStreak = Math.max(bestStreak, currentStreak);
       }
 
+      return { currentStreak, bestStreak };
+    },
+
+    async recalculateDoublesStreaks(
+      playerId: string,
+      groupId: string,
+    ): Promise<{ currentStreak: number; bestStreak: number }> {
+      const rows = await sql<{ won: boolean }[]>`
+        SELECT (winner_id = ${playerId} OR winner_partner_id = ${playerId}) AS won
+        FROM matches
+        WHERE group_id = ${groupId}
+          AND match_type = 'doubles'
+          AND ${playerId} IN (winner_id, loser_id, winner_partner_id, loser_partner_id)
+        ORDER BY played_at ASC
+      `;
+      let currentStreak = 0;
+      let bestStreak = 0;
+      for (const row of rows) {
+        currentStreak = row.won
+          ? currentStreak > 0 ? currentStreak + 1 : 1
+          : currentStreak < 0 ? currentStreak - 1 : -1;
+        bestStreak = Math.max(bestStreak, currentStreak);
+      }
       return { currentStreak, bestStreak };
     },
 
@@ -369,6 +415,7 @@ export function matchQueries(sql: SqlLike) {
           COUNT(*) FILTER (WHERE winner_id = ${playerB})::text AS wins_b
         FROM matches
         WHERE group_id = ${groupId}
+          AND match_type != 'doubles'
           AND (
             (winner_id = ${playerA} AND loser_id = ${playerB})
             OR (winner_id = ${playerB} AND loser_id = ${playerA})
@@ -388,6 +435,7 @@ export function matchQueries(sql: SqlLike) {
         LEFT JOIN players wp ON wp.id = m.winner_partner_id
         LEFT JOIN players lp ON lp.id = m.loser_partner_id
         WHERE m.group_id = ${groupId}
+          AND m.match_type != 'doubles'
           AND (
             (m.winner_id = ${playerA} AND m.loser_id = ${playerB})
             OR (m.winner_id = ${playerB} AND m.loser_id = ${playerA})
@@ -413,10 +461,106 @@ export function matchQueries(sql: SqlLike) {
       const rows = await sql<{ count: string }[]>`
         SELECT COUNT(*)::text AS count FROM matches
         WHERE group_id = ${groupId}
+          AND match_type != 'doubles'
           AND ((winner_id = ${playerA} AND loser_id = ${playerB})
             OR (winner_id = ${playerB} AND loser_id = ${playerA}))
       `;
       return parseInt(rows[0].count, 10);
+    },
+
+    async getH2HWinnerIds(
+      playerA: string,
+      playerB: string,
+      groupId: string,
+      limit?: number,
+    ): Promise<(string | null)[]> {
+      const rows = await sql<{ winner_id: string | null }[]>`
+        SELECT winner_id FROM (
+          SELECT
+            CASE WHEN winner_score = loser_score THEN NULL ELSE winner_id END AS winner_id,
+            played_at
+          FROM matches
+          WHERE group_id = ${groupId}
+            AND match_type != 'doubles'
+            AND ((winner_id = ${playerA} AND loser_id = ${playerB})
+              OR (winner_id = ${playerB} AND loser_id = ${playerA}))
+          ORDER BY played_at DESC
+          LIMIT ${limit ?? 1000000}
+        ) recent
+        ORDER BY played_at ASC
+      `;
+      return rows.map((row) => row.winner_id);
+    },
+
+    async getConsecutiveLossesAgainst(
+      playerId: string,
+      opponentId: string,
+      groupId: string,
+      before: Date = new Date(),
+    ): Promise<number> {
+      const rows = await sql<{ winner_id: string; is_draw: boolean }[]>`
+        SELECT winner_id, winner_score = loser_score AS is_draw
+        FROM matches
+        WHERE group_id = ${groupId}
+          AND match_type = 'singles'
+          AND played_at < ${before}
+          AND ((winner_id = ${playerId} AND loser_id = ${opponentId})
+            OR (winner_id = ${opponentId} AND loser_id = ${playerId}))
+        ORDER BY played_at DESC
+        LIMIT 100
+      `;
+      let count = 0;
+      for (const row of rows) {
+        if (row.is_draw || row.winner_id === playerId) break;
+        count += 1;
+      }
+      return count;
+    },
+
+    async getPreviousDoublesPartner(
+      playerId: string,
+      groupId: string,
+      before: Date = new Date(),
+    ): Promise<string | null> {
+      const rows = await sql<{ partner_id: string | null }[]>`
+        SELECT CASE
+          WHEN winner_id = ${playerId} THEN winner_partner_id
+          WHEN winner_partner_id = ${playerId} THEN winner_id
+          WHEN loser_id = ${playerId} THEN loser_partner_id
+          ELSE loser_id
+        END AS partner_id
+        FROM matches
+        WHERE group_id = ${groupId}
+          AND match_type = 'doubles'
+          AND played_at < ${before}
+          AND (${playerId} IN (winner_id, loser_id, winner_partner_id, loser_partner_id))
+        ORDER BY played_at DESC
+        LIMIT 1
+      `;
+      return rows[0]?.partner_id ?? null;
+    },
+
+    async getTopTwoDefenceStreak(playerId: string, groupId: string): Promise<number> {
+      const rows = await sql<{ qualifies: boolean }[]>`
+        SELECT (
+          winner_id = ${playerId}
+          AND winner_score > loser_score
+          AND winner_rank_before = 1
+          AND loser_rank_before = 2
+        ) AS qualifies
+        FROM matches
+        WHERE group_id = ${groupId}
+          AND match_type = 'singles'
+          AND (winner_id = ${playerId} OR loser_id = ${playerId})
+        ORDER BY played_at DESC
+        LIMIT 3
+      `;
+      let count = 0;
+      for (const row of rows) {
+        if (!row.qualifies) break;
+        count += 1;
+      }
+      return count;
     },
 
     async getConsecutiveWinsAgainst(
@@ -424,16 +568,17 @@ export function matchQueries(sql: SqlLike) {
       loserId: string,
       groupId: string,
     ): Promise<number> {
-      const rows = await sql<{ winner_id: string }[]>`
-        SELECT winner_id FROM matches
+      const rows = await sql<{ winner_id: string; is_draw: boolean }[]>`
+        SELECT winner_id, winner_score = loser_score AS is_draw FROM matches
         WHERE group_id = ${groupId}
+          AND match_type != 'doubles'
           AND ((winner_id = ${winnerId} AND loser_id = ${loserId})
             OR (winner_id = ${loserId} AND loser_id = ${winnerId}))
         ORDER BY played_at DESC
       `;
       let count = 0;
       for (const row of rows) {
-        if (row.winner_id === winnerId) {
+        if (!row.is_draw && row.winner_id === winnerId) {
           count++;
         } else {
           break;

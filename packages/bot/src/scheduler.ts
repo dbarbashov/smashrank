@@ -6,12 +6,17 @@ import {
   tournamentQueries,
   matchupQueries,
   seasonQueries,
+  achievementQueries,
+  playerQueries,
 } from "@smashrank/db";
 import {
   getT,
   generateDigestCommentary,
   formatDigestFallback,
   generateMatchupCommentary,
+  evaluateLightsOutAchievements,
+  evaluateExclusiveAchievements,
+  ACHIEVEMENT_BY_ID,
 } from "@smashrank/core";
 import type { DigestData } from "@smashrank/core";
 import type { SmashRankContext } from "./context.js";
@@ -30,6 +35,83 @@ const DECAY_PER_WEEK = 5;
 const DECAY_FLOOR = 800;
 const DECAY_INACTIVE_DAYS = 14;
 const lastDecayApplied = new Map<string, number>(); // groupId → timestamp
+
+function moscowHour(now: Date): number {
+  const hour = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Moscow",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now).find((part) => part.type === "hour")?.value;
+  return Number(hour ?? 0);
+}
+
+export async function checkBackgroundAchievements(
+  bot: Bot<SmashRankContext>,
+  now: Date = new Date(),
+): Promise<void> {
+  if (moscowHour(now) < 10) return;
+  const sql = getConnection();
+  const groups = groupQueries(sql);
+  const achievements = achievementQueries(sql);
+  const players = playerQueries(sql);
+  const eligibleGroups = await groups.getAllGroupsWithAchievements();
+
+  for (const group of eligibleGroups) {
+    const [lastMatches, exclusive] = await Promise.all([
+      achievements.listCompletedDayLastMatches(group.id, now),
+      achievements.listMaturedExclusivity(group.id, now),
+    ]);
+    const lightsCandidates = evaluateLightsOutAchievements(lastMatches.map((match) => ({
+      playedAt: match.played_at,
+      participantIds: match.participant_ids,
+    })));
+    const insertedLights = await achievements.awardWithMeta(
+      group.id,
+      lightsCandidates,
+      { type: "meta", context: { category: "activity", background: "lights_out" } },
+      now,
+    );
+
+    const exclusiveCandidates = evaluateExclusiveAchievements(exclusive.map((state) => ({
+      achievementId: state.achievement_id,
+      solePlayerId: state.sole_player_id,
+      uniqueSince: state.unique_since,
+    })), now);
+    const insertedExclusive = [];
+    for (const candidate of exclusiveCandidates) {
+      const state = exclusive.find((item) => item.sole_player_id === candidate.playerId);
+      insertedExclusive.push(...await achievements.awardMany(
+        group.id,
+        [candidate],
+        { type: "meta", context: {
+          category: "meta",
+          trigger_achievement_ids: state ? [state.achievement_id] : [],
+          background: "one_of_a_kind",
+        } },
+        now,
+      ));
+    }
+    const inserted = [
+      ...insertedLights,
+      ...insertedExclusive.map((row) => ({ playerId: row.player_id, achievementId: row.achievement_id })),
+    ];
+    if (inserted.length === 0) continue;
+
+    const uniquePlayerIds = [...new Set(inserted.map((item) => item.playerId))];
+    const playerRows = await Promise.all(uniquePlayerIds.map((id) => players.findById(id)));
+    const names = new Map(playerRows.filter(Boolean).map((player) => [player!.id, player!.display_name]));
+    const t = getT(group.language ?? "en");
+    const lines = inserted.map((item) => {
+      const definition = ACHIEVEMENT_BY_ID.get(item.achievementId);
+      return `${definition?.emoji ?? "🏅"} ${names.get(item.playerId) ?? "?"}: ${t(`achievement.${item.achievementId}`)}`;
+    });
+    try {
+      await bot.api.sendMessage(group.chat_id, `${t("achievement.background_unlocked")}\n${lines.join("\n")}`);
+    } catch {
+      // The group may have removed the bot; rewards remain safely persisted.
+    }
+  }
+}
 
 function getDigestIntervalMs(digest: string): number {
   if (digest === "daily") return 24 * 60 * 60 * 1000;
@@ -278,6 +360,9 @@ export function startScheduler(bot: Bot<SmashRankContext>): void {
     );
     checkEloDecay().catch((err) =>
       console.error("ELO decay scheduler error:", err),
+    );
+    checkBackgroundAchievements(bot).catch((err) =>
+      console.error("Achievement scheduler error:", err),
     );
   }, DIGEST_INTERVAL_MS);
 

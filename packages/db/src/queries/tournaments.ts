@@ -156,6 +156,7 @@ export function tournamentQueries(sql: SqlLike) {
       winner_id: string | null;
       winner_score: number | null;
       loser_score: number | null;
+      played_at: Date | null;
     }[]> {
       return sql<{
         player1_id: string;
@@ -166,6 +167,7 @@ export function tournamentQueries(sql: SqlLike) {
         winner_id: string | null;
         winner_score: number | null;
         loser_score: number | null;
+        played_at: Date | null;
       }[]>`
         SELECT
           p1.id AS player1_id,
@@ -176,6 +178,7 @@ export function tournamentQueries(sql: SqlLike) {
           m.winner_id,
           m.winner_score,
           m.loser_score
+          ,m.played_at
         FROM tournament_participants tp1
         JOIN tournament_participants tp2
           ON tp1.tournament_id = tp2.tournament_id AND tp1.player_id < tp2.player_id

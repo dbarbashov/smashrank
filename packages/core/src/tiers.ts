@@ -1,5 +1,12 @@
+export type RatingTierId =
+  | "diamond"
+  | "platinum"
+  | "gold"
+  | "silver"
+  | "bronze";
+
 export interface RatingTier {
-  id: string;
+  id: RatingTierId;
   name: string;
   emoji: string;
   minElo: number;

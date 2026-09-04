@@ -3,7 +3,7 @@ import {
   playerQueries,
   tournamentQueries,
 } from "@smashrank/db";
-import { parseTournamentGameCommand, sortStandings } from "@smashrank/core";
+import { parseTournamentGameCommand, sortStandings, ACHIEVEMENT_BY_ID } from "@smashrank/core";
 import type { Standing } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { recordTournamentMatch } from "../helpers/record-tournament-match.js";
@@ -121,6 +121,15 @@ export async function tgameCommand(ctx: SmashRankContext): Promise<void> {
     });
   }
 
+  if (matchResult.newAchievements.length > 0) {
+    const names = new Map([[ctx.player.id, ctx.player.display_name], [opponent.id, opponent.display_name]]);
+    const lines = matchResult.newAchievements.map((achievement) => {
+      const definition = ACHIEVEMENT_BY_ID.get(achievement.achievementId);
+      return `${definition?.emoji ?? "🏅"} ${names.get(achievement.playerId)}: ${ctx.t(`achievement.${achievement.achievementId}`) || definition?.name}`;
+    });
+    message += `\n\n${ctx.t("achievement.unlocked")}\n${lines.join("\n")}`;
+  }
+
   message += "\n" + ctx.t("tournament.remaining_fixtures", { count: matchResult.remainingFixtures });
 
   // If tournament complete, show final standings
@@ -164,7 +173,14 @@ export async function tgameCommand(ctx: SmashRankContext): Promise<void> {
     message += "\n" + standingLines.join("\n");
 
     // Evaluate and persist tournament achievements
-    await evaluateAndPersistTournamentAchievements(tournament.id);
+    const tournamentAwards = await evaluateAndPersistTournamentAchievements(tournament.id);
+    if (tournamentAwards.achievements.length > 0) {
+      const lines = tournamentAwards.achievements.map((achievement) => {
+        const definition = ACHIEVEMENT_BY_ID.get(achievement.achievementId);
+        return `${definition?.emoji ?? "🏅"} ${nameMap.get(achievement.playerId)}: ${ctx.t(`achievement.${achievement.achievementId}`) || definition?.name}`;
+      });
+      message += `\n\n${ctx.t("achievement.unlocked")}\n${lines.join("\n")}`;
+    }
   }
 
   await ctx.reply(message);

@@ -5,6 +5,7 @@ export { seasonQueries } from "./queries/seasons.js";
 export type { ExpiredActiveSeason } from "./queries/seasons.js";
 export { matchQueries } from "./queries/matches.js";
 export { achievementQueries } from "./queries/achievements.js";
+export type { AchievementAward, AchievementAwardSource } from "./queries/achievements.js";
 export { digestQueries } from "./queries/digest.js";
 export type { WeeklyStats } from "./queries/digest.js";
 export { tournamentQueries } from "./queries/tournaments.js";
@@ -12,6 +13,7 @@ export { matchupQueries } from "./queries/matchup.js";
 export type { MatchupCandidate } from "./queries/matchup.js";
 export { recordQueries } from "./queries/records.js";
 export type { RecordEntry, GroupRecords } from "./queries/records.js";
+export { backfillAchievements } from "./backfill-achievements.js";
 export type {
   Player,
   Group,
@@ -21,7 +23,10 @@ export type {
   Match,
   SeasonSnapshot,
   AchievementDefinition,
+  AchievementDefinitionWithCount,
+  AchievementHolderRow,
   PlayerAchievement,
+  AchievementExclusivity,
   Tournament,
   TournamentParticipant,
   TournamentStanding,

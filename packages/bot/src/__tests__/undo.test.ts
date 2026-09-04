@@ -71,8 +71,10 @@ describe("/undo", () => {
 
     const sql = getConnection();
     const achievements = achievementQueries(sql);
+    const group = await groupQueries(sql).findByChatId(-1001);
     const before = await achievements.getPlayerAchievementIds(
       (await playerQueries(sql).findByTelegramId(100))!.id,
+      group!.id,
     );
     expect(before).toContain("first_blood");
 
@@ -83,6 +85,7 @@ describe("/undo", () => {
 
     const after = await achievements.getPlayerAchievementIds(
       (await playerQueries(sql).findByTelegramId(100))!.id,
+      group!.id,
     );
     expect(after).not.toContain("first_blood");
   });
