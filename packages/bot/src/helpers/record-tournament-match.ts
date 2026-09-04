@@ -4,14 +4,25 @@ import {
   matchQueries,
   tournamentQueries,
   groupQueries,
+  achievementQueries,
 } from "@smashrank/db";
 import type { Player, Group, GroupMember, Match, Tournament } from "@smashrank/db";
 import {
   calculateElo,
   calculateDrawElo,
+  evaluateAchievements,
+  evaluatePlayerHistoryAchievements,
+  evaluateDrawScoreAchievements,
+  ACHIEVEMENT_BY_ID,
 } from "@smashrank/core";
-import type { EloResult, DrawEloResult } from "@smashrank/core";
+import type { EloResult, DrawEloResult, AchievementUnlock } from "@smashrank/core";
 import { ensureActiveSeason } from "./ensure-season.js";
+
+function withoutDoublesAchievements(unlocks: AchievementUnlock[]): AchievementUnlock[] {
+  return unlocks.filter((unlock) =>
+    ACHIEVEMENT_BY_ID.get(unlock.achievementId)?.category !== "doubles"
+  );
+}
 
 export interface RecordTournamentMatchInput {
   group: Group;
@@ -35,6 +46,7 @@ export interface RecordTournamentMatchResult {
   opponentNewElo: number;
   remainingFixtures: number;
   tournamentComplete: boolean;
+  newAchievements: AchievementUnlock[];
 }
 
 export async function recordTournamentMatch(
@@ -56,6 +68,11 @@ export async function recordTournamentMatch(
   let eloChange!: number;
   let remainingFixtures!: number;
   let tournamentComplete = false;
+  let newAchievements: AchievementUnlock[] = [];
+  const [reporterRankBefore, opponentRankBefore] = await Promise.all([
+    matchQueries(sql).getPlayerStats(input.reporter.id, input.group.id),
+    matchQueries(sql).getPlayerStats(input.opponent.id, input.group.id),
+  ]);
 
   await sql.begin(async (tx) => {
     const txSql = tx as unknown as postgres.Sql;
@@ -95,11 +112,23 @@ export async function recordTournamentMatch(
         elo_change: eloChange,
         reported_by: input.reporter.id,
         tournament_id: input.tournament.id,
+        winner_rank_before: reporterRankBefore?.rank ?? null,
+        loser_rank_before: opponentRankBefore?.rank ?? null,
       });
 
       const setsInMatch = input.reporterSets + input.opponentSets;
       await txGroups.updateGroupEloForDraw(input.group.id, input.reporter.id, reporterNewElo, setsInMatch);
       await txGroups.updateGroupEloForDraw(input.group.id, input.opponent.id, opponentNewElo, setsInMatch);
+      const [reporterRankAfter, opponentRankAfter] = await Promise.all([
+        txMatches.getPlayerStats(input.reporter.id, input.group.id),
+        txMatches.getPlayerStats(input.opponent.id, input.group.id),
+      ]);
+      await txSql`
+        UPDATE matches SET
+          winner_rank_after = ${reporterRankAfter?.rank ?? null},
+          loser_rank_after = ${opponentRankAfter?.rank ?? null}
+        WHERE id = ${match.id}
+      `;
 
       // Update standings
       await txTournaments.updateStanding(
@@ -110,6 +139,52 @@ export async function recordTournamentMatch(
         input.tournament.id, input.opponent.id, "draw",
         input.opponentSets, input.reporterSets,
       );
+      if (input.group.settings?.achievements !== false) {
+        const txAchievements = achievementQueries(txSql);
+        const [reporterExisting, opponentExisting, reporterHistory, opponentHistory, activeOpponentIds] = await Promise.all([
+          txAchievements.getPlayerAchievementIds(input.reporter.id, input.group.id),
+          txAchievements.getPlayerAchievementIds(input.opponent.id, input.group.id),
+          txMatches.getPlayerRecentMatches(input.reporter.id, input.group.id, 10000),
+          txMatches.getPlayerRecentMatches(input.opponent.id, input.group.id, 10000),
+          txGroups.getActivePlayerIds(input.group.id, "singles", match.played_at),
+        ]);
+        const toHistory = (playerId: string, rows: typeof reporterHistory) => rows.map((row) => ({
+          playedAt: row.played_at,
+          matchType: row.match_type,
+          won: row.winner_score !== row.loser_score && row.winner_id === playerId,
+          draw: row.winner_score === row.loser_score,
+          opponentIds: [row.winner_id === playerId ? row.loser_id : row.winner_id],
+          playerEloBefore: row.winner_id === playerId ? row.elo_before_winner : row.elo_before_loser,
+          opponentEloBefore: row.winner_id === playerId ? row.elo_before_loser : row.elo_before_winner,
+        }));
+        const existing = new Map([
+          [input.reporter.id, reporterExisting],
+          [input.opponent.id, opponentExisting],
+        ]);
+        const candidates = [
+          ...evaluateDrawScoreAchievements(input.reporter.id, input.opponent.id, orientedSetScores, existing),
+          ...withoutDoublesAchievements(evaluatePlayerHistoryAchievements({
+            playerId: input.reporter.id,
+            matches: toHistory(input.reporter.id, reporterHistory),
+            activeOpponentIds,
+            existingAchievements: reporterExisting,
+          })),
+          ...withoutDoublesAchievements(evaluatePlayerHistoryAchievements({
+            playerId: input.opponent.id,
+            matches: toHistory(input.opponent.id, opponentHistory),
+            activeOpponentIds,
+            existingAchievements: opponentExisting,
+          })),
+        ];
+        newAchievements = await txAchievements.awardWithMeta(
+          input.group.id,
+          candidates.filter((candidate, index, all) => all.findIndex((item) =>
+            item.playerId === candidate.playerId && item.achievementId === candidate.achievementId
+          ) === index),
+          { type: "match", id: match.id },
+          match.played_at,
+        );
+      }
     } else {
       // Win/loss — determine winner/loser by sets
       const reporterIsWinner = input.reporterSets > input.opponentSets;
@@ -157,6 +232,8 @@ export async function recordTournamentMatch(
         elo_change: eloResult.change,
         reported_by: input.reporter.id,
         tournament_id: input.tournament.id,
+        winner_rank_before: reporterIsWinner ? reporterRankBefore?.rank : opponentRankBefore?.rank,
+        loser_rank_before: reporterIsWinner ? opponentRankBefore?.rank : reporterRankBefore?.rank,
       });
 
       const setsInMatch = winnerSets + loserSets;
@@ -173,6 +250,84 @@ export async function recordTournamentMatch(
         setsInMatch,
       );
 
+      const achievementsEnabled = input.group.settings?.achievements !== false;
+      if (achievementsEnabled) {
+        const txAchievements = achievementQueries(txSql);
+        const [winnerExisting, loserExisting, matchCount, winnerRankAfter, loserRankAfter, consecutiveWins, recentH2H, winnerHistoryRows, loserHistoryRows, activeOpponentIds] = await Promise.all([
+          txAchievements.getPlayerAchievementIds(winnerId, input.group.id),
+          txAchievements.getPlayerAchievementIds(loserId, input.group.id),
+          txMatches.countMatchesBetween(winnerId, loserId, input.group.id),
+          txMatches.getPlayerStats(winnerId, input.group.id),
+          txMatches.getPlayerStats(loserId, input.group.id),
+          txMatches.getConsecutiveWinsAgainst(winnerId, loserId, input.group.id),
+          txMatches.getH2HWinnerIds(winnerId, loserId, input.group.id),
+          txMatches.getPlayerRecentMatches(winnerId, input.group.id, 10000),
+          txMatches.getPlayerRecentMatches(loserId, input.group.id, 10000),
+          txGroups.getActivePlayerIds(input.group.id, "singles", match.played_at),
+        ]);
+        await txSql`
+          UPDATE matches SET
+            winner_rank_after = ${winnerRankAfter?.rank ?? null},
+            loser_rank_after = ${loserRankAfter?.rank ?? null}
+          WHERE id = ${match.id}
+        `;
+        const candidates = evaluateAchievements({
+          matchType: "tournament",
+          winnerId,
+          loserId,
+          winnerStreak: winnerMember.current_streak > 0 ? winnerMember.current_streak + 1 : 1,
+          winnerStreakBefore: winnerMember.current_streak,
+          winnerElo: winnerMember.elo_rating,
+          loserElo: loserMember.elo_rating,
+          winnerGamesPlayed: winnerMember.games_played + 1,
+          loserGamesPlayed: loserMember.games_played + 1,
+          winnerWins: winnerMember.wins + 1,
+          setScores: orientedSetScores,
+          matchesBetween: matchCount,
+          winnerRank: winnerRankAfter?.rank ?? null,
+          winnerExistingAchievements: winnerExisting,
+          loserExistingAchievements: loserExisting,
+          loserStreak: loserMember.current_streak < 0 ? loserMember.current_streak - 1 : -1,
+          loserConsecutiveLossesVsWinner: consecutiveWins,
+          playedAt: match.played_at,
+          eloChange: eloResult.change,
+          winnerRankBefore: reporterIsWinner ? reporterRankBefore?.rank : opponentRankBefore?.rank,
+          loserRankBefore: reporterIsWinner ? opponentRankBefore?.rank : reporterRankBefore?.rank,
+          winnerRankAfter: winnerRankAfter?.rank ?? null,
+          recentH2HWinnerIds: recentH2H,
+        });
+        const toHistory = (playerId: string, rows: typeof winnerHistoryRows) => rows.map((row) => ({
+          playedAt: row.played_at,
+          matchType: row.match_type,
+          won: row.winner_score !== row.loser_score && row.winner_id === playerId,
+          draw: row.match_type === "tournament" && row.winner_score === row.loser_score,
+          opponentIds: [row.winner_id === playerId ? row.loser_id : row.winner_id],
+          playerEloBefore: row.winner_id === playerId ? row.elo_before_winner : row.elo_before_loser,
+          opponentEloBefore: row.winner_id === playerId ? row.elo_before_loser : row.elo_before_winner,
+        }));
+        candidates.push(
+          ...withoutDoublesAchievements(evaluatePlayerHistoryAchievements({
+            playerId: winnerId,
+            matches: toHistory(winnerId, winnerHistoryRows),
+            activeOpponentIds,
+            existingAchievements: winnerExisting,
+          })),
+          ...withoutDoublesAchievements(evaluatePlayerHistoryAchievements({
+            playerId: loserId,
+            matches: toHistory(loserId, loserHistoryRows),
+            activeOpponentIds,
+            existingAchievements: loserExisting,
+          })),
+        );
+        newAchievements = await txAchievements.awardWithMeta(
+          input.group.id,
+          candidates.filter((candidate, index, all) => all.findIndex((item) =>
+            item.playerId === candidate.playerId && item.achievementId === candidate.achievementId
+          ) === index),
+          { type: "match", id: match.id },
+          match.played_at,
+        );
+      }
       // Update standings
       await txTournaments.updateStanding(
         input.tournament.id, winnerId, "win", winnerSets, loserSets,
@@ -198,5 +353,6 @@ export async function recordTournamentMatch(
     opponentNewElo: opponentNewElo!,
     remainingFixtures: remainingFixtures!,
     tournamentComplete,
+    newAchievements,
   };
 }

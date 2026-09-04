@@ -73,6 +73,13 @@ export interface Match {
   elo_before_loser: number;
   elo_change: number;
   tournament_id: string | null;
+  winner_rank_before: number | null;
+  loser_rank_before: number | null;
+  winner_rank_after: number | null;
+  loser_rank_after: number | null;
+  challenge_type: string | null;
+  challenge_initiator_id: string | null;
+  challenge_target_rank: number | null;
   reported_by: string;
   played_at: Date;
 }
@@ -98,6 +105,9 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   emoji: string;
+  category: "match" | "rating" | "opponents" | "activity" | "doubles" | "tournaments" | "shame" | "meta";
+  kind: "positive" | "shame" | "neutral" | "meta";
+  sort_order: number;
 }
 
 export interface AchievementDefinitionWithCount extends AchievementDefinition {
@@ -112,7 +122,17 @@ export interface PlayerAchievement {
   match_id: string | null;
   tournament_id: string | null;
   season_id: string | null;
+  source_type: "match" | "tournament" | "season" | "meta" | null;
+  meta_context: Record<string, unknown> | null;
   unlocked_at: Date;
+}
+
+export interface AchievementExclusivity {
+  group_id: string;
+  achievement_id: string;
+  sole_player_id: string | null;
+  unique_since: Date | null;
+  updated_at: Date;
 }
 
 export interface AchievementHolderRow extends PlayerAchievement {

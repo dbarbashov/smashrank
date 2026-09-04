@@ -4,12 +4,17 @@ import {
   playerQueries,
   matchQueries,
   groupQueries,
+  achievementQueries,
 } from "@smashrank/db";
 import {
   parseGameCommand,
   calculateDoublesElo,
   updateStreak,
+  evaluateDoublesAchievements,
+  evaluatePlayerHistoryAchievements,
+  ACHIEVEMENT_BY_ID,
 } from "@smashrank/core";
+import type { AchievementUnlock } from "@smashrank/core";
 import type { SmashRankContext } from "../context.js";
 import { ensureActiveSeason } from "../helpers/ensure-season.js";
 import { checkOptOut } from "../helpers/check-opt-out.js";
@@ -68,6 +73,7 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
   const sql = getConnection();
   const players = playerQueries(sql);
   const groups = groupQueries(sql);
+  const matches = matchQueries(sql);
 
   // Resolve all players
   const partner = await players.findByUsername(partnerMatch[1]);
@@ -149,6 +155,18 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
 
   const season = await ensureActiveSeason(ctx.group.id);
 
+  const participantIds = [winner1.id, winner2.id, loser1.id, loser2.id];
+  const [previousPartners, existingEntries] = await Promise.all([
+    Promise.all(participantIds.map((id) => matches.getPreviousDoublesPartner(id, ctx.group!.id))),
+    Promise.all(participantIds.map(async (id) => [
+      id,
+      await achievementQueries(sql).getPlayerAchievementIds(id, ctx.group!.id),
+    ] as const)),
+  ]);
+  const previousPartnerByPlayer = new Map(participantIds.map((id, index) => [id, previousPartners[index]]));
+  const existingAchievements = new Map(existingEntries);
+  let newAchievements: AchievementUnlock[] = [];
+
   const eloResult = calculateDoublesElo({
     winner1Rating: w1Member.doubles_elo_rating,
     winner2Rating: w2Member.doubles_elo_rating,
@@ -170,7 +188,7 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
     const txMatches = matchQueries(txSql);
     const txGroups = groupQueries(txSql);
 
-    await txMatches.create({
+    const recordedMatch = await txMatches.create({
       match_type: "doubles",
       season_id: season.id,
       group_id: ctx.group!.id,
@@ -194,6 +212,54 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
     await txGroups.updateGroupDoublesElo(ctx.group!.id, winner2.id, eloResult.winner2NewRating, true, w2Streak.currentStreak, w2Streak.bestStreak, setsInMatch);
     await txGroups.updateGroupDoublesElo(ctx.group!.id, loser1.id, eloResult.loser1NewRating, false, l1Streak.currentStreak, l1Streak.bestStreak, setsInMatch);
     await txGroups.updateGroupDoublesElo(ctx.group!.id, loser2.id, eloResult.loser2NewRating, false, l2Streak.currentStreak, l2Streak.bestStreak, setsInMatch);
+
+    if (ctx.group!.settings?.achievements !== false) {
+      const intrinsic = evaluateDoublesAchievements({
+        winnerIds: [winner1.id, winner2.id],
+        loserIds: [loser1.id, loser2.id],
+        winnerElos: [w1Member.doubles_elo_rating, w2Member.doubles_elo_rating],
+        loserElos: [l1Member.doubles_elo_rating, l2Member.doubles_elo_rating],
+        previousPartnerByPlayer,
+        existingAchievements,
+        playedAt: recordedMatch.played_at,
+      });
+      const [historyRows, activeDoublesIds] = await Promise.all([
+        Promise.all(participantIds.map((id) => txMatches.getPlayerRecentMatches(id, ctx.group!.id, 10000))),
+        txGroups.getActivePlayerIds(ctx.group!.id, "doubles", recordedMatch.played_at),
+      ]);
+      const historical = participantIds.flatMap((playerId, playerIndex) => {
+        const history = historyRows[playerIndex].map((row) => {
+          const won = row.winner_id === playerId || row.winner_partner_id === playerId;
+          const partnerId = row.winner_id === playerId ? row.winner_partner_id
+            : row.winner_partner_id === playerId ? row.winner_id
+              : row.loser_id === playerId ? row.loser_partner_id : row.loser_id;
+          const opponents = won
+            ? [row.loser_id, row.loser_partner_id]
+            : [row.winner_id, row.winner_partner_id];
+          return {
+            playedAt: row.played_at,
+            matchType: row.match_type,
+            won,
+            opponentIds: [...(partnerId ? [partnerId] : []), ...opponents.filter((id): id is string => Boolean(id))],
+          };
+        });
+        return evaluatePlayerHistoryAchievements({
+          playerId,
+          matches: history,
+          activeDoublesPlayerIds: activeDoublesIds,
+          existingAchievements: existingAchievements.get(playerId),
+        });
+      });
+      const candidates = [...intrinsic, ...historical].filter((achievement, index, all) =>
+        all.findIndex((item) => item.playerId === achievement.playerId && item.achievementId === achievement.achievementId) === index
+      );
+      newAchievements = await achievementQueries(txSql).awardWithMeta(
+        ctx.group!.id,
+        candidates,
+        { type: "match", id: recordedMatch.id },
+        recordedMatch.played_at,
+      );
+    }
   });
 
   const setScoresStr = orientedSetScores
@@ -204,7 +270,7 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
   const losers = `${loser1.display_name} & ${loser2.display_name}`;
 
   const templateKey = setScoresStr ? "doubles.result_with_sets" : "doubles.result";
-  const message = ctx.t(templateKey, {
+  let message = ctx.t(templateKey, {
     winners,
     losers,
     winnerSets: data.winnerSets,
@@ -212,6 +278,19 @@ export async function doublesCommand(ctx: SmashRankContext): Promise<void> {
     setScores: setScoresStr,
     change: eloResult.change,
   });
+
+  if (newAchievements.length > 0) {
+    const names = new Map([
+      [winner1.id, winner1.display_name], [winner2.id, winner2.display_name],
+      [loser1.id, loser1.display_name], [loser2.id, loser2.display_name],
+    ]);
+    const lines = newAchievements.map((achievement) => {
+      const definition = ACHIEVEMENT_BY_ID.get(achievement.achievementId);
+      const name = ctx.t(`achievement.${achievement.achievementId}`) || definition?.name || achievement.achievementId;
+      return `${definition?.emoji ?? "🏅"} ${names.get(achievement.playerId)}: ${name}`;
+    });
+    message += `\n\n${ctx.t("achievement.unlocked")}\n${lines.join("\n")}`;
+  }
 
   await ctx.reply(message);
 }

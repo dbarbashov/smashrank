@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { UsersRound, X } from "lucide-react";
+import { Info, UsersRound, X } from "lucide-react";
 import { useAchievementDetails } from "../api/queries.js";
 import type {
   AchievementDefinition,
@@ -9,6 +9,33 @@ import type {
   AchievementSource,
 } from "../types.js";
 import { PlayerLink } from "./player-link.js";
+
+const SINGLES_ONLY_ACHIEVEMENTS = new Set([
+  "broke_the_wall",
+  "throne_defender",
+]);
+
+function SinglesOnlyHint() {
+  const { t } = useTranslation();
+  const label = t("achievements.singlesOnly");
+
+  return (
+    <span
+      tabIndex={0}
+      aria-label={label}
+      title={label}
+      className="group relative mt-0.5 inline-flex shrink-0 cursor-help rounded-full text-slate-400 outline-none transition-colors hover:text-blue-600 focus-visible:text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:text-blue-300 dark:focus-visible:text-blue-300 dark:focus-visible:ring-offset-slate-900"
+    >
+      <Info className="h-4 w-4" aria-hidden="true" />
+      <span
+        role="tooltip"
+        className="invisible absolute right-0 top-full z-30 mt-2 w-52 rounded-lg bg-slate-900 px-3 py-2 text-left text-xs font-normal leading-4 text-white opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 dark:bg-slate-100 dark:text-slate-900"
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
 
 function formatSource(
   source: Extract<AchievementSource, { type: "match" }>,
@@ -38,6 +65,18 @@ function HolderSource({ source }: { source: AchievementSource | null }) {
         <span className="font-mono font-medium">{formatSource(source)}</span>
       </span>
     );
+  }
+
+  if (source.type === "meta") {
+    const trigger = source.trigger_achievement_ids[0];
+    if (trigger) {
+      return (
+        <span>
+          {t("achievements.metaTrigger")}: {t(`achievementDefs.${trigger}.name`, trigger)}
+        </span>
+      );
+    }
+    return <span>{t(`achievementCategories.${source.category}.name`, source.category ?? t("achievements.meta"))}</span>;
   }
 
   const label = source.name ?? (
@@ -124,6 +163,7 @@ export function AchievementDetailsDialog({
 
   const closeDialog = () => dialogRef.current?.close();
   const holders = data?.holders ?? [];
+  const hasHolders = holders.length > 0;
   const percentage = data && data.total_players > 0
     ? Math.round((data.holder_count / data.total_players) * 100)
     : 0;
@@ -136,20 +176,29 @@ export function AchievementDetailsDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) closeDialog();
       }}
-      className="m-0 mt-auto h-[min(48rem,88dvh)] w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:h-[min(48rem,94dvh)] sm:max-w-lg sm:rounded-2xl"
+      className={`m-0 mt-auto flex w-full max-w-none flex-col overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:max-w-lg sm:rounded-2xl ${
+        hasHolders
+          ? "h-[min(42rem,88dvh)] sm:h-[min(42rem,94dvh)]"
+          : "h-[min(48rem,88dvh)] sm:h-[min(48rem,94dvh)]"
+      }`}
     >
       <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
-      <div className="flex h-[calc(100%-0.75rem)] flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <header className="flex items-start gap-3 border-b border-slate-100 px-5 pb-4 pt-5 dark:border-slate-800 sm:px-6">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-3xl dark:bg-slate-800">
             {achievement?.emoji}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="achievement-dialog-title" className="text-lg font-semibold">
-              {achievement
-                ? t(`achievementDefs.${achievement.id}.name`, achievement.name)
-                : ""}
-            </h2>
+            <div className="flex items-start gap-1.5">
+              <h2 id="achievement-dialog-title" className="text-lg font-semibold">
+                {achievement
+                  ? t(`achievementDefs.${achievement.id}.name`, achievement.name)
+                  : ""}
+              </h2>
+              {achievement && SINGLES_ONLY_ACHIEVEMENTS.has(achievement.id)
+                ? <SinglesOnlyHint />
+                : null}
+            </div>
             <p className="mt-0.5 text-sm leading-5 text-slate-500 dark:text-slate-400">
               {achievement
                 ? t(`achievementDefs.${achievement.id}.desc`, achievement.description)
@@ -186,8 +235,8 @@ export function AchievementDetailsDialog({
             </div>
           ) : data ? (
             holders.length === 0 ? (
-              <div className="relative min-h-[14.5rem]">
-                <div className="absolute left-0 top-0 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
+              <div className="flex min-h-full flex-col">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
                   <UsersRound className="h-4 w-4" aria-hidden="true" />
                   <span>
                     {t("achievements.share", {
@@ -197,8 +246,8 @@ export function AchievementDetailsDialog({
                     })}
                   </span>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <div className="text-3xl" aria-hidden="true">✨</div>
+                <div className="flex flex-1 flex-col items-center justify-center text-center">
+                  <div className="text-3xl" aria-hidden="true">😢</div>
                   <p className="mt-3 font-medium">{t("achievements.nobodyYet")}</p>
                 </div>
               </div>
@@ -218,17 +267,19 @@ export function AchievementDetailsDialog({
                   <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                     {t("achievements.holders")}
                   </h3>
-                  <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {holders.map((holder, index) => {
-                      const isOnly = holders.length === 1;
-                      const badge = index === holders.length - 1
-                        ? "first"
-                        : index === 0 && !isOnly
-                          ? "latest"
-                          : undefined;
-                      return <HolderRow key={holder.id} holder={holder} badge={badge} />;
-                    })}
-                  </ul>
+                  <div className="max-h-[29.25rem] overflow-y-auto overscroll-contain pr-1">
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {holders.map((holder, index) => {
+                        const isOnly = holders.length === 1;
+                        const badge = index === holders.length - 1
+                          ? "first"
+                          : index === 0 && !isOnly
+                            ? "latest"
+                            : undefined;
+                        return <HolderRow key={holder.id} holder={holder} badge={badge} />;
+                      })}
+                    </ul>
+                  </div>
                 </div>
               </>
             )

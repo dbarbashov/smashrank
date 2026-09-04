@@ -84,7 +84,7 @@ DATABASE_URL=postgres://smashrank:smashrank@localhost:5432/smashrank
 # Optional
 DEFAULT_LANG=en           # default language for new groups (en or ru)
 WEB_URL=http://localhost:3000  # enables /web command in bot
-PORT=3000                 # API server port
+API_PORT=3000             # API server port (used by API and Vite proxy)
 STATIC_DIR=               # path to web dist/ for API to serve the SPA
 
 # Optional — LLM commentary

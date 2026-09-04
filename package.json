@@ -6,7 +6,8 @@
     "test": "pnpm --filter '@smashrank/*' --workspace-concurrency=1 run test",
     "dev": "pnpm --filter @smashrank/bot run dev",
     "migrate": "pnpm --filter @smashrank/db run migrate",
-    "seed": "pnpm --filter @smashrank/db run seed"
+    "seed": "pnpm --filter @smashrank/db run seed",
+    "backfill-achievements": "pnpm --filter @smashrank/db run backfill-achievements"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

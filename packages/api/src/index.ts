@@ -11,7 +11,7 @@ if (!url) {
 const sql = postgres(url);
 setConnection(sql);
 
-const port = parseInt(process.env.PORT ?? "3000", 10);
+const port = parseInt(process.env.API_PORT ?? process.env.PORT ?? "3000", 10);
 const app = createApp();
 
 serve({ fetch: app.fetch, port }, (info) => {

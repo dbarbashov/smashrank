@@ -30,11 +30,67 @@ describe("achievements routes", () => {
       const res = await get("/api/g/test-ach/achievements");
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.length).toBeGreaterThan(0);
+      expect(body).toHaveLength(64);
       expect(body[0].id).toBeDefined();
       expect(body[0].name).toBeDefined();
       expect(body[0].emoji).toBeDefined();
+      expect(body[0].category).toBe("match");
+      expect(body[0].kind).toBeDefined();
+      expect(body[0].sort_order).toBeTypeOf("number");
       expect(body[0].holder_count).toBe(0);
+
+      const categoryOrder = [
+        "match", "rating", "opponents", "activity", "doubles", "tournaments", "shame", "meta",
+      ];
+      expect(body.map((item: { category: string }) => categoryOrder.indexOf(item.category)))
+        .toEqual([...body]
+          .map((item: { category: string }) => categoryOrder.indexOf(item.category))
+          .sort((a: number, b: number) => a - b));
+    });
+
+    it("atomically ignores concurrent duplicate awards", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      await addToGroup(group.id, alice.id);
+      const sql = getSql();
+      const awards = sql.json([{ player_id: alice.id, achievement_id: "first_blood" }]);
+
+      const [first, second] = await Promise.all([
+        sql`SELECT * FROM award_achievements(${group.id}::uuid, ${awards}::jsonb)`,
+        sql`SELECT * FROM award_achievements(${group.id}::uuid, ${awards}::jsonb)`,
+      ]);
+      const stored = await sql<{ count: number }[]>`
+        SELECT COUNT(*)::int AS count FROM player_achievements
+        WHERE group_id = ${group.id} AND player_id = ${alice.id} AND achievement_id = 'first_blood'
+      `;
+
+      expect(first.length + second.length).toBe(1);
+      expect(stored[0].count).toBe(1);
+    });
+
+    it("restarts exclusivity after a second holder is removed", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      const bob = await createPlayer({ display_name: "Bob" });
+      await addToGroup(group.id, alice.id);
+      await addToGroup(group.id, bob.id);
+      const sql = getSql();
+      await sql`
+        INSERT INTO player_achievements (group_id, player_id, achievement_id, unlocked_at)
+        VALUES
+          (${group.id}, ${alice.id}, 'first_blood', NOW() - INTERVAL '40 days'),
+          (${group.id}, ${bob.id}, 'first_blood', NOW() - INTERVAL '35 days')
+      `;
+
+      await sql`
+        DELETE FROM player_achievements
+        WHERE group_id = ${group.id} AND player_id = ${bob.id} AND achievement_id = 'first_blood'
+      `;
+      const state = await sql<{ sole_player_id: string; unique_since: Date }[]>`
+        SELECT sole_player_id, unique_since FROM achievement_exclusivity
+        WHERE group_id = ${group.id} AND achievement_id = 'first_blood'
+      `;
+
+      expect(state[0].sole_player_id).toBe(alice.id);
+      expect(state[0].unique_since.getTime()).toBeGreaterThan(Date.now() - 60_000);
     });
 
     it("counts holders independently in each group", async () => {
@@ -260,6 +316,32 @@ describe("achievements routes", () => {
         name: "Summer 2026",
       });
       expect(legacyBody.holders[0].source).toBeNull();
+    });
+
+    it("returns meta trigger context", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      await addToGroup(group.id, alice.id);
+      const sql = getSql();
+      const context = sql.json({
+        category: "match",
+        trigger_achievement_ids: ["perfect_game", "glass_cannon"],
+      });
+      await sql`
+        INSERT INTO player_achievements (
+          group_id, player_id, achievement_id, source_type, meta_context
+        ) VALUES (
+          ${group.id}, ${alice.id}, 'jackpot', 'meta',
+          ${context}::jsonb
+        )
+      `;
+
+      const res = await get("/api/g/test-ach/achievements/jackpot");
+      const body = await res.json();
+      expect(body.holders[0].source).toEqual({
+        type: "meta",
+        category: "match",
+        trigger_achievement_ids: ["perfect_game", "glass_cannon"],
+      });
     });
 
     it("excludes ambiguous unscoped legacy rows", async () => {

@@ -12,6 +12,10 @@ import { ErrorMessage } from "../components/error-message.js";
 import { AchievementDetailsDialog } from "../components/achievement-details-dialog.js";
 import type { AchievementDefinition } from "../types.js";
 
+const CATEGORY_ORDER: AchievementDefinition["category"][] = [
+  "match", "rating", "opponents", "activity", "doubles", "tournaments", "shame", "meta",
+];
+
 export function Achievements() {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
@@ -30,12 +34,23 @@ export function Achievements() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="mb-4 text-lg font-semibold">
-          {t("achievements.definitions")}
-        </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {definitions?.map((d) => (
+      <div className="space-y-8">
+        <h2 className="text-lg font-semibold">{t("achievements.definitions")}</h2>
+        {CATEGORY_ORDER.map((category) => {
+          const categoryDefinitions = definitions?.filter((definition) => definition.category === category) ?? [];
+          if (categoryDefinitions.length === 0) return null;
+          return (
+            <section key={category} aria-labelledby={`achievement-category-${category}`}>
+              <div className="mb-4">
+                <h3 id={`achievement-category-${category}`} className="font-semibold">
+                  {t(`achievementCategories.${category}.name`, category)}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {t(`achievementCategories.${category}.description`, "")}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {categoryDefinitions.map((d) => (
             <button
               type="button"
               key={d.id}
@@ -60,8 +75,11 @@ export function Achievements() {
                 </span>
               </div>
             </button>
-          ))}
-        </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <div>

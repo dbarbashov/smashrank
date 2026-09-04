@@ -23,7 +23,7 @@ import {
 } from "./league-broadcast-events.js";
 import "./league-broadcast.css";
 
-const ROTATION_INTERVAL_MS = 6000;
+const ROTATION_INTERVAL_MS = 4000;
 const EVENT_CLOCK_INTERVAL_MS = 60_000;
 
 type BroadcastTone = "blue" | "emerald" | "amber" | "violet";

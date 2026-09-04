@@ -18,6 +18,7 @@ const MIGRATION_FILES = [
   "011_sets_played.sql",
   "012_opt_out.sql",
   "013_group_scoped_achievements.sql",
+  "014_achievement_system.sql",
 ];
 
 export async function setup(): Promise<void> {
@@ -30,6 +31,7 @@ export async function setup(): Promise<void> {
 
   // Drop all tables first so migrations are idempotent
   await sql.unsafe(`
+    DROP TABLE IF EXISTS achievement_exclusivity CASCADE;
     DROP TABLE IF EXISTS tournament_standings CASCADE;
     DROP TABLE IF EXISTS tournament_participants CASCADE;
     DROP TABLE IF EXISTS player_achievements CASCADE;

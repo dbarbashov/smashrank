@@ -9,7 +9,8 @@
     "build": "tsc",
     "migrate": "tsx --env-file=../../.env src/migrate.ts",
     "seed": "tsx --env-file=../../.env src/seed.ts",
-    "recalculate": "tsx --env-file=../../.env src/recalculate-elo.ts"
+    "recalculate": "tsx --env-file=../../.env src/recalculate-elo.ts",
+    "backfill-achievements": "tsx --env-file=../../.env src/backfill-achievements.ts"
   },
   "dependencies": {
     "@smashrank/core": "workspace:*",

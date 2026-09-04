@@ -75,6 +75,9 @@ export interface AchievementDefinition {
   description: string;
   emoji: string;
   holder_count: number;
+  category: "match" | "rating" | "opponents" | "activity" | "doubles" | "tournaments" | "shame" | "meta";
+  kind: "positive" | "shame" | "neutral" | "meta";
+  sort_order: number;
 }
 
 export type AchievementSource =
@@ -89,7 +92,12 @@ export type AchievementSource =
       set_scores: { w: number; l: number }[] | null;
     }
   | { type: "tournament"; id: string; name: string | null }
-  | { type: "season"; id: string; name: string | null };
+  | { type: "season"; id: string; name: string | null }
+  | {
+      type: "meta";
+      trigger_achievement_ids: string[];
+      category: string | null;
+    };
 
 export interface AchievementHolder {
   id: string;

@@ -1,15 +1,8 @@
 import { beforeAll, afterAll } from "vitest";
 import postgres from "postgres";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { setConnection, closeConnection } from "@smashrank/db";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 let sql: postgres.Sql;
-
-const MIGRATIONS_DIR = join(__dirname, "../../../db/migrations");
 
 beforeAll(async () => {
   const url = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -27,15 +20,6 @@ afterAll(async () => {
 
 export async function cleanDb(): Promise<void> {
   await sql`TRUNCATE tournament_standings, tournament_participants, tournaments, player_achievements, matches, season_snapshots, seasons, group_members, groups, players CASCADE`;
-  await sql`DELETE FROM achievement_definitions WHERE true`;
-  const seed = readFileSync(join(MIGRATIONS_DIR, "002_seed_achievements.sql"), "utf-8");
-  await sql.unsafe(seed);
-  await sql`
-    INSERT INTO achievement_definitions (id, name, description, emoji) VALUES
-      ('tournament_champion', 'Tournament Champion', 'Win a tournament', '🏆'),
-      ('party_worker', 'Party Worker', 'Be #1 in total games played at end of season', '🏭')
-    ON CONFLICT (id) DO NOTHING
-  `;
 }
 
 export function getSql(): postgres.Sql {

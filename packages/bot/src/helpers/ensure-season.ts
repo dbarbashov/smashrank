@@ -21,17 +21,18 @@ export async function ensureActiveSeason(groupId: string): Promise<Season> {
   if (existing) {
     // Award "party_worker" achievement before snapshot/reset
     const groups = groupQueries(sql);
-    const topSetsPlayer = await groups.getTopSetsPlayer(groupId);
-    if (topSetsPlayer) {
+    const [topSetsPlayer, group] = await Promise.all([
+      groups.getTopSetsPlayer(groupId),
+      groups.findById(groupId),
+    ]);
+    if (topSetsPlayer && group?.settings?.achievements !== false) {
       const achievements = achievementQueries(sql);
-      const existingIds = await achievements.getPlayerAchievementIds(topSetsPlayer.player_id, groupId);
-      if (!existingIds.includes("party_worker")) {
-        await sql`
-          INSERT INTO player_achievements (group_id, player_id, achievement_id, season_id)
-          VALUES (${groupId}, ${topSetsPlayer.player_id}, 'party_worker', ${existing.id})
-          ON CONFLICT (group_id, player_id, achievement_id) WHERE group_id IS NOT NULL DO NOTHING
-        `;
-      }
+      await achievements.awardWithMeta(
+        groupId,
+        [{ playerId: topSetsPlayer.player_id, achievementId: "party_worker" }],
+        { type: "season", id: existing.id },
+        new Date(existing.end_date),
+      );
     }
 
     // Season expired — snapshot and reset

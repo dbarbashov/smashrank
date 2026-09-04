@@ -30,6 +30,17 @@ achievementsRoutes.get("/recent", async (c) => {
 });
 
 function achievementSource(holder: AchievementHolderRow) {
+  if (holder.source_type === "meta" || holder.meta_context) {
+    return {
+      type: "meta" as const,
+      trigger_achievement_ids: Array.isArray(holder.meta_context?.trigger_achievement_ids)
+        ? holder.meta_context.trigger_achievement_ids
+        : [],
+      category: typeof holder.meta_context?.category === "string"
+        ? holder.meta_context.category
+        : null,
+    };
+  }
   if (
     holder.match_id &&
     holder.match_winner_id &&

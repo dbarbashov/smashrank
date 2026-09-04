@@ -3,6 +3,7 @@ import { evaluateAchievements, type AchievementContext } from "../achievements.j
 
 function baseContext(overrides: Partial<AchievementContext> = {}): AchievementContext {
   return {
+    matchType: "singles",
     winnerId: "winner-1",
     loserId: "loser-1",
     winnerStreak: 1,
