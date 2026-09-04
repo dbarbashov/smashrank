@@ -110,6 +110,10 @@ export function evaluateMatchAchievements(ctx: AchievementContext): AchievementU
   if (ctx.winnerElo - ctx.loserElo >= 200) grants.grant("punching_bag", ctx.loserId);
   if (ctx.loserElo - ctx.winnerElo >= 200) grants.grant("upset_victim", ctx.loserId);
   if (ctx.loserConsecutiveLossesVsWinner >= 5) grants.grant("doormat", ctx.loserId);
+  if (ctx.matchType === "singles" && ctx.loserStreak <= -15) grants.grant("abyss", ctx.loserId);
+  if (ctx.matchType === "singles" && ctx.loserConsecutiveLossesVsWinner >= 3) {
+    grants.grant("regular_customer", ctx.loserId);
+  }
 
   if (ctx.eloChange !== undefined && ctx.eloChange >= 1 && ctx.eloChange <= 3) {
     grants.grant("small_but_nice", ctx.winnerId);
@@ -155,6 +159,17 @@ export function evaluateMatchAchievements(ctx: AchievementContext): AchievementU
 
   const scores = ctx.setScores;
   if (!scores || scores.length === 0) return grants.unlocks;
+
+  if (ctx.matchType === "singles") {
+    if (scores.every((set) => set.w > set.l)) grants.grant("shut_out", ctx.loserId);
+    if (scores.every((set) => set.l <= 5)) grants.grant("demolition", ctx.loserId);
+    if (scores.length === 3 && scores[2].w === 12 && scores[2].l === 10) {
+      grants.grant("almost", ctx.loserId);
+    }
+    if (scores.filter((set) => set.w === 11 && set.l === 0).length >= 2) {
+      grants.grant("double_zero", ctx.loserId);
+    }
+  }
 
   if (scores.some((set) => set.w === 11 && set.l === 0)) grants.grant("perfect_game", ctx.winnerId);
   if (scores.some((set) => set.l === 11 && set.w === 0)) grants.grant("perfect_game", ctx.loserId);

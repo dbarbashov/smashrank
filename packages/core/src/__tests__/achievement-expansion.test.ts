@@ -26,10 +26,14 @@ function match(overrides: Partial<AchievementContext> = {}): AchievementContext 
 
 const ids = (items: { achievementId: string }[]) => items.map((item) => item.achievementId);
 
+const EXPANDED_SHAME_IDS = new Set([
+  "abyss", "regular_customer", "shut_out", "demolition", "almost", "double_zero",
+]);
+
 describe("expanded achievement evaluators", () => {
   it("contains the 39 release achievements in the shared catalog", () => {
-    expect(ACHIEVEMENT_CATALOG).toHaveLength(64);
-    expect(new Set(ACHIEVEMENT_CATALOG.map((item) => item.id)).size).toBe(64);
+    expect(ACHIEVEMENT_CATALOG).toHaveLength(70);
+    expect(new Set(ACHIEVEMENT_CATALOG.map((item) => item.id)).size).toBe(70);
   });
 
   it("orients perfect_game for a set won by the match loser", () => {
@@ -67,6 +71,14 @@ describe("expanded achievement evaluators", () => {
     });
     expect(awards.filter((item) => item.achievementId === "pack_hunt")).toHaveLength(2);
     expect(awards).toContainEqual({ achievementId: "hard_carry", playerId: "a" });
+  });
+
+  it("does not grant expanded shame achievements for doubles", () => {
+    const awards = evaluateDoublesAchievements({
+      winnerIds: ["a", "b"], loserIds: ["c", "d"],
+      winnerElos: [1200, 1200], loserElos: [1000, 1000],
+    });
+    expect(ids(awards).filter((id) => EXPANDED_SHAME_IDS.has(id))).toEqual([]);
   });
 
   it("uses the previous doubles partner for office_divorce", () => {

@@ -30,7 +30,7 @@ describe("achievements routes", () => {
       const res = await get("/api/g/test-ach/achievements");
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body).toHaveLength(64);
+      expect(body).toHaveLength(70);
       expect(body[0].id).toBeDefined();
       expect(body[0].name).toBeDefined();
       expect(body[0].emoji).toBeDefined();
@@ -65,6 +65,35 @@ describe("achievements routes", () => {
 
       expect(first.length + second.length).toBe(1);
       expect(stored[0].count).toBe(1);
+    });
+
+    it("does not award new hall-of-shame achievements before their release date", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      await addToGroup(group.id, alice.id);
+      const sql = getSql();
+      const [{ eligible_from: eligibleFrom }] = await sql<{ eligible_from: Date }[]>`
+        SELECT eligible_from FROM achievement_definitions WHERE id = 'abyss'
+      `;
+      const awards = sql.json([{ player_id: alice.id, achievement_id: "abyss" }]);
+
+      const beforeRelease = await sql`
+        SELECT * FROM award_achievements(
+          ${group.id}::uuid, ${awards}::jsonb,
+          NULL::text, NULL::uuid, NULL::jsonb,
+          ${new Date(eligibleFrom.getTime() - 1)}
+        )
+      `;
+      const afterRelease = await sql`
+        SELECT * FROM award_achievements(
+          ${group.id}::uuid, ${awards}::jsonb,
+          NULL::text, NULL::uuid, NULL::jsonb,
+          ${new Date(eligibleFrom.getTime() + 1)}
+        )
+      `;
+
+      expect(eligibleFrom).toBeInstanceOf(Date);
+      expect(beforeRelease).toHaveLength(0);
+      expect(afterRelease).toHaveLength(1);
     });
 
     it("restarts exclusivity after a second holder is removed", async () => {

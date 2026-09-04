@@ -19,6 +19,7 @@ const MIGRATION_FILES = [
   "012_opt_out.sql",
   "013_group_scoped_achievements.sql",
   "014_achievement_system.sql",
+  "015_hall_of_shame_expansion.sql",
 ];
 
 export async function setup(): Promise<void> {

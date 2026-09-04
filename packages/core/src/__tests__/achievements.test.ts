@@ -28,6 +28,10 @@ function ids(result: { achievementId: string; playerId: string }[]): string[] {
   return result.map((r) => r.achievementId).sort();
 }
 
+const EXPANDED_SHAME_IDS = new Set([
+  "abyss", "regular_customer", "shut_out", "demolition", "almost", "double_zero",
+]);
+
 describe("evaluateAchievements", () => {
   it("returns empty for unremarkable match", () => {
     const result = evaluateAchievements(baseContext());
@@ -293,5 +297,58 @@ describe("evaluateAchievements", () => {
     }));
     const loserGrants = result.filter((r) => r.playerId === "loser-1");
     expect(loserGrants.map((r) => r.achievementId)).not.toContain("free_fall");
+  });
+
+  it("grants abyss at 15 losses, but not at 14", () => {
+    expect(ids(evaluateAchievements(baseContext({ loserStreak: -15 })))).toContain("abyss");
+    expect(ids(evaluateAchievements(baseContext({ loserStreak: -14 })))).not.toContain("abyss");
+  });
+
+  it("grants regular_customer at 3 consecutive losses to one opponent, but not at 2", () => {
+    expect(ids(evaluateAchievements(baseContext({ loserConsecutiveLossesVsWinner: 3 }))))
+      .toContain("regular_customer");
+    expect(ids(evaluateAchievements(baseContext({ loserConsecutiveLossesVsWinner: 2 }))))
+      .not.toContain("regular_customer");
+  });
+
+  it("grants shut_out only when the loser wins no sets", () => {
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 7 }, { w: 11, l: 4 }] }))))
+      .toContain("shut_out");
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 7 }, { w: 8, l: 11 }, { w: 11, l: 4 }] }))))
+      .not.toContain("shut_out");
+  });
+
+  it("grants demolition only when the loser scores at most five in every set", () => {
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 5 }, { w: 11, l: 0 }] }))))
+      .toContain("demolition");
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 6 }, { w: 11, l: 0 }] }))))
+      .not.toContain("demolition");
+  });
+
+  it("grants almost only on a 10-12 deciding third set", () => {
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 7 }, { w: 8, l: 11 }, { w: 12, l: 10 }] }))))
+      .toContain("almost");
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 7 }, { w: 8, l: 11 }, { w: 11, l: 9 }] }))))
+      .not.toContain("almost");
+  });
+
+  it("grants double_zero for two 0-11 set losses, but not one", () => {
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 0 }, { w: 11, l: 0 }] }))))
+      .toContain("double_zero");
+    expect(ids(evaluateAchievements(baseContext({ setScores: [{ w: 11, l: 0 }, { w: 11, l: 5 }] }))))
+      .not.toContain("double_zero");
+  });
+
+  it("does not grant expanded shame achievements for tournaments or without set scores", () => {
+    const qualifyingTournament = evaluateAchievements(baseContext({
+      matchType: "tournament",
+      loserStreak: -15,
+      loserConsecutiveLossesVsWinner: 5,
+      setScores: [{ w: 11, l: 0 }, { w: 11, l: 0 }, { w: 12, l: 10 }],
+    }));
+    expect(ids(qualifyingTournament).filter((id) => EXPANDED_SHAME_IDS.has(id))).toEqual([]);
+
+    const noScores = evaluateAchievements(baseContext({ setScores: null }));
+    expect(ids(noScores).filter((id) => ["shut_out", "demolition", "almost", "double_zero"].includes(id))).toEqual([]);
   });
 });

@@ -176,14 +176,14 @@ export function AchievementDetailsDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) closeDialog();
       }}
-      className={`m-0 mt-auto flex w-full max-w-none flex-col overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:max-w-lg sm:rounded-2xl ${
+      className={`m-0 mt-auto w-full max-w-none overflow-hidden rounded-t-3xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-950/45 dark:bg-slate-900 dark:text-slate-100 sm:m-auto sm:max-w-lg sm:rounded-2xl ${
         hasHolders
-          ? "h-[min(42rem,88dvh)] sm:h-[min(42rem,94dvh)]"
+          ? "h-[min(42rem,94dvh)]"
           : "h-[min(48rem,88dvh)] sm:h-[min(48rem,94dvh)]"
       }`}
     >
       <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex h-[calc(100%-0.75rem)] flex-col">
         <header className="flex items-start gap-3 border-b border-slate-100 px-5 pb-4 pt-5 dark:border-slate-800 sm:px-6">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-3xl dark:bg-slate-800">
             {achievement?.emoji}

@@ -185,31 +185,35 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
       candidates = candidates.filter((candidate, index, all) =>
         all.findIndex((item) => item.playerId === candidate.playerId && item.achievementId === candidate.achievementId) === index
       );
-      for (const candidate of candidates) {
-        const replayed = replayedAchievements.get(candidate.playerId) ?? new Set<string>();
-        replayed.add(candidate.achievementId);
-        replayedAchievements.set(candidate.playerId, replayed);
-      }
-      await achievements.awardMany(
+      const awarded = await achievements.awardMany(
         group.id,
         candidates,
         { type: "match", id: match.id },
         match.played_at,
       );
-      // Derive event-based meta rewards even when some primary rewards predated this backfill.
-      for (const playerId of new Set(candidates.map((candidate) => candidate.playerId))) {
+      const awardedPrimary = awarded.map((row) => ({
+        playerId: row.player_id,
+        achievementId: row.achievement_id,
+      }));
+      for (const award of awardedPrimary) {
+        const replayed = replayedAchievements.get(award.playerId) ?? new Set<string>();
+        replayed.add(award.achievementId);
+        replayedAchievements.set(award.playerId, replayed);
+      }
+      // Derive event-based meta rewards only from awards persisted for this match.
+      for (const playerId of new Set(awardedPrimary.map((award) => award.playerId))) {
         const owned = await achievements.getPlayerAchievementIds(playerId, group.id);
         const meta = evaluateMetaAchievements({
           playerId,
-          primaryUnlockIds: candidates.filter((candidate) => candidate.playerId === playerId).map((candidate) => candidate.achievementId),
+          primaryUnlockIds: awardedPrimary.filter((award) => award.playerId === playerId).map((award) => award.achievementId),
           ownedAchievementIds: owned,
           eventIsMatch: true,
           includeCollection: false,
         });
         if (meta.length > 0) {
-          const triggerIds = candidates
-            .filter((candidate) => candidate.playerId === playerId)
-            .map((candidate) => candidate.achievementId);
+          const triggerIds = awardedPrimary
+            .filter((award) => award.playerId === playerId)
+            .map((award) => award.achievementId);
           await achievements.awardMany(group.id, meta, {
             type: "meta",
             context: { match_id: match.id, trigger_achievement_ids: triggerIds },

@@ -105,6 +105,12 @@ export const ACHIEVEMENT_CATALOG: readonly AchievementCatalogEntry[] = [
   entry("bottled_it", "Bottled It", "Lose after winning the first set", "🫣", "shame", "shame", 60),
   entry("glass_cannon", "Glass Cannon", "Win a set 11-0 but lose the match", "💥", "shame", "shame", 70),
   entry("doormat", "Doormat", "Lose to the same opponent 5 times in a row", "🧽", "shame", "shame", 80),
+  entry("abyss", "Abyss", "Lose 15 matches in a row", "🕳️", "shame", "shame", 90),
+  entry("regular_customer", "Regular Customer", "Lose to the same opponent 3 times in a row", "🧾", "shame", "shame", 100),
+  entry("shut_out", "Shut Out", "Lose a match without winning a set", "🏳️", "shame", "shame", 110),
+  entry("demolition", "Demolition", "Score no more than 5 points in every set of a lost match", "🧨", "shame", "shame", 120),
+  entry("almost", "Almost", "Lose the deciding third set 10-12", "🤏", "shame", "shame", 130),
+  entry("double_zero", "Double Zero", "Lose two sets 0-11 in one match", "0️⃣", "shame", "shame", 140),
 
   entry("jackpot", "Jackpot", "Unlock at least three primary achievements from one match", "🎰", "meta", "meta", 10),
   entry("full_collection", "Full Collection", "Complete any non-meta achievement category", "🗂️", "meta", "meta", 20),

@@ -24,7 +24,8 @@ export function achievementQueries(sql: SqlLike) {
   return {
     async listDefinitions(): Promise<AchievementDefinition[]> {
       return sql<AchievementDefinition[]>`
-        SELECT * FROM achievement_definitions
+        SELECT id, name, description, emoji, category, kind, sort_order
+        FROM achievement_definitions
         ORDER BY
           CASE category
             WHEN 'match' THEN 1 WHEN 'rating' THEN 2 WHEN 'opponents' THEN 3
@@ -41,7 +42,7 @@ export function achievementQueries(sql: SqlLike) {
     ): Promise<AchievementDefinitionWithCount[]> {
       return sql<AchievementDefinitionWithCount[]>`
         SELECT
-          ad.*,
+          ad.id, ad.name, ad.description, ad.emoji, ad.category, ad.kind, ad.sort_order,
           COUNT(pa.id)::int AS holder_count
         FROM achievement_definitions ad
         LEFT JOIN player_achievements pa
@@ -61,7 +62,7 @@ export function achievementQueries(sql: SqlLike) {
 
     async getDefinition(achievementId: string): Promise<AchievementDefinition | undefined> {
       const rows = await sql<AchievementDefinition[]>`
-        SELECT *
+        SELECT id, name, description, emoji, category, kind, sort_order
         FROM achievement_definitions
         WHERE id = ${achievementId}
         LIMIT 1
