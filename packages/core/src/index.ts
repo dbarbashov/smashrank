@@ -15,11 +15,44 @@ export { initI18n, getT, t } from "./i18n/index.js";
 export { generateMatchCommentary } from "./llm.js";
 export type { MatchCommentaryContext } from "./llm.js";
 
-export { evaluateAchievements, evaluateTournamentAchievements } from "./achievements.js";
-export type { AchievementContext, AchievementUnlock, TournamentAchievementContext } from "./achievements.js";
+export {
+  evaluateAchievements,
+  evaluateMatchAchievements,
+  evaluateDrawScoreAchievements,
+  evaluatePlayerHistoryAchievements,
+  evaluateDoublesAchievements,
+  evaluateTournamentAchievements,
+  evaluateMetaAchievements,
+  evaluateExclusiveAchievements,
+  evaluateLightsOutAchievements,
+  achievementsInCategory,
+  moscowDateKey,
+} from "./achievements.js";
+export type {
+  AchievementContext,
+  AchievementUnlock,
+  PlayerHistoryMatch,
+  PlayerHistoryAchievementContext,
+  DoublesAchievementContext,
+  TournamentAchievementContext,
+  MetaAchievementContext,
+  ExclusivityState,
+  CompletedDayLastMatch,
+} from "./achievements.js";
+export {
+  ACHIEVEMENT_CATALOG,
+  ACHIEVEMENT_BY_ID,
+  ACHIEVEMENT_CATEGORIES,
+} from "./achievement-catalog.js";
+export type {
+  AchievementCatalogEntry,
+  AchievementCategory,
+  AchievementKind,
+} from "./achievement-catalog.js";
 
 export { generateDigestCommentary, formatDigestFallback } from "./digest.js";
 export type { DigestData } from "./digest.js";
+export type { WeeklyStats } from "./weekly-stats.js";
 
 export { calculateDoublesElo } from "./doubles.js";
 export type { DoublesEloInput, DoublesEloResult } from "./doubles.js";
@@ -34,4 +67,4 @@ export { generateMatchupCommentary } from "./matchup-llm.js";
 export type { MatchupCommentaryContext } from "./matchup-llm.js";
 
 export { getTier, getTierChange } from "./tiers.js";
-export type { RatingTier } from "./tiers.js";
+export type { RatingTier, RatingTierId } from "./tiers.js";

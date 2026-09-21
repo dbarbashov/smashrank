@@ -7,6 +7,7 @@ import type {
   EloHistoryEntry,
   Match,
   AchievementDefinition,
+  AchievementDetails,
   PlayerAchievement,
   RecentAchievement,
   Season,
@@ -18,7 +19,12 @@ import type {
   H2HData,
   OpponentEntry,
   GroupRecords,
+  MatchType,
 } from "../types.js";
+
+export type LeaderboardData =
+  | { kind: "current"; rows: LeaderboardEntry[] }
+  | { kind: "season"; rows: SeasonSnapshot[] };
 
 export function useGroupInfo(slug: string) {
   return useQuery({
@@ -35,9 +41,16 @@ export function useLeaderboard(slug: string, seasonId?: string, type?: string) {
       if (seasonId) params.set("season", seasonId);
       if (type) params.set("type", type);
       const qs = params.toString();
-      return apiFetch<LeaderboardEntry[] | SeasonSnapshot[]>(
-        `/${slug}/leaderboard${qs ? `?${qs}` : ""}`,
-      );
+      const path = `/${slug}/leaderboard${qs ? `?${qs}` : ""}`;
+      return seasonId
+        ? apiFetch<SeasonSnapshot[]>(path).then((rows): LeaderboardData => ({
+            kind: "season",
+            rows,
+          }))
+        : apiFetch<LeaderboardEntry[]>(path).then((rows): LeaderboardData => ({
+            kind: "current",
+            rows,
+          }));
     },
   });
 }
@@ -109,11 +122,49 @@ export function useAchievementDefinitions(slug: string) {
   });
 }
 
-export function useRecentAchievements(slug: string) {
+export function useAchievementDetails(slug: string, achievementId: string | null) {
   return useQuery({
-    queryKey: ["recent-achievements", slug],
+    queryKey: ["achievement-details", slug, achievementId],
     queryFn: () =>
-      apiFetch<RecentAchievement[]>(`/${slug}/achievements/recent`),
+      apiFetch<AchievementDetails>(
+        `/${slug}/achievements/${encodeURIComponent(achievementId!)}`,
+      ),
+    enabled: !!slug && !!achievementId,
+  });
+}
+
+export function useRecentAchievements(
+  slug: string,
+  options: { limit?: number; matchType?: MatchType } = {},
+) {
+  const limit = options.limit ?? 10;
+  const matchType = options.matchType;
+  return useQuery({
+    queryKey: ["recent-achievements", slug, limit, matchType],
+    queryFn: () => {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (matchType) params.set("type", matchType);
+      return apiFetch<RecentAchievement[]>(
+        `/${slug}/achievements/recent?${params}`,
+      );
+    },
+  });
+}
+
+export function useRecentMatches(
+  slug: string,
+  { limit = 3, matchType }: { limit?: number; matchType: MatchType },
+) {
+  return useQuery({
+    queryKey: ["recent-matches", slug, limit, matchType],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: "0",
+        type: matchType,
+      });
+      return apiFetch<Match[]>(`/${slug}/matches?${params}`);
+    },
   });
 }
 
@@ -134,10 +185,12 @@ export function useSeasonDetail(slug: string, seasonId: string, type?: string) {
   });
 }
 
-export function useWeeklyStats(slug: string) {
+export function useWeeklyStats(slug: string, matchType?: MatchType) {
   return useQuery({
-    queryKey: ["weekly-stats", slug],
-    queryFn: () => apiFetch<WeeklyStats>(`/${slug}/stats/weekly`),
+    queryKey: ["weekly-stats", slug, matchType],
+    queryFn: () => apiFetch<WeeklyStats>(
+      `/${slug}/stats/weekly${matchType ? `?type=${matchType}` : ""}`,
+    ),
   });
 }
 

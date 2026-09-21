@@ -578,8 +578,9 @@ describe("/tgame", () => {
     // Verify achievements
     const sql = getConnection();
     const alice = await playerQueries(sql).findByTelegramId(100);
+    const group = await groupQueries(sql).findByChatId(-1001);
     const achievements = achievementQueries(sql);
-    const aliceAchievements = await achievements.getPlayerAchievementIds(alice!.id);
+    const aliceAchievements = await achievements.getPlayerAchievementIds(alice!.id, group!.id);
 
     expect(aliceAchievements).toContain("tournament_champion");
     expect(aliceAchievements).toContain("tournament_undefeated");

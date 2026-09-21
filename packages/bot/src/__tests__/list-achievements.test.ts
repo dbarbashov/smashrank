@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestBot, sendMessage, lastReply, resetCounters, type CapturedCall } from "./harness.js";
+import { createTestBot, sendMessage, getSentMessages, resetCounters, type CapturedCall } from "./harness.js";
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
 import type { SmashRankContext } from "../context.js";
@@ -25,8 +25,11 @@ describe("/listachievements", () => {
       displayName: "Alice",
     });
 
-    const reply = lastReply(calls);
-    expect(reply).toContain("Available Achievements");
+    const messages = getSentMessages(calls);
+    const reply = messages.map((message) => message.text).join("\n");
+    expect(messages.length).toBe(8);
+    expect(reply).toContain("Match & score");
+    expect(reply).toContain("Meta achievements");
     expect(reply).toContain("First Blood");
     expect(reply).toContain("On Fire");
     expect(reply).toContain("Giant Killer");

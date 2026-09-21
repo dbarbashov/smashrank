@@ -1,0 +1,182 @@
+.leaderboard-badge-motion [data-badge-motion="0"] {
+  --badge-motion-delay: -0.35s;
+}
+
+.leaderboard-badge-motion [data-badge-motion="1"] {
+  --badge-motion-delay: -1.1s;
+}
+
+.leaderboard-badge-motion [data-badge-motion="2"] {
+  --badge-motion-delay: -1.85s;
+}
+
+.leaderboard-badge-motion [data-badge-motion="3"] {
+  --badge-motion-delay: -2.6s;
+}
+
+.leaderboard-badge-motion [data-badge-motion="4"] {
+  --badge-motion-delay: -3.35s;
+}
+
+.leaderboard-badge-motion .badge-motion-icon {
+  display: inline-block;
+  transform-origin: center bottom;
+}
+
+.leaderboard-badge-motion .elo-badge-icon {
+  position: relative;
+}
+
+.leaderboard-badge-motion .elo-badge-icon::after {
+  content: "✦";
+  position: absolute;
+  top: -0.45em;
+  right: -0.42em;
+  color: var(--badge-spark-color);
+  font-size: 0.62em;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 0 4px var(--badge-spark-color);
+  transform: scale(0.4) rotate(-20deg);
+  transform-origin: center;
+  animation: badge-spark var(--badge-cycle) ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-diamond {
+  --badge-cycle: 7.4s;
+  --badge-spark-color: #facc15;
+  animation: badge-crown-lift var(--badge-cycle) ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-platinum {
+  --badge-cycle: 6.8s;
+  --badge-spark-color: #e0f2fe;
+  animation: badge-gem-glint var(--badge-cycle) ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-gold,
+.leaderboard-badge-motion .elo-badge-icon-silver,
+.leaderboard-badge-motion .elo-badge-icon-bronze {
+  animation: badge-medal-glint var(--badge-cycle) ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-gold {
+  --badge-cycle: 7.2s;
+  --badge-spark-color: #fde68a;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-silver {
+  --badge-cycle: 7.7s;
+  --badge-spark-color: #e2e8f0;
+}
+
+.leaderboard-badge-motion .elo-badge-icon-bronze {
+  --badge-cycle: 8.2s;
+  --badge-spark-color: #fdba74;
+}
+
+.leaderboard-badge-motion .streak-icon-fire {
+  animation: badge-fire-flicker 2s ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .streak-icon-up,
+.leaderboard-badge-motion .streak-icon-down {
+  animation: badge-trend 3.6s ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .streak-icon-up {
+  --badge-trend-peak: -2px;
+  --badge-trend-settle: -1px;
+}
+
+.leaderboard-badge-motion .streak-icon-down {
+  --badge-trend-peak: 2px;
+  --badge-trend-settle: 1px;
+}
+
+.leaderboard-badge-motion .streak-icon-ice {
+  animation: badge-ice-shiver 4s ease-in-out infinite;
+}
+
+.leaderboard-badge-motion .badge-motion-icon,
+.leaderboard-badge-motion .elo-badge-icon::after {
+  animation-delay: var(--badge-motion-delay, 0s);
+}
+
+@keyframes badge-crown-lift {
+  0%, 76%, 100% { transform: translateY(0) rotate(0); }
+  82% { transform: translateY(-1px) rotate(-4deg); }
+  88% { transform: translateY(-1px) rotate(4deg); }
+  94% { transform: translateY(0) rotate(0); }
+}
+
+@keyframes badge-gem-glint {
+  0%, 74%, 100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transform: translateY(0) scale(1);
+  }
+  84% {
+    filter: brightness(1.28) drop-shadow(0 0 2px #7dd3fc);
+    transform: translateY(-1px) scale(1.05);
+  }
+  92% {
+    filter: brightness(1.08) drop-shadow(0 0 1px #bae6fd);
+    transform: translateY(0) scale(1.02);
+  }
+}
+
+@keyframes badge-medal-glint {
+  0%, 78%, 100% {
+    filter: brightness(1);
+    transform: rotate(0);
+  }
+  85% {
+    filter: brightness(1.24);
+    transform: rotate(-4deg);
+  }
+  92% {
+    filter: brightness(1.08);
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes badge-spark {
+  0%, 77%, 94%, 100% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+  84% {
+    opacity: 1;
+    transform: scale(1) rotate(8deg);
+  }
+  89% {
+    opacity: 0.55;
+    transform: scale(0.72) rotate(20deg);
+  }
+}
+
+@keyframes badge-fire-flicker {
+  0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+  45% { transform: translateY(-1px) rotate(2deg) scale(1.08); }
+  70% { transform: translateY(0) rotate(-1deg) scale(0.98); }
+}
+
+@keyframes badge-trend {
+  0%, 78%, 100% { transform: translateY(0); }
+  88% { transform: translateY(var(--badge-trend-peak)); }
+  94% { transform: translateY(var(--badge-trend-settle)); }
+}
+
+@keyframes badge-ice-shiver {
+  0%, 84%, 100% { transform: translateX(0); }
+  89% { transform: translateX(-1px) rotate(-3deg); }
+  94% { transform: translateX(1px) rotate(3deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-badge-motion .badge-motion-icon,
+  .leaderboard-badge-motion .elo-badge-icon::after {
+    animation: none;
+  }
+}

@@ -10,7 +10,11 @@ import { Sparkline } from "../components/sparkline.js";
 import { Loading } from "../components/loading.js";
 import { ErrorMessage } from "../components/error-message.js";
 import { ActivityHeatmap } from "../components/activity-heatmap.js";
-import type { LeaderboardEntry, SeasonSnapshot } from "../types.js";
+import { AnimatedSegmentedControl } from "../components/animated-segmented-control.js";
+import { getMatchTypeOptions } from "../components/match-type-options.js";
+import { LeagueBroadcast } from "../components/league-broadcast.js";
+import type { LeaderboardEntry, MatchType, SeasonSnapshot } from "../types.js";
+import "../components/badge-motion.css";
 
 const INACTIVE_DAYS = 14;
 function isPlayerInactive(lastActive: string | null | undefined): boolean {
@@ -22,7 +26,7 @@ export function Leaderboard() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
   const [seasonId, setSeasonId] = useState("");
-  const [matchType, setMatchType] = useState<"singles" | "doubles">("singles");
+  const [matchType, setMatchType] = useState<MatchType>("singles");
 
   const { data: seasons } = useSeasons(slug!);
   const typeParam = matchType === "doubles" ? "doubles" : undefined;
@@ -37,28 +41,20 @@ export function Leaderboard() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
 
-  const rows = data ?? [];
-  const isSeason = !!seasonId;
+  const rows = data?.rows ?? [];
+  const isSeason = data?.kind === "season";
 
   return (
-    <div>
+    <div className="leaderboard-badge-motion">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t("leaderboard.title")}</h2>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
-            <button
-              className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "singles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-              onClick={() => setMatchType("singles")}
-            >
-              {t("leaderboard.singles")}
-            </button>
-            <button
-              className={`rounded-md px-3 py-1 text-sm font-medium transition-all ${matchType === "doubles" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-              onClick={() => setMatchType("doubles")}
-            >
-              {t("leaderboard.doubles")}
-            </button>
-          </div>
+          <AnimatedSegmentedControl
+            ariaLabel="Leaderboard match type"
+            options={getMatchTypeOptions(t)}
+            value={matchType}
+            onChange={setMatchType}
+          />
           {seasons && seasons.some((s) => !s.is_active) && (
             <SeasonSelector
               seasons={seasons}
@@ -68,6 +64,14 @@ export function Leaderboard() {
           )}
         </div>
       </div>
+
+      {data?.kind === "current" && data.rows.length > 0 ? (
+        <LeagueBroadcast
+          slug={slug!}
+          leaderboard={data.rows}
+          matchType={matchType}
+        />
+      ) : null}
 
       {rows.length === 0 ? (
         <p className="py-12 text-center text-slate-500 dark:text-slate-400">
@@ -80,19 +84,19 @@ export function Leaderboard() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
-                  <th className="px-4 py-3">{t("leaderboard.rank")}</th>
+                  <th className="px-4 py-3 text-center">{t("leaderboard.rank")}</th>
                   <th className="px-4 py-3">{t("leaderboard.player")}</th>
-                  <th className="px-4 py-3 text-right">{t("leaderboard.elo")}</th>
+                  <th className="px-4 py-3 text-center">{t("leaderboard.elo")}</th>
                   {!isSeason && (
-                    <th className="w-24 px-2 py-3"></th>
+                    <th className="w-24 px-2 py-3 text-center"></th>
                   )}
-                  <th className="px-4 py-3 text-right">{t("leaderboard.record")}</th>
-                  <th className="px-4 py-3 text-right">{t("leaderboard.games")}</th>
-                  <th className="px-4 py-3 text-right">
+                  <th className="px-4 py-3 text-center">{t("leaderboard.record")}</th>
+                  <th className="px-4 py-3 text-center">{t("leaderboard.games")}</th>
+                  <th className="px-4 py-3 text-center">
                     {t("leaderboard.winRate")}
                   </th>
                   {!isSeason && (
-                    <th className="px-4 py-3 text-right">
+                    <th className="px-4 py-3 text-center">
                       {t("leaderboard.streak")}
                     </th>
                   )}
@@ -124,31 +128,36 @@ export function Leaderboard() {
                   return (
                     <tr
                       key={playerId}
+                      data-badge-motion={i % 5}
                       className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 ${inactive ? "opacity-50" : ""}`}
                     >
-                      <td className="px-4 py-3 font-medium text-slate-400 dark:text-slate-500">{rank}</td>
+                      <td className="px-4 py-3 text-center font-medium text-slate-400 dark:text-slate-500">{rank}</td>
                       <td className="px-4 py-3">
                         <PlayerLink id={playerId} name={name} />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-center">
                         <EloBadge elo={elo} />
                       </td>
                       {!isSeason && (
-                        <td className="px-2 py-3">
-                          {sparkData && <Sparkline data={sparkData} />}
+                        <td className="px-2 py-3 text-center">
+                          {sparkData && (
+                            <div className="flex justify-center">
+                              <Sparkline data={sparkData} />
+                            </div>
+                          )}
                         </td>
                       )}
-                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-center tabular-nums text-slate-600 dark:text-slate-300">
                         {wins}-{losses}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-center tabular-nums text-slate-600 dark:text-slate-300">
                         {(entry as LeaderboardEntry).sets_played ?? 0}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                      <td className="px-4 py-3 text-center tabular-nums text-slate-600 dark:text-slate-300">
                         {winPct}%
                       </td>
                       {!isSeason && (
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-center">
                           <StreakBadge
                             streak={
                               (row as LeaderboardEntry).current_streak ?? 0
@@ -183,6 +192,7 @@ export function Leaderboard() {
               return (
                 <div
                   key={playerId}
+                  data-badge-motion={i % 5}
                   className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/40"
                 >
                   <div className="flex items-center gap-3">

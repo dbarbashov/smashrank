@@ -2,6 +2,7 @@ import {
   getConnection,
   tournamentQueries,
   achievementQueries,
+  groupQueries,
 } from "@smashrank/db";
 import {
   evaluateTournamentAchievements,
@@ -25,9 +26,17 @@ export async function evaluateAndPersistTournamentAchievements(
   const sql = getConnection();
   const tournaments = tournamentQueries(sql);
   const achievements = achievementQueries(sql);
+  const groups = groupQueries(sql);
 
-  const participants = await tournaments.getParticipants(tournamentId);
-  const standings = await tournaments.getStandings(tournamentId);
+  const [tournament, participants, standings] = await Promise.all([
+    tournaments.findById(tournamentId),
+    tournaments.getParticipants(tournamentId),
+    tournaments.getStandings(tournamentId),
+  ]);
+  if (!tournament) {
+    throw new Error(`Tournament ${tournamentId} not found`);
+  }
+  const group = await groups.findById(tournament.group_id);
   const participantIds = participants.map((p) => p.player_id);
 
   // Build standings map
@@ -70,6 +79,11 @@ export async function evaluateAndPersistTournamentAchievements(
   // Count draws and fixtures played per player
   const drawCounts = new Map<string, number>();
   const fixturesPlayed = new Map<string, number>();
+  const beatenOpponentIds = new Map<string, string[]>();
+  const firstMatchResult = new Map<string, "win" | "draw" | "loss">();
+  const chronologicalFixtures = fixtures
+    .filter((fixture) => fixture.match_id && fixture.played_at)
+    .sort((a, b) => +new Date(a.played_at!) - +new Date(b.played_at!));
   for (const f of fixtures) {
     if (f.match_id) {
       fixturesPlayed.set(f.player1_id, (fixturesPlayed.get(f.player1_id) ?? 0) + 1);
@@ -77,14 +91,28 @@ export async function evaluateAndPersistTournamentAchievements(
       if (f.winner_score === f.loser_score) {
         drawCounts.set(f.player1_id, (drawCounts.get(f.player1_id) ?? 0) + 1);
         drawCounts.set(f.player2_id, (drawCounts.get(f.player2_id) ?? 0) + 1);
+      } else if (f.winner_id) {
+        const loserId = f.winner_id === f.player1_id ? f.player2_id : f.player1_id;
+        beatenOpponentIds.set(f.winner_id, [...(beatenOpponentIds.get(f.winner_id) ?? []), loserId]);
       }
+    }
+  }
+  for (const fixture of chronologicalFixtures) {
+    for (const playerId of [fixture.player1_id, fixture.player2_id]) {
+      if (firstMatchResult.has(playerId)) continue;
+      firstMatchResult.set(
+        playerId,
+        fixture.winner_score === fixture.loser_score
+          ? "draw"
+          : fixture.winner_id === playerId ? "win" : "loss",
+      );
     }
   }
 
   // Existing achievements
   const existingAchievements = new Map<string, string[]>();
   for (const playerId of participantIds) {
-    const existing = await achievements.getPlayerAchievementIds(playerId);
+    const existing = await achievements.getPlayerAchievementIds(playerId, tournament.group_id);
     existingAchievements.set(playerId, existing);
   }
 
@@ -98,16 +126,20 @@ export async function evaluateAndPersistTournamentAchievements(
     fixturesPlayed,
     totalFixturesPerPlayer,
     winnerId,
+    sortedPlayerIds: sorted.map((standing) => standing.playerId),
+    points: new Map(standings.map((standing) => [standing.player_id, standing.points])),
+    beatenOpponentIds,
+    firstMatchResult,
   });
 
-  // Persist
-  for (const a of unlocks) {
-    await sql`
-      INSERT INTO player_achievements (player_id, achievement_id)
-      VALUES (${a.playerId}, ${a.achievementId})
-      ON CONFLICT (player_id, achievement_id) DO NOTHING
-    `;
-  }
+  const inserted = group?.settings?.achievements === false
+    ? []
+    : await achievements.awardWithMeta(
+      tournament.group_id,
+      unlocks,
+      { type: "tournament", id: tournamentId },
+      tournament.completed_at ?? new Date(),
+    );
 
-  return { achievements: unlocks, winnerId, winnerName };
+  return { achievements: inserted, winnerId, winnerName };
 }

@@ -1,10 +1,13 @@
-import { NavLink, Outlet, useParams } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGroupInfo } from "../api/queries.js";
 import { LanguageToggle } from "./language-toggle.js";
 import { ThemeToggle } from "./theme-toggle.js";
 import { Loading } from "./loading.js";
 import { ErrorMessage } from "./error-message.js";
+import { AnimatedNav } from "./animated-nav.js";
+import { RouteTransition } from "./route-transition.js";
+import { PRIMARY_NAV_ITEMS } from "./navigation.js";
 
 export function Layout() {
   const { slug } = useParams<{ slug: string }>();
@@ -14,14 +17,11 @@ export function Layout() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorMessage message={error.message} />;
 
-  const tabs = [
-    { to: `/g/${slug}`, label: t("nav.leaderboard"), end: true },
-    { to: `/g/${slug}/matches`, label: t("nav.matches") },
-    { to: `/g/${slug}/achievements`, label: t("nav.achievements") },
-    { to: `/g/${slug}/seasons`, label: t("nav.seasons") },
-    { to: `/g/${slug}/tournaments`, label: t("nav.tournaments") },
-    { to: `/g/${slug}/records`, label: t("nav.records") },
-  ];
+  const tabs = PRIMARY_NAV_ITEMS.map((item) => ({
+    to: item.segment ? `/g/${slug}/${item.segment}` : `/g/${slug}`,
+    label: t(`nav.${item.key}`),
+    end: item.end,
+  }));
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-4 py-6">
@@ -33,28 +33,11 @@ export function Layout() {
         </div>
       </header>
 
-      <nav className="mb-8 flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 dark:bg-slate-800/60">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={tab.end}
-            className={({ isActive }) =>
-              `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              }`
-            }
-          >
-            {tab.label}
-          </NavLink>
-        ))}
-      </nav>
+      <AnimatedNav tabs={tabs} />
 
-      <main>
+      <RouteTransition>
         <Outlet />
-      </main>
+      </RouteTransition>
     </div>
   );
 }

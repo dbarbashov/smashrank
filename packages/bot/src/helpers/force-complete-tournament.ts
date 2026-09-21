@@ -45,6 +45,10 @@ export async function forceCompleteTournament(
       const memberA = await txGroups.getGroupMember(groupId, fixture.player1_id);
       const memberB = await txGroups.getGroupMember(groupId, fixture.player2_id);
       if (!memberA || !memberB) continue;
+      const [rankABefore, rankBBefore] = await Promise.all([
+        txMatches.getPlayerStats(fixture.player1_id, groupId),
+        txMatches.getPlayerStats(fixture.player2_id, groupId),
+      ]);
 
       const drawResult = calculateDrawElo({
         playerARating: memberA.elo_rating,
@@ -53,7 +57,7 @@ export async function forceCompleteTournament(
         playerBGamesPlayed: memberB.games_played,
       });
 
-      await txMatches.create({
+      const match = await txMatches.create({
         match_type: "tournament",
         season_id: season.id,
         group_id: groupId,
@@ -67,10 +71,22 @@ export async function forceCompleteTournament(
         elo_change: drawResult.playerAChange,
         reported_by: fixture.player1_id,
         tournament_id: tournament.id,
+        winner_rank_before: rankABefore?.rank ?? null,
+        loser_rank_before: rankBBefore?.rank ?? null,
       });
 
       await txGroups.updateGroupEloForDraw(groupId, fixture.player1_id, drawResult.playerANewRating);
       await txGroups.updateGroupEloForDraw(groupId, fixture.player2_id, drawResult.playerBNewRating);
+      const [rankAAfter, rankBAfter] = await Promise.all([
+        txMatches.getPlayerStats(fixture.player1_id, groupId),
+        txMatches.getPlayerStats(fixture.player2_id, groupId),
+      ]);
+      await txSql`
+        UPDATE matches SET
+          winner_rank_after = ${rankAAfter?.rank ?? null},
+          loser_rank_after = ${rankBAfter?.rank ?? null}
+        WHERE id = ${match.id}
+      `;
 
       await txTournaments.updateStanding(tournament.id, fixture.player1_id, "draw", 0, 0);
       await txTournaments.updateStanding(tournament.id, fixture.player2_id, "draw", 0, 0);

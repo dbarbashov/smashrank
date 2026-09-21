@@ -5,7 +5,7 @@ import type { RecordMatchInput } from "./record-match.js";
 import { recordMatch } from "./record-match.js";
 import { formatAchievementUnlocks } from "./format-achievements.js";
 import { buildRematchKeyboard } from "./rematch.js";
-import { generateMatchCommentary } from "@smashrank/core";
+import { ACHIEVEMENT_BY_ID, generateMatchCommentary } from "@smashrank/core";
 import type { MatchCommentaryContext } from "@smashrank/core";
 
 export interface PendingMatch {
@@ -163,15 +163,24 @@ export async function cleanupExpiredConfirmations(bot: Bot<SmashRankContext>): P
 
     try {
       const result = await recordMatch(pm.matchInput);
-      const { eloResult, winnerMember, loserMember } = result;
+      const { eloResult, winnerMember, loserMember, newAchievements } = result;
 
       const { getT } = await import("@smashrank/core");
       const t = getT(pm.groupLanguage);
 
-      const message = t("confirmation.auto_confirmed") + "\n\n"
+      let message = t("confirmation.auto_confirmed") + "\n\n"
         + `${pm.winnerName} beat ${pm.loserName} ${pm.winnerSets}-${pm.loserSets}\n`
         + `${pm.winnerName}: ${winnerMember.elo_rating} \u2192 ${eloResult.winnerNewRating} (+${eloResult.change})\n`
         + `${pm.loserName}: ${loserMember.elo_rating} \u2192 ${eloResult.loserNewRating} (-${eloResult.change})`;
+
+      if (newAchievements.length > 0) {
+        const names = new Map([[pm.winnerId, pm.winnerName], [pm.loserId, pm.loserName]]);
+        const lines = newAchievements.map((achievement) => {
+          const definition = ACHIEVEMENT_BY_ID.get(achievement.achievementId);
+          return `${definition?.emoji ?? "🏅"} ${names.get(achievement.playerId) ?? "?"}: ${t(`achievement.${achievement.achievementId}`)}`;
+        });
+        message += `\n\n${t("achievement.unlocked")}\n${lines.join("\n")}`;
+      }
 
       await bot.api.sendMessage(pm.chatId, message);
     } catch (err) {

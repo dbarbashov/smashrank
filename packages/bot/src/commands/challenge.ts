@@ -31,6 +31,7 @@ export interface ChallengeSession {
   state: ChallengeState;
   winnerSide?: "challenger" | "challenged";
   expiresAt: number;
+  challengeTargetRank?: number | null;
 }
 
 // Key: "groupId:challengerId:challengedId"
@@ -102,6 +103,7 @@ export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
     return;
   }
 
+  const targetRank = await matchQueries(sql).getPlayerStats(opponent.id, ctx.group.id);
   const session: ChallengeSession = {
     challengerId: ctx.player.id,
     challengerTelegramId: ctx.from!.id,
@@ -112,6 +114,7 @@ export async function challengeCommand(ctx: SmashRankContext): Promise<void> {
     groupId: ctx.group.id,
     chatId: ctx.chat!.id,
     state: "pending",
+    challengeTargetRank: targetRank?.rank ?? null,
     expiresAt: Date.now() + 24 * 60 * 60 * 1000,
   };
   challengeSessions.set(key, session);
@@ -325,6 +328,9 @@ export async function processChallengeScore(ctx: SmashRankContext): Promise<bool
     loserSets: data.loserSets,
     setScores: orientedSetScores,
     reportedBy: ctx.player.id,
+    challengeType: "challenge",
+    challengeInitiatorId: session.challengerId,
+    challengeTargetRank: session.challengeTargetRank,
   });
 
   // Build response

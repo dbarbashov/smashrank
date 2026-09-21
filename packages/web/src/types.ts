@@ -4,6 +4,8 @@ export interface GroupInfo {
   language: string;
 }
 
+export type MatchType = "singles" | "doubles";
+
 export interface LeaderboardEntry {
   id: string;
   display_name: string;
@@ -72,6 +74,42 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   emoji: string;
+  holder_count: number;
+  category: "match" | "rating" | "opponents" | "activity" | "doubles" | "tournaments" | "shame" | "meta";
+  kind: "positive" | "shame" | "neutral" | "meta";
+  sort_order: number;
+}
+
+export type AchievementSource =
+  | {
+      type: "match";
+      id: string;
+      match_type: string | null;
+      opponent_id: string;
+      opponent_name: string | null;
+      player_score: number;
+      opponent_score: number;
+      set_scores: { w: number; l: number }[] | null;
+    }
+  | { type: "tournament"; id: string; name: string | null }
+  | { type: "season"; id: string; name: string | null }
+  | {
+      type: "meta";
+      trigger_achievement_ids: string[];
+      category: string | null;
+    };
+
+export interface AchievementHolder {
+  id: string;
+  player_id: string;
+  display_name: string;
+  unlocked_at: string;
+  source: AchievementSource | null;
+}
+
+export interface AchievementDetails extends AchievementDefinition {
+  total_players: number;
+  holders: AchievementHolder[];
 }
 
 export interface PlayerAchievement {
@@ -120,12 +158,7 @@ export interface SeasonDetail extends Season {
   standings: SeasonSnapshot[];
 }
 
-export interface WeeklyStats {
-  total_matches: number;
-  active_players: number;
-  biggest_upset: Match | null;
-  top_winner: { display_name: string; wins: number } | null;
-}
+export type { WeeklyStats } from "@smashrank/core";
 
 export interface TournamentSummary {
   id: string;

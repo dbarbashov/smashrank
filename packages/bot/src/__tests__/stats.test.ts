@@ -36,7 +36,7 @@ describe("/stats", () => {
     expect(reply).toContain("Alice");
     expect(reply).toContain("1W");
     expect(reply).toContain("0L");
-    expect(reply).toContain("Achievements: 1"); // first_blood
+    expect(reply).toMatch(/Achievements: [1-9]\d*/);
   });
 
   it("shows another player stats via /stats @username", async () => {

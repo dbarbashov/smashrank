@@ -13,6 +13,10 @@ import {
 import { cleanDb } from "./setup.js";
 import type { Bot } from "grammy";
 import type { SmashRankContext } from "../context.js";
+import {
+  cleanupExpiredConfirmations,
+  pendingMatches,
+} from "../helpers/match-confirmation.js";
 
 describe("match confirmation", () => {
   let bot: Bot<SmashRankContext>;
@@ -20,6 +24,7 @@ describe("match confirmation", () => {
 
   beforeEach(async () => {
     await cleanDb();
+    pendingMatches.clear();
     resetCounters();
     ({ bot, calls } = createTestBot());
   });
@@ -79,6 +84,26 @@ describe("match confirmation", () => {
     const group = await groupQueries(sql).findByChatId(-1001);
     const aliceMember = await groupQueries(sql).getGroupMember(group!.id, alice!.id);
     expect(aliceMember!.wins).toBe(1);
+  });
+
+  it("auto-confirmation includes newly unlocked achievements", async () => {
+    await registerPlayer(100, "alice", "Alice");
+    await registerPlayer(200, "bob", "Bob");
+    await enableConfirmation();
+    await sendMessage(bot, {
+      text: "/game @bob 11-0 11-3",
+      userId: 100,
+      username: "alice",
+      displayName: "Alice",
+    });
+    for (const pending of pendingMatches.values()) pending.expiresAt = 0;
+    calls.length = 0;
+
+    await cleanupExpiredConfirmations(bot);
+
+    const message = getSentMessages(calls).at(-1)?.text as string;
+    expect(message).toContain("Achievement unlocked");
+    expect(message).toContain("First Blood");
   });
 
   it("opponent confirms → match recorded", async () => {
