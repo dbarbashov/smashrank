@@ -43,6 +43,19 @@ describe("stats routes", () => {
       expect(body.biggestGainer).toMatchObject({ playerId: alice.id });
     });
 
+    it("breaks winning streaks on tournament draws", async () => {
+      const alice = await createPlayer({ display_name: "Alice" });
+      const bob = await createPlayer({ display_name: "Bob" });
+      const season = await createSeason({ group_id: group.id, name: "S1" });
+      for (const [winner_score, loser_score] of [[2, 0], [1, 1], [2, 0]]) {
+        await createMatch({ group_id: group.id, season_id: season.id,
+          winner_id: alice.id, loser_id: bob.id, match_type: "tournament",
+          winner_score, loser_score });
+      }
+      const res = await get("/api/g/test-stats/stats/weekly?type=tournament");
+      expect((await res.json()).longestStreak).toBeNull();
+    });
+
     it("scopes stats to the requested match type", async () => {
       const alice = await createPlayer({ display_name: "Alice" });
       const bob = await createPlayer({ display_name: "Bob" });

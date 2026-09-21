@@ -48,7 +48,8 @@ function achievementSource(holder: AchievementHolderRow) {
     holder.match_winner_score !== null &&
     holder.match_loser_score !== null
   ) {
-    const isWinner = holder.player_id === holder.match_winner_id;
+    const isWinner = holder.player_id === holder.match_winner_id
+      || holder.player_id === holder.match_winner_partner_id;
     const rawSets = typeof holder.match_set_scores === "string"
       ? JSON.parse(holder.match_set_scores) as { w: number; l: number }[]
       : holder.match_set_scores;

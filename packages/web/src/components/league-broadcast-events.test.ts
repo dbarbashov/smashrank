@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TFunction } from "i18next";
 import type {
   LeaderboardEntry,
   Match,
@@ -8,6 +9,7 @@ import type {
 import {
   BROADCAST_EVENT_MAX_AGE_MS,
   buildBroadcastEvents,
+  formatBroadcastEvent,
 } from "./league-broadcast-events.js";
 
 const NOW = Date.parse("2026-09-04T12:00:00.000Z");
@@ -129,6 +131,14 @@ describe("buildBroadcastEvents", () => {
       player: "Challenger",
       count: 8,
     });
+  });
+
+  it("does not announce a tournament draw as an upset", () => {
+    const events = buildBroadcastEvents({ slug: "demo", leaderboard: [], now: NOW,
+      matches: [match({ match_type: "tournament", winner_score: 1, loser_score: 1 })] });
+    expect(events[0].kind).toBe("match");
+    const t = ((key: string) => key) as TFunction;
+    expect(formatBroadcastEvent(events[0], t)).toBe("broadcast.draw");
   });
 
   it("builds the gainer link from the canonical player id", () => {

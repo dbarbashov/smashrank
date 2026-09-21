@@ -224,6 +224,7 @@ export function achievementQueries(sql: SqlLike) {
           p.display_name,
           m.match_type,
           m.winner_id AS match_winner_id,
+          m.winner_partner_id AS match_winner_partner_id,
           m.loser_id AS match_loser_id,
           m.winner_score AS match_winner_score,
           m.loser_score AS match_loser_score,

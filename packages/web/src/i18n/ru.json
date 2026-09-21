@@ -33,6 +33,7 @@
     "streak": "{{player}} включает режим босса: {{count}} побед подряд",
     "gainer": "{{player}} рвётся наверх: +{{change}} ELO за неделю",
     "match": "{{winner}} забирает матч у {{loser}}{{score}} · +{{change}} ELO",
+    "draw": "{{winner}} и {{loser}} играют вничью{{score}}",
     "chase": "{{player}} дышит лидеру в спину — разрыв {{gap}} ELO"
   },
   "player": {

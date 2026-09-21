@@ -139,6 +139,7 @@ export interface AchievementHolderRow extends PlayerAchievement {
   display_name: string;
   match_type: string | null;
   match_winner_id: string | null;
+  match_winner_partner_id: string | null;
   match_loser_id: string | null;
   match_winner_score: number | null;
   match_loser_score: number | null;

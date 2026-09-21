@@ -78,6 +78,40 @@ describe("achievement backfill", () => {
     expect(calls).toEqual([]);
   });
 
+  it("backfills completed seasons with PostgreSQL date values", async () => {
+    await register(100, "alice", "Alice");
+    const { sql, groupId, seasonId, byUsername } = await loadGroupAndPlayers(["alice"]);
+    const aliceId = byUsername.get("alice")!;
+    await sql`UPDATE seasons SET is_active = FALSE, end_date = '2026-08-31' WHERE id = ${seasonId}`;
+    await sql`INSERT INTO season_snapshots (season_id, player_id, final_elo, games_played, wins, losses, final_rank)
+      VALUES (${seasonId}, ${aliceId}, 1200, 10, 6, 4, 1)`;
+    await backfillAchievements(new Date("2026-09-05T12:00:00Z"));
+    const [award] = await sql`SELECT season_id, unlocked_at FROM player_achievements
+      WHERE group_id = ${groupId} AND achievement_id = 'party_worker'`;
+    expect(award.season_id).toBe(seasonId);
+    expect(award.unlocked_at.toISOString()).toBe("2026-08-31T20:59:59.000Z");
+  });
+
+  it("does not join win streaks across seasons", async () => {
+    await register(100, "alice", "Alice");
+    await register(200, "bob", "Bob");
+    const { sql, groupId, seasonId, byUsername } = await loadGroupAndPlayers(["alice", "bob"]);
+    const [oldSeason] = await sql`INSERT INTO seasons (group_id, name, start_date, end_date, is_active)
+      VALUES (${groupId}, 'Old season', '2026-01-01', '2026-06-30', FALSE) RETURNING id`;
+    for (let index = 0; index < 5; index++) {
+      await sql`INSERT INTO matches (match_type, season_id, group_id, winner_id, loser_id,
+        winner_score, loser_score, elo_before_winner, elo_before_loser, elo_change, reported_by, played_at)
+        VALUES ('singles', ${index < 3 ? oldSeason.id : seasonId}, ${groupId},
+          ${byUsername.get("alice")!}, ${byUsername.get("bob")!}, 2, 0, 1200, 1200, 16,
+          ${byUsername.get("alice")!}, ${new Date(`2026-09-0${index + 1}T12:00:00Z`)})`;
+    }
+    await backfillAchievements(new Date("2026-09-06T12:00:00Z"));
+    expect(await achievementQueries(sql).getPlayerAchievementIds(byUsername.get("alice")!, groupId))
+      .not.toContain("on_fire");
+    expect(await achievementQueries(sql).getPlayerAchievementIds(byUsername.get("bob")!, groupId))
+      .not.toContain("free_fall");
+  });
+
   it("keeps tournament losses out of broke_the_wall in live queries and backfill", async () => {
     await register(100, "alice", "Alice");
     await register(200, "bob", "Bob");

@@ -298,6 +298,28 @@ describe("achievements routes", () => {
       });
     });
 
+    it("orients doubles achievement scores for both winning partners", async () => {
+      const sql = getSql();
+      const players = await Promise.all(["Alice", "Bob", "Carol", "Dave"].map(
+        (display_name) => createPlayer({ display_name }),
+      ));
+      for (const player of players) await addToGroup(group.id, player.id);
+      const [alice, bob, carol, dave] = players;
+      const season = await createSeason({ group_id: group.id, name: "S1" });
+      const match = await createMatch({ group_id: group.id, season_id: season.id,
+        winner_id: alice.id, loser_id: bob.id, match_type: "doubles",
+        winner_score: 2, loser_score: 0 });
+      await sql`UPDATE matches SET winner_partner_id = ${carol.id}, loser_partner_id = ${dave.id},
+        set_scores = '[{"w":11,"l":5},{"w":11,"l":7}]'::jsonb WHERE id = ${match.id}`;
+      await sql`INSERT INTO player_achievements (group_id, player_id, achievement_id, match_id)
+        VALUES (${group.id}, ${carol.id}, 'pack_hunt', ${match.id})`;
+      const res = await get("/api/g/test-ach/achievements/pack_hunt");
+      expect((await res.json()).holders[0].source).toMatchObject({
+        opponent_id: bob.id, player_score: 2, opponent_score: 0,
+        set_scores: [{ w: 11, l: 5 }, { w: 11, l: 7 }],
+      });
+    });
+
     it("returns tournament, season, and missing-source contexts", async () => {
       const alice = await createPlayer({ display_name: "Alice" });
       await addToGroup(group.id, alice.id);

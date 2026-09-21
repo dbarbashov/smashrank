@@ -33,6 +33,7 @@
     "streak": "{{player}} is in boss mode: {{count}} wins and counting",
     "gainer": "{{player}} is charging upward: +{{change}} ELO this week",
     "match": "{{winner}} takes the match from {{loser}}{{score}} · +{{change}} ELO",
+    "draw": "{{winner}} and {{loser}} draw{{score}}",
     "chase": "{{player}} is breathing down the leader’s neck — {{gap}} ELO back"
   },
   "player": {

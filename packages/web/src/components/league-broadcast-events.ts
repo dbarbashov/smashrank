@@ -117,7 +117,8 @@ function strongestStreak(leaderboard: LeaderboardEntry[]) {
 }
 
 function matchEvent(match: Match, slug: string, occurredAt: number): BroadcastEvent {
-  if (match.elo_before_loser - match.elo_before_winner >= UPSET_ELO_GAP) {
+  if (match.winner_score !== match.loser_score
+    && match.elo_before_loser - match.elo_before_winner >= UPSET_ELO_GAP) {
     return {
       id: `match-${match.id}`,
       kind: "upset",
@@ -239,7 +240,8 @@ export function formatBroadcastEvent(event: BroadcastEvent, t: TFunction): strin
       const score = event.winnerScore == null || event.loserScore == null
         ? ""
         : ` · ${event.winnerScore}:${event.loserScore}`;
-      return t("broadcast.match", { ...event, score });
+      const isDraw = event.winnerScore != null && event.winnerScore === event.loserScore;
+      return t(isDraw ? "broadcast.draw" : "broadcast.match", { ...event, score });
     }
     case "chase":
       return t("broadcast.chase", event);

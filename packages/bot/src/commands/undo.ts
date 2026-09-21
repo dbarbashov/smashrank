@@ -17,7 +17,7 @@ export async function undoCommand(ctx: SmashRankContext): Promise<void> {
   const matches = matchQueries(sql);
 
   // Find last match reported by this player within 5 minutes
-  const match = await matches.findLastByReporter(ctx.player.id);
+  const match = await matches.findLastByReporter(ctx.player.id, ctx.group.id);
   if (!match) {
     await ctx.reply(ctx.t("undo.no_match"));
     return;
@@ -88,6 +88,14 @@ export async function undoCommand(ctx: SmashRankContext): Promise<void> {
         WHERE group_id = ${groupId} AND player_id = ${match.loser_id}
       `;
       if (match.tournament_id) {
+        // Completing a tournament awards separately from its final match.
+        // Reopening it invalidates those rewards and the meta rewards they triggered.
+        await txSql`
+          DELETE FROM player_achievements
+          WHERE group_id = ${groupId}
+            AND (tournament_id = ${match.tournament_id}
+              OR meta_context->>'tournament_id' = ${match.tournament_id})
+        `;
         await txSql`
           UPDATE tournament_standings SET
             points = GREATEST(0, points - ${isDraw ? 1 : 3}),

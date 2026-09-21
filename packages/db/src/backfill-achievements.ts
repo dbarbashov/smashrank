@@ -66,6 +66,7 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
       groups.getActivePlayerIds(group.id, "doubles", now),
     ]);
     const histories = new Map<string, PlayerHistoryMatch[]>();
+    // Live counters/streaks reset at the start of every season.
     const states = new Map<string, ReplayState>();
     const h2h = new Map<string, (string | null)[]>();
     const singlesH2h = new Map<string, string[]>();
@@ -113,8 +114,8 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
           existing,
         ));
         for (const playerId of [match.winner_id, match.loser_id]) {
-          const state = states.get(playerId) ?? { games: 0, wins: 0, streak: 0 };
-          states.set(playerId, { ...state, games: state.games + 1, streak: 0 });
+          const state = states.get(`${match.season_id}:${playerId}`) ?? { games: 0, wins: 0, streak: 0 };
+          states.set(`${match.season_id}:${playerId}`, { ...state, games: state.games + 1, streak: 0 });
         }
       }
 
@@ -133,8 +134,8 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
         previousPartner.set(match.loser_id, match.loser_partner_id);
         previousPartner.set(match.loser_partner_id, match.loser_id);
       } else if (match.winner_score !== match.loser_score) {
-        const winner = states.get(match.winner_id) ?? { games: 0, wins: 0, streak: 0 };
-        const loser = states.get(match.loser_id) ?? { games: 0, wins: 0, streak: 0 };
+        const winner = states.get(`${match.season_id}:${match.winner_id}`) ?? { games: 0, wins: 0, streak: 0 };
+        const loser = states.get(`${match.season_id}:${match.loser_id}`) ?? { games: 0, wins: 0, streak: 0 };
         let priorLosses = 0;
         const h2hKey = [match.winner_id, match.loser_id].sort().join(":");
         const currentSinglesH2H = singlesH2h.get(h2hKey) ?? [];
@@ -178,20 +179,29 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
           recentH2HWinnerIds: currentH2HWinners,
           winnerConsecutiveLossesVsLoserBefore: priorLosses,
         }));
-        states.set(match.winner_id, { games: winner.games + 1, wins: winner.wins + 1, streak: winnerStreak });
-        states.set(match.loser_id, { games: loser.games + 1, wins: loser.wins, streak: loserStreak });
+        states.set(`${match.season_id}:${match.winner_id}`, { games: winner.games + 1, wins: winner.wins + 1, streak: winnerStreak });
+        states.set(`${match.season_id}:${match.loser_id}`, { games: loser.games + 1, wins: loser.wins, streak: loserStreak });
       }
 
       candidates = candidates.filter((candidate, index, all) =>
         all.findIndex((item) => item.playerId === candidate.playerId && item.achievementId === candidate.achievementId) === index
       );
-      const awarded = await achievements.awardMany(
+      await achievements.awardMany(
         group.id,
         candidates,
         { type: "match", id: match.id },
         match.played_at,
       );
-      const awardedPrimary = awarded.map((row) => ({
+      // Include previously persisted awards from this event so an interrupted
+      // backfill can reconstruct meta rewards on its next run.
+      const eventAwards = await sql<{ player_id: string; achievement_id: string }[]>`
+        SELECT pa.player_id, pa.achievement_id
+        FROM player_achievements pa
+        JOIN achievement_definitions ad ON ad.id = pa.achievement_id
+        WHERE pa.group_id = ${group.id} AND pa.match_id = ${match.id}
+          AND ad.kind != 'meta'
+      `;
+      const awardedPrimary = eventAwards.map((row) => ({
         playerId: row.player_id,
         achievementId: row.achievement_id,
       }));
@@ -289,8 +299,9 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
       );
     }
 
-    const seasonLeaders = await sql<{ season_id: string; player_id: string; end_date: string }[]>`
-      SELECT season_id, player_id, end_date
+    const seasonLeaders = await sql<{ season_id: string; player_id: string; unlocked_at: Date }[]>`
+      SELECT season_id, player_id,
+        (end_date + TIME '23:59:59') AT TIME ZONE 'Europe/Moscow' AS unlocked_at
       FROM (
         SELECT
           ss.season_id,
@@ -312,7 +323,7 @@ export async function backfillAchievements(now: Date = new Date()): Promise<void
         group.id,
         [{ playerId: leader.player_id, achievementId: "party_worker" }],
         { type: "season", id: leader.season_id },
-        new Date(`${leader.end_date}T20:59:59Z`),
+        leader.unlocked_at,
       );
     }
 

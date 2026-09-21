@@ -300,11 +300,13 @@ export function matchQueries(sql: SqlLike) {
 
     async findLastByReporter(
       reporterId: string,
+      groupId: string,
       minutes: number = 5,
     ): Promise<Match | undefined> {
       const rows = await sql<Match[]>`
         SELECT * FROM matches
         WHERE reported_by = ${reporterId}
+          AND group_id = ${groupId}
           AND played_at > NOW() - INTERVAL '1 minute' * ${minutes}
         ORDER BY played_at DESC
         LIMIT 1

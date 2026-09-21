@@ -92,8 +92,10 @@ export function digestQueries(sql: SqlLike) {
         winner_partner_id: string | null;
         loser_partner_id: string | null;
         played_at: Date;
+        is_draw: boolean;
       }[]>`
-        SELECT winner_id, loser_id, winner_partner_id, loser_partner_id, played_at
+        SELECT winner_id, loser_id, winner_partner_id, loser_partner_id, played_at,
+          winner_score = loser_score AS is_draw
         FROM matches m
         WHERE m.group_id = ${groupId}
           AND m.played_at >= ${since}
@@ -114,7 +116,7 @@ export function digestQueries(sql: SqlLike) {
         for (const pid of [...winners, ...losers]) {
           if (!streaks.has(pid)) streaks.set(pid, { current: 0, best: 0 });
           const s = streaks.get(pid)!;
-          if (winners.includes(pid)) {
+          if (!row.is_draw && winners.includes(pid)) {
             s.current = s.current > 0 ? s.current + 1 : 1;
           } else {
             s.current = 0;
